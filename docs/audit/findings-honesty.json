@@ -1,0 +1,235 @@
+{
+ "scope": "honesty",
+ "keep": [
+  "No invented prices anywhere: every package CTA is 'Request Quote' (components/Packages.tsx:32) and the intro says prices are confirmed per proposal.",
+  "No statistics, client names, testimonials, reviews, awards, team member names, team size number, phone, email, address or social links anywhere in rendered text; zero external/mailto/tel links and zero img/video/audio elements on all 10 routes (honest-dump.mjs output).",
+  "No AI automation / chatbot / AI assistant service is offered anywhere; no 'Inc/LLC/Ltd/registered/TM/(R)' claims.",
+  "Contact form never fakes a send: with no email configured it says 'this message was not sent anywhere' (components/ContactForm.tsx:34-35, screenshot docs/audit/tmp/contact-1440-valid-result.png). Keep the honesty, only reword it.",
+  "GROW Beta labelling is present on: hero tab (BETA badge + aria-label 'Digital Marketing \u2014 Beta'), hero supporting line, home studio card (BETA pill + aria-label '(Beta)'), Transformation tab, Packages tab, footer 'GROW \u2014 Beta', /studios card 'GROW \u00b7 BETA', /grow eyebrow 'GROW \u00b7 Beta', contact select '(beta interest)', Solutions chips 'Marketing (beta)', meta description '(beta)'.",
+  "/grow disclaimer banner: 'Nothing here is a guarantee of leads, sales or return on ad spend.' (components/StudioPage.tsx:9) and Packages beta note 'No campaigns are offered yet.' (Packages.tsx:37).",
+  "Transformation marketing demo shows no numbers at all, carries 'SIMULATED \u00b7 ILLUSTRATIVE ONLY' and the line 'These are not live campaigns and show no performance results.' (Transformation.tsx:134,148).",
+  "Hero demos are original CSS-drawn content: phone has 'CONCEPT DEMO', browser bar reads 'northlight-studio.example \u00b7 Concept demo' (reserved .example domain), ad mock uses generic 'yourbrand' and 'Beta \u2014 illustrative demo' (HeroScreens.tsx:53,89,120).",
+  "Section footnote 'Original concept demonstrations built for this site. Not client work.' (Transformation.tsx:173).",
+  "Privacy and Terms are openly marked as placeholders rather than filled with invented legal text (app/privacy/page.tsx, app/terms/page.tsx).",
+  "FAQ delivery answer 'We don't promise timelines we haven't scoped.' and About 'We promise only what we can deliver' \u2014 no invented timelines or revision counts.",
+  "Exact spec headlines and supporting lines are used verbatim on all seven home sections; brand spelled MAKENDLESS everywhere."
+ ],
+ "findings": [
+  {
+   "n": 178,
+   "severity": "blocker",
+   "kind": "content-honesty",
+   "title": "How-we-work steps and FAQ state process policies nobody approved",
+   "where": "data/site.ts:102-107 (process) and data/site.ts:109-116 (faqs); rendered on / and /faq",
+   "evidence": "Visible promises: 'scope, timeline, revisions and price in a written proposal before we start'; 'An assigned owner and team produce the work, with an internal quality review'; 'deliver securely'; 'You'll receive a written proposal covering deliverables, dependencies and price before any work begins'; 'We'll send a clear list after discovery'; 'Yes. Ongoing video editing and website maintenance arrangements can be agreed after delivery.' README.md:24 itself says 'Package names, FAQ answers: drafts for owner approval'. Spec: never invent policies or guarantees.",
+   "fix": "Either get the owner to approve each sentence (list them in TODO-FOR-OWNER.md) or soften to non-committal wording now: e.g. 'We agree scope, timing and price with you before work starts', drop 'internal quality review', 'assigned owner', 'securely' and 'written proposal' until confirmed as real practice."
+  },
+  {
+   "n": 179,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "/contact (Start a Project) scrolls sideways on every phone width",
+   "where": "app/contact/page.tsx:8 h1 via components/PageShell.tsx; measured at 360, 390 and 414 wide",
+   "evidence": "docs/audit/tmp/honestv-test3.mjs and honestv-test4.mjs: document.documentElement.scrollWidth = 421 at viewport 360, 390 and 414 (all other routes equal the viewport). The offending element is the h1 span.prism-text 'worth remembering.' with getBoundingClientRect left 20, right 421.4 at 36px font size: the word 'remembering.' is wider than the column. The fixed header stretches to 421 and the menu button's right edge lands at 401, past the 390 viewport. This is the page every CTA on the site leads to. Spec: no sideways scrolling.",
+   "fix": "Reduce the PageShell h1 size on small screens (clamp so the longest word fits 320px of content width, e.g. text-[1.75rem] below 420px) or allow overflow-wrap:anywhere / hyphens on the h1; add overflow-x:clip on the page shell as a guard. Re-measure scrollWidth at 360/390/414."
+  },
+  {
+   "n": 180,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "FAQ says revision limits are 'defined per package' but no package shows any",
+   "where": "data/site.ts:113 vs data/site.ts:68-85 / components/Packages.tsx",
+   "evidence": "FAQ answer: 'Revision limits are defined per package and written into your proposal.' The Package type has only name/for/deliverables/addons; no card shows a revision limit. The claim describes a policy that does not exist on the site.",
+   "fix": "Change to 'Revisions are agreed with you before work starts' (no 'per package'), and add 'revision policy per package' to TODO-FOR-OWNER.md."
+  },
+  {
+   "n": 181,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "'Join the beta list' promises a list and 'Early-access updates' that do not exist",
+   "where": "data/site.ts:50 and :83; components/StudioPage.tsx:19; components/Packages.tsx:32; screenshot docs/audit/tmp/honest-390-pkg-grow.png",
+   "evidence": "GROW tagline 'We are learning in public. Join the beta list.', package 'Beta interest list' with deliverables 'Early-access updates', 'Informative beta descriptions', 'No commitments', CTA 'Join the beta list \u2192' linking to /contact?service=grow. The contact form sends nothing (ContactForm.tsx:24-28: no EMAIL means no delivery), so nobody can join anything and no updates channel exists. 'Learning in public' is also an unverified claim (no public channel is linked).",
+   "fix": "Until a delivery channel is approved, relabel CTA 'Register interest' and deliverables to what is true ('Tell us what you'd want from marketing support', 'No commitments'); replace tagline with 'Coming soon. Currently in beta.'; add 'beta list channel' to owner TODOs."
+  },
+  {
+   "n": 182,
+   "severity": "major",
+   "kind": "missing",
+   "title": "TODO-FOR-OWNER.md does not exist",
+   "where": "project root /Users/raghusai/Desktop/CLAUDE 2.0/MAKENDLESSNWEBSITE (ls shows only README.md)",
+   "evidence": "Spec line 56: 'Missing items go to TODO-FOR-OWNER.md.' No such file in the repo; only a short 'Open items' list in README.md:19-25.",
+   "fix": "Create TODO-FOR-OWNER.md from the ownerTodos list in this report."
+  },
+  {
+   "n": 183,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "Visitor-facing success message contains developer text and an env var name",
+   "where": "components/ContactForm.tsx:34-35; /contact after valid submit; docs/audit/tmp/contact-1440-valid-result.png",
+   "evidence": "Rendered: 'Form checked. Delivery channel pending.' / 'The team needs to set NEXT_PUBLIC_CONTACT_EMAIL or a form backend before launch.' Honest, but it is a note to developers shown to customers; the visitor is also only told after filling everything in.",
+   "fix": "Keep the no-false-sent rule but write for visitors: 'Your details look good, but our inbox isn't open yet, so nothing was sent. Please check back soon.' Also show a short notice above the form before they type. Move the env-var instruction to TODO-FOR-OWNER.md."
+  },
+  {
+   "n": 184,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "Form collects name and email while Privacy is a placeholder and no data notice is shown",
+   "where": "app/contact/page.tsx, components/ContactForm.tsx:42-45, app/privacy/page.tsx:6-7",
+   "evidence": "Form asks for Name, Email, message; there is no line about how data is used; /privacy renders 'Draft placeholder. Requires owner and legal review before launch.' The mailto path would put the visitor's data in an email with no stated handling.",
+   "fix": "Owner must supply approved privacy text before launch; add a one-line notice under the form linking to Privacy once approved. Until then the site is not launchable (track in TODO-FOR-OWNER.md)."
+  },
+  {
+   "n": 185,
+   "severity": "major",
+   "kind": "missing",
+   "title": "Privacy and Terms are placeholder pages linked from every footer",
+   "where": "app/privacy/page.tsx:6-7, app/terms/page.tsx:6-7",
+   "evidence": "Both render 'This page is a placeholder. MAKENDLESS has not yet approved formal Privacy/Terms policy text...'. Also awkward wording 'formal Terms policy text'. Correctly not invented, but a launch blocker.",
+   "fix": "Keep placeholders (do not invent legal text); fix wording to 'has not yet published its Terms'; list legal text as an owner TODO and consider noindex on both until approved."
+  },
+  {
+   "n": 186,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "GROW studio card art is a rising bar chart labelled only 'ILLUSTRATIVE'",
+   "where": "components/Studios.tsx:31-40; docs/audit/1440-home-02-studios.png",
+   "evidence": "Six animated bars with heights [40,70,55,100,85,130] trending up, i.e. a performance-growth graphic, with SVG text 'ILLUSTRATIVE' at fontSize 11. Spec: GROW demos say 'Illustrative demo' and show no performance numbers; a growth chart implies results even without digits, and the wording is not the required phrase.",
+   "fix": "Replace the chart with non-performance imagery of the work itself (ad creative frame, content calendar grid) and caption it 'Illustrative demo'."
+  },
+  {
+   "n": 187,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "Hero marketing 'Beta \u2014 illustrative demo' and 'CONCEPT DEMO' labels are unreadably small",
+   "where": "components/HeroScreens.tsx:53 and :89 rendered through Hero3D; measured by docs/audit/tmp/honest-measure.mjs; screenshots honest-1440-hero-marketing.png, honest-390-hero-marketing.png",
+   "evidence": "Measured rendered label box: 1440 wide = 81x14.7px (phone) and 84x11px (laptop); 390 wide = 62x10px; 360 wide = 38x6px tall. 'CONCEPT DEMO' is 50x10.8px at 1440, 38x7.5px at 390 and 23.5x4.5px at 360. At phone widths the disclosure text is roughly 3-5px high: present in the DOM but not legible.",
+   "fix": "Add a legible caption outside the 3D screens in the hero scene/dock (min 11-12px) that switches with mode: 'Concept demo' for video/web, 'Beta \u00b7 Illustrative demo' for marketing."
+  },
+  {
+   "n": 188,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "Live Transformation video and website demos have no 'Concept demo' caption on the demo itself",
+   "where": "components/Transformation.tsx:37-53 (VideoDemo), :103-109 (WebDemo); screenshot docs/audit/tmp/transformation-390-web-default.png",
+   "evidence": "Only labels inside the stages are 'RAW \u00b7 16:9 \u00b7 NO CAPTIONS', 'EDITED \u00b7 9:16 \u00b7 POP' and '(sample UI)'. The single disclosure is a 12px footnote below the controls: 'Original concept demonstrations built for this site. Not client work.' The literal 'Concept demo' caption required by the spec is absent, and on mobile the footnote is a full screen away from the demo.",
+   "fix": "Put a 'Concept demo' chip inside each demo stage (same position as the marketing 'SIMULATED' chip) and keep the footnote."
+  },
+  {
+   "n": 189,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "Proposal and pricing policy also hardcoded in two components, outside data/site.ts",
+   "where": "components/Packages.tsx:14; components/ProcessFaq.tsx:29",
+   "evidence": "Rendered on the home page: 'Every project is quoted from its real scope, effort and timeline. Package structures below show how we organise work. Prices are confirmed in a written proposal.' and 'Specifics are confirmed in your proposal before work starts.' These repeat the unapproved 'written proposal' policy and would survive a fix that only edits data/site.ts. They also break the spec's 'data/site.ts is the single source of truth' rule for copy.",
+   "fix": "Move both strings into data/site.ts next to process/faqs and soften together with them (e.g. 'We agree scope and price with you before work starts') until the owner confirms the written-proposal practice; list in TODO-FOR-OWNER.md."
+  },
+  {
+   "n": 190,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "Site promises a reply while no inquiry can reach anyone",
+   "where": "data/site.ts:110 (FAQ 1), components/Transformation.tsx:124, every 'Start a Project' / 'Request Quote' / 'Join the beta list' CTA leading to components/ContactForm.tsx",
+   "evidence": "FAQ answer open by default on the home page: 'Use Start a Project and tell us what you're building. We'll follow up to understand your goal, then outline scope and next steps.' Mock ad copy in the Leads objective: 'Tell us what you're building. We'll reply with next steps.' Verified by submitting the form: result is 'this message was not sent anywhere' (no EMAIL configured, no network request in ContactForm.tsx:24-28). The visitor is told they will be followed up with, fills the form, and only then learns nothing was sent; there is no email, phone or other channel anywhere on the site.",
+   "fix": "Until the owner supplies a verified delivery channel, show a short visible notice at the top of /contact ('Our inbox is not open yet; nothing will be sent') and change FAQ 1 to not promise a follow-up; add 'contact channel' as the first item in TODO-FOR-OWNER.md. Do not connect any service without owner approval."
+  },
+  {
+   "n": 191,
+   "severity": "minor",
+   "kind": "off-spec",
+   "title": "Marketing demo uses 'Simulated \u00b7 Illustrative only' instead of the required 'Illustrative demo'; calendar is unlabelled",
+   "where": "components/Transformation.tsx:134 and :141-143; docs/audit/tmp/transformation-1440-mkt-default.png",
+   "evidence": "Chip text 'SIMULATED \u00b7 ILLUSTRATIVE ONLY'. The weekly calendar (Mon Reel / Tue Post ...) has only an aria-label 'Sample weekly content calendar', no visible label. The ad mock is attributed to 'makendless \u00b7 Sponsored', which reads as MAKENDLESS running paid ads.",
+   "fix": "Change chip to 'Beta \u00b7 Illustrative demo', add visible 'Sample content calendar' heading, and use 'yourbrand' (as the hero does) instead of 'makendless' on the mock ad."
+  },
+  {
+   "n": 192,
+   "severity": "minor",
+   "kind": "off-spec",
+   "title": "GROW appears without a Beta label in several places",
+   "where": "components/Hero.tsx:162-164 (kinetic word); app/grow/page.tsx:3 (title); components/FinalCta.tsx:13 (footer tagline); app/studios/page.tsx:8; app/about/page.tsx:6",
+   "evidence": "Hero kinetic word renders bare 'G R O W' under the headline in marketing mode (honest-1440-hero-marketing.png); browser tab title is 'GROW \u2014 MAKENDLESS'; /grow h1 is plain 'Digital Marketing'; /studios intro 'Grow the audience.' is an outcome line with no beta qualifier; hero status chip still reads 'EDITED' in marketing mode. Footer 'CREATE \u2022 BUILD \u2022 GROW' is the locked philosophy line, acceptable.",
+   "fix": "Kinetic word 'GROW \u00b7 BETA'; metadata title 'GROW (Beta)'; h1 'Digital Marketing \u2014 Beta'; /studios intro 'Create the content. Build the experience. Grow \u2014 in beta.'; status label 'PREVIEW' in marketing mode."
+  },
+  {
+   "n": 193,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "/grow lists full paid-service scope as if deliverable",
+   "where": "data/site.ts:53-57; components/StudioPage.tsx:10-18",
+   "evidence": "Cards 'Meta & Google Ads: Campaign setup & monitoring, Campaign reporting', 'Social media management: Page management', 'Marketing reporting' are styled identically to live CREATE/BUILD services. Only the page-level banner says beta; Packages says 'No campaigns are offered yet', which contradicts 'Campaign setup & monitoring'. Meta, Google, Instagram, YouTube appear as platform names in text only (no logos) which is acceptable descriptive use.",
+   "fix": "Add a 'Planned' / 'Coming soon' tag on each GROW service card and prefix the list with 'What we are preparing'."
+  },
+  {
+   "n": 194,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "Outcome-style marketing lines that read as promises",
+   "where": "data/site.ts:96-99, :20; components/Transformation.tsx:122",
+   "evidence": "'Products that sell themselves.' (online store), 'Turn one long recording into a week of content' (implied quantity), 'explains your idea in seconds', 'Look ready before you are.', 'that hold attention', 'the studio behind the scroll-stoppers'. None is a numeric guarantee but the first two are result/volume claims for a studio with no published work.",
+   "fix": "Soften: 'Products shown at their best.'; 'Turn one long recording into multiple platform-ready clips.'; get owner sign-off on the rest."
+  },
+  {
+   "n": 195,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "About page makes an unverified AI and review claim",
+   "where": "app/about/page.tsx:12",
+   "evidence": "'we use AI tools to move faster while people review every final result.' Not an AI service (so not a spec breach) but 'people review every final result' is an absolute process guarantee and the AI statement is not in the spec digest. Role list matches the spec; no names or head-count shown.",
+   "fix": "Owner to confirm or remove the sentence; if kept, drop 'every'."
+  },
+  {
+   "n": 196,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "Fictional demo brand names may collide with real businesses",
+   "where": "components/Transformation.tsx:85 ('BREW & CO.'); components/HeroScreens.tsx:120,127 ('NORTHLIGHT', northlight-studio.example)",
+   "evidence": "'Brew & Co.' is a generic name used by real cafes; the web demo shows it with no 'Concept demo' label next to it. Hero 'NORTHLIGHT' is at least paired with a .example domain and 'Concept demo'. Browser chrome uses generic red/yellow/green dots, no real logos.",
+   "fix": "Use an obviously invented name plus .example, and place 'Concept demo' beside it; or use 'Your Cafe'."
+  },
+  {
+   "n": 197,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "Footer column titled 'Company' and \u00a9 line for a non-incorporated team",
+   "where": "components/FinalCta.tsx:7 and :19",
+   "evidence": "Footer heading 'COMPANY' and '\u00a9 2026 MAKENDLESS. Creative & Technology Studio.' Spec: not incorporated, no trademark claims. No TM/registered claim is made; 'Company' mildly implies an incorporated entity.",
+   "fix": "Rename column to 'Studio'; owner to confirm who holds copyright before keeping the \u00a9 line."
+  },
+  {
+   "n": 198,
+   "severity": "minor",
+   "kind": "missing",
+   "title": "No favicon, robots, sitemap, Open Graph or canonical; default English-only 404",
+   "where": "public/ is empty; app/layout.tsx:8-11; /favicon.ico, /robots.txt, /sitemap.xml all return 404",
+   "evidence": "honest-dump.mjs: status 404 for all three; no og:* or canonical tags on any route; 404 body is Next default '404 / This page could not be found.' with no footer. All depend on the real domain, which is not known.",
+   "fix": "Add once the owner supplies the domain and an approved icon; add a branded not-found page now."
+  },
+  {
+   "n": 199,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "Package deliverables that depend on owner confirmation of capability",
+   "where": "data/site.ts:70-81",
+   "evidence": "Items such as 'Multilingual versions', 'Audio cleanup', 'CMS', 'Analytics', 'Basic SEO setup', 'Approved checkout integration', 'Ongoing editing arrangement', and package names Starter/Creator/Professional/Business/Commerce/Custom/Maintenance are drafts (README.md:24). BUILD Starter promises a 'Working contact form' while the studio's own form delivers nothing.",
+   "fix": "Owner to tick off each deliverable/add-on as genuinely offered; remove any the team cannot do today."
+  },
+  {
+   "n": 200,
+   "severity": "minor",
+   "kind": "off-spec",
+   "title": "Hero dock describes the GROW beta demo as a finished video edit",
+   "where": "components/Hero.tsx:222-224 (status), :179 (Pause video), hint chip; screenshot docs/audit/tmp/honestv-gl-390-hero-mkt.png",
+   "evidence": "With the Marketing BETA tab selected the dock still shows status 'EDITED', hint 'Drag to see the edit \u2193', the button 'Pause video' and the stages Brief/Creative/Format/Preview/Review, while the only legible beta marker is the small chip in the tab and the 'illustrative demo' label is about 9px tall. The mode reads as a completed deliverable rather than an illustrative demo.",
+   "fix": "Make the status, hint and pause label mode-aware (e.g. status 'ILLUSTRATIVE DEMO' and hint 'Drag to preview' in marketing mode, 'Pause demo' for all modes) and add the legible out-of-screen caption the auditor proposed."
+  },
+  {
+   "n": 201,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "Solutions recommends 'Marketing (beta)' as a service for Startup and Online store while Packages says none is offered",
+   "where": "data/site.ts:98-99 rendered by components/Solutions.tsx:40",
+   "evidence": "Selecting Startup or Online store renders the chip list '... | Marketing (beta)' under recommended services with the same chip styling as live services (measured panel text in honestv-test.mjs). The Packages section states 'No campaigns are offered yet.' The label is present, so this is not a missing-beta breach, but a not-yet-offered service is being recommended to two of four customer types.",
+   "fix": "Render the GROW chip differently (dashed border, 'Coming soon' suffix) or move it below the list as 'Later: marketing support (beta, not yet available)'."
+  }
+ ]
+}

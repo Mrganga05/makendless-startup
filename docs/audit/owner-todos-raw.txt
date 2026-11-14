@@ -1,0 +1,68 @@
+Production domain (needed for metadataBase, canonical URLs, sitemap and Open Graph URLs) - must not be invented.
+Approve a favicon / app-icon mark (e.g. 'M' monogram or the prism 'LESS' fragment) and the social share (Open Graph) image design.
+Approve 404 page wording.
+Decide whether the primary nav keeps both 'Contact' and 'Start a Project' (same destination) or drops the text link.
+Decide whether the mini-site inside the laptop should be scrollable and clickable by visitors at all, or be a self-playing demo; this determines the fix for the scroll trap and the hidden tab stops.
+Approve the direction for the film strip and clip props: textured film frames and timeline tracks using the existing original demo shots, versus removing them.
+Supply a favicon; /favicon.ico currently returns 404.
+Confirm that 'northlight-studio.example' / 'NORTHLIGHT' and 'yourbrand' are acceptable invented demo names (they are labelled Concept demo / illustrative).
+Approve switching this section to a light 'paper' background so dark and light sections alternate (hero dark -> studios light -> transformation dark).
+Approve the GROW wording on the gateway: 'Beta' only, or 'Beta - Coming Soon', and whether 'Join the beta list' should stay (it implies a waiting list exists).
+Decide whether original 'Concept demo' stills or short clips may be produced for the CREATE gateway preview, or whether it should stay fully CSS/SVG-drawn.
+Approve the fictional sample business name 'BREW & CO.' used in the website demo (components/Transformation.tsx:85) or supply a different invented name; it is labelled '(sample UI)' but real cafes may use that name.
+Decide whether real, owner-supplied footage (raw and edited versions of an original clip) may be used in the Video demo; today it is abstract gradients captioned as concept demonstrations.
+Confirm that showing a mock 'Sponsored' post under the handle 'makendless' is acceptable while GROW is Beta.
+Approve or reword the creator blurb ('a week of content') and the store headline ('Products that sell themselves.') so they do not read as promised outcomes.
+Decide which section in the run Hero / Studios / Live Transformation / Solutions becomes light: the spec requires dark and light to alternate, and today four dark sections are followed by two light ones.
+Confirm the customer-type to service mapping for the contact form prefill (e.g. Local business, Startup and Online store -> BUILD; Content creator -> CREATE) or approve adding a separate 'What are you building?' field.
+Approve the scope wording and any exclusions per package (what is and is not included, what the client must supply). None exists in data/site.ts today and it must not be invented.
+Confirm the package names and groupings (CREATE: Starter / Creator / Professional / Custom; BUILD: Starter / Business / Commerce / Custom / Maintenance) and the add-on lists.
+Decide whether a real GROW beta interest list will exist and whether 'Early-access updates' will actually be sent; otherwise the CTA should say 'Register beta interest'.
+Approve a delivery channel for the contact form (NEXT_PUBLIC_CONTACT_EMAIL or a backend) so Request Quote enquiries, including the selected package, actually reach the team.
+The FAQ says revision limits are defined per package; supply those limits for the written proposal or confirm they stay proposal-only and off the site.
+Confirm the real revision policy (is it per package? how are rounds agreed?) so the 'How do revisions work?' answer can state it truthfully
+Confirm whether there is a genuine internal quality-review step and an 'assigned owner' per project before the site claims them
+Confirm how finished work is delivered (the word 'securely' is currently unbacked)
+Confirm that ongoing video editing and website maintenance are actually offered, and on what basis
+Provide/approve an inquiry delivery channel (email or form backend) - until then the FAQ should not promise 'We'll follow up'
+TODO-FOR-OWNER.md does not exist in the repo; approve creating it to hold the items above
+Approve making section 6 a dark section (or another clearly different surface) so it stops merging with Packages
+Decide whether the footer should carry any contact route beyond the Contact page link (email, WhatsApp, socials). None exist today, which is correct until real details are supplied.
+NEXT_PUBLIC_CONTACT_EMAIL is unset, so the Start a Project CTA leads to a form that honestly says nothing was sent; a real inbox or form backend is needed before launch.
+Approve the direction for the closing visual (3D devices settling vs. timeline reaching EXPORT) before it is built.
+Confirm the footer label: "All studios" (current) or "Studios" (spec wording).
+Approve a delivery channel for the form (inbox address or form backend). Until then the form must keep saying nothing was sent.
+Decide whether an email address may be shown publicly on the contact page (currently none, per 'no invented contact details').
+Decide whether to ask for budget at all, and if so whether as free text only (no price brackets can be shown since no prices are approved).
+Decide whether phone / WhatsApp may be offered as a preferred contact method.
+Approve the wording for what happens after a brief is received (no response-time promise can be written without owner sign-off).
+Confirm the privacy/consent sentence to show next to the submit button and that /privacy covers form data.
+Approve or supply real Privacy Policy and Terms text (currently honest placeholders); no TODO-FOR-OWNER.md file exists in the repo yet — it needs creating.
+Confirm or remove the About-page sentence 'we use AI tools to move faster while people review every final result' (app/about/page.tsx:12) — not in the spec.
+Supply any About-page facts wanted beyond the generic description (origin, location, working hours, how the team collaborates) — nothing can be invented.
+Decide whether GROW's 'Join the beta list' should remain a contact-form inquiry (currently pre-selects 'GROW — Digital marketing (beta interest)') — the form has no delivery channel yet (NEXT_PUBLIC_CONTACT_EMAIL unset).
+Provide or approve original concept-demo footage/imagery for the CREATE and BUILD pages if real media is wanted instead of CSS/SVG concept demos.
+Approve any additional FAQ questions/answers per division (revision limits, timelines and support terms must come from the owner).
+Supply favicon / social-share image artwork.
+Verified contact email (NEXT_PUBLIC_CONTACT_EMAIL) or an approved form delivery service; until then the form sends nothing.
+Whether a GROW beta interest list really exists, where sign-ups go and whether 'early-access updates' will actually be sent; whether 'learning in public' points to a real public channel.
+Approved Privacy Policy text (including how form name/email/message data is stored and used) and approved Terms text; legal review.
+Prices or price ranges, if any are to be published; otherwise confirm 'Request Quote' stays.
+Approval of every process promise: written proposal before work starts, assigned project owner, internal quality review, consolidated feedback rounds, 'secure' delivery method, sending a requirements list after discovery.
+Revision policy (is there a limit per package? what is it?) and how it is communicated.
+Delivery-time guidance, if any, per service; otherwise keep 'confirmed per project'.
+Ongoing support / maintenance terms (is it really offered for video and web, on what basis).
+Sign-off on package names and each deliverable/add-on (multilingual versions, audio cleanup, CMS, analytics, SEO setup, checkout integrations, logo motion, thumbnails).
+Sign-off on the GROW service scope shown on /grow (Meta & Google Ads, social media management, Google Business Profile support) as 'planned', and target date or 'no date' for leaving beta.
+Confirm or remove the About sentence 'we use AI tools to move faster while people review every final result'.
+Sign-off on outcome-style lines ('Products that sell themselves', 'a week of content', 'hold attention', 'Look ready before you are').
+Real, permission-cleared sample work (edited videos, live websites) if concept demos are ever to be replaced; written client permission for any names or logos.
+Production domain name (needed for canonical URL, sitemap, robots, Open Graph).
+Favicon / app icon and social share image in the approved brand style.
+Legal name of the copyright holder for the footer © line, and confirmation the footer should not say 'Company'.
+Social media / public profile links, if any are to be shown (none are shown today).
+Business location, time zone or working hours, if they should appear (none are shown today).
+Final decision on the 'Prism Atelier' colour variant (README lists it as a proposal).
+The original MAKENDLESS-website-build-prompt.md file, which the spec digest says was not found.
+Approve a favicon / app icon (a simple MAKENDLESS mark) since none exists and the browser requests one.
+Decide whether the fifth website package (Maintenance) should stay as its own card; with five cards the grid needs a 3+2 or 2-column layout at tablet/laptop widths.

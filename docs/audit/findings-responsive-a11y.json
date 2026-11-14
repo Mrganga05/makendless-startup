@@ -1,0 +1,264 @@
+{
+ "scope": "responsive-a11y",
+ "keep": [
+  "Skip link ('Skip to content' -> #main) is the first Tab stop on every page and becomes visible on focus (138x40).",
+  "Document structure: lang=en, one <main>, one header, one footer, unique page titles, exactly one h1 per page, and the homepage heading order is clean (h1 > h2 per section > h3 > h4 for FAQ questions, no skipped levels).",
+  "Homepage has zero document-level horizontal overflow at 360, 768 and 1024, and exactly seven sections in spec order.",
+  "Visible focus exists on every one of the 58 Tab stops on the homepage (2px solid #22d3ee, offset 3px); the hero range correctly moves its ring to the visible track (.hero-track-ring). Tab order follows visual order with no traps.",
+  "Hero at 360x780: headline, supporting line and both CTAs fit above the fold (CTA bottoms at 396/398px, 48-50px tall); the mode tabs and timeline also fit (range bottom 768).",
+  "Hero 'Service mode' tablist: roving tabindex, ArrowLeft/ArrowRight work, aria-selected correct, 44px tall tabs, role=status on the RAW/EDITED state, aria-valuetext on the timeline slider, Pause/Play video button with aria-pressed.",
+  "Hero under prefers-reduced-motion: no canvas, still fallback, autoplay paused ('Play video'), mode cycling stopped, scroll-behavior auto.",
+  "Mobile menu at 360: 320x61px link rows, 52px CTA, aria-expanded/aria-controls on the toggle, 44x44 toggle; Escape closes it when focus is on the toggle.",
+  "Touch targets in the page body are good: all section tabs/pills are 44px tall, FAQ rows 64px, Request Quote links 64px tall, Solutions tabs 56px+, form fields 51-54px with 16px font (no iOS zoom), submit 56px.",
+  "FAQ accordion buttons sit inside headings with aria-expanded + aria-controls pointing at existing panels.",
+  "Muted text contrast is fine nearly everywhere: #a4aac7 on ink/surface and #5a6082 on paper all pass 4.5:1; only the specific cases listed in findings fail.",
+  "Console is clean on all 10 pages at all three widths (only a favicon 404 on first load).",
+  "Only Syne is used for text (330 sampled elements; one monospace timecode in the hero).",
+  "Recomposition at 360 is genuinely mobile-first in Studios (stacked full-width gateways with Beta badge visible), Solutions (2x2 selector), Packages (single column) and Process (vertical steps)."
+ ],
+ "findings": [
+  {
+   "n": 202,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "Sideways overflow on /contact, /build and /studios on phones (h1 wider than the screen)",
+   "where": "components/PageShell.tsx:7 (h1 'text-4xl ... sm:text-6xl'); http://localhost:3456/contact, /build, /studios at 360 (and 390)",
+   "evidence": "With mobile emulation at 360 the layout viewport grows to the content width: /contact innerWidth and scrollWidth = 421 (h1 'remembering.' right edge 421), /build = 411 ('Development'), /studios = 362. Full-page screenshots are 421 and 411 px wide: docs/audit/tmp/resp-a11y-360-contact.png, resp-a11y-360-build.png; the existing docs/audit/390-page-contact.png (421px) and 390-page-build.png (411px) show the same at 390. The hero section in PageShell has no overflow clipping, so the page either pans sideways or renders zoomed out.",
+   "fix": "Reduce the inner-page h1 on small screens (e.g. clamp(1.75rem, 8.2vw, 2.25rem) below 400px) so the longest single word ('remembering.', 'Development') fits 320px of content width, and add overflow-wrap: anywhere / hyphens as a safety net. Re-test all inner pages at 360 by asserting window.innerWidth === 360 after load."
+  },
+  {
+   "n": 203,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "Final CTA headline 'worth remembering.' is cut off at 360 and 768",
+   "where": "components/FinalCta.tsx (#cta-title, span.prism-text); homepage section 7 at 360 and 768",
+   "evidence": "Measured span box [20, 377] in a 360 viewport (17px past the edge) and [32, 835] at 768 (67px past); the section has overflow:hidden so the final 'g.' is clipped. Font size is 32px at 360 and 72px at 768. Screenshots: docs/audit/tmp/resp-a11y-360-home-7.png and resp-a11y-768-home-7.png. At 1024 it fits ([111, 913]).",
+   "fix": "The gradient span keeps 'worth remembering.' on one unbreakable line. Size the headline fluidly so 'remembering.' fits the content width (about 30px at 360, about 60px at 768), or allow the span to wrap and step the md size down (72px should start at lg, not md)."
+  },
+  {
+   "n": 204,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "Studios gateways break at 768: title clipped and the GROW Beta badge is pushed off-screen",
+   "where": "components/Studios.tsx:53-65 (three-column grid from md); homepage #studios at 768; also /studios at 768",
+   "evidence": "At 768 each card is 221px wide. 'Website Development' h3 (24px) extends to x=559 while its card ends at 495, so 64px is clipped to 'Website Developm'. 'Digital Marketing' ends at 733 against a card edge of 736, and the BETA badge sits at x=745-801, outside both the card and the 768 viewport, so the required Beta indicator is invisible. Screenshot: docs/audit/tmp/resp-a11y-768-home-2.png. The /studios page shows the same title collision at 768 (docs/audit/tmp/resp-a11y-768-studios.png, 'Developme' running into the next card).",
+   "fix": "Keep the cards stacked or 1+2 until lg (1024), or reduce the card title to about 18px between 768 and 1023 and let it wrap. Position the Beta badge absolutely at the card's top-right so the title can never push it out."
+  },
+  {
+   "n": 205,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Three of four tablists have no keyboard or ARIA wiring",
+   "where": "components/Transformation.tsx:160-168, components/Solutions.tsx:28-34, components/Packages.tsx:15-22",
+   "evidence": "For 'Demonstration mode', 'Customer type' and 'Service category': ArrowRight, ArrowDown, Home, End and ArrowLeft all leave selection and focus unchanged; every tab has tabindex unset so all 3-4 tabs are Tab stops; tabs have no id or aria-controls; the tabpanel has no id, no aria-labelledby and no tabindex. In Packages the role=tabpanel is put on the <ul>, which removes its list semantics. Only the hero 'Service mode' tablist handles arrows, and it ignores Home/End and has no tabpanel at all.",
+   "fix": "Extract one shared Tabs component: roving tabindex, Left/Right (plus Up/Down for the vertical Solutions list with aria-orientation), Home/End, id + aria-controls on tabs, id + aria-labelledby + tabindex=0 on the panel. Wrap the Packages <ul> in a div that carries role=tabpanel."
+  },
+  {
+   "n": 206,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Reduced motion is ignored by Studios, Live Transformation and the Final CTA",
+   "where": "components/Studios.tsx:12-36 (SVG <animate repeatCount=indefinite>), components/Transformation.tsx:30-33 (setInterval 700ms), components/FinalCta.tsx:10 (SVG <animate>)",
+   "evidence": "With prefers-reduced-motion: reduce emulated at 1024, two screenshots of the same section taken 2.5s apart differ for sections 2, 3 and 7 (different MD5: resp-a11y-rm-1024-home-2-a/b.png, -3-a/b.png, -7-a/b.png) while sections 4 and 6 are identical. Section 3's DOM also changes (caption word cycling) and its button still reads 'Pause preview', i.e. autoplay is on. The global CSS rule in app/globals.css only shortens CSS animations and transitions; it does not affect SMIL or JS timers.",
+   "fix": "Start VideoDemo with playing=false when matchMedia('(prefers-reduced-motion: reduce)') matches (as the hero already does). Replace the SMIL <animate> elements with CSS keyframes so the global rule covers them, or render them only when motion is allowed."
+  },
+  {
+   "n": 207,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Focus ring is nearly invisible on the light sections",
+   "where": "app/globals.css:26 (outline: 2px solid #22d3ee for all controls); Packages and How We Work + FAQ sections, light inner pages",
+   "evidence": "#22d3ee against paper #f6f7fc is about 1.7:1 (1.8:1 on the white cards), below the 3:1 needed for a focus indicator. Screenshot docs/audit/tmp/resp-a11y-1024-focus-on-light.png shows the pale ring around 'Join the beta list'. On dark sections the same ring is clearly visible.",
+   "fix": "Use a darker ring inside light sections, e.g. a [data-tone=light] scope with outline-color #6f45f6 (about 4.6:1 on paper), or a two-tone ring (2px #13172b plus 2px white box-shadow) that works on both."
+  },
+  {
+   "n": 208,
+   "severity": "major",
+   "kind": "mobile-break",
+   "title": "Hero device shrinks to a 72px strip on short phones and is covered by the Pause button",
+   "where": "components/Hero.tsx:142 (min-h-[100svh] layout); homepage hero at 360x640",
+   "evidence": "At 360x640 the canvas is 320x72px (at y=406) between the CTAs and the mode tabs; the phone renders about 30px wide and the 'Pause video' pill overlaps it. Screenshot: docs/audit/tmp/resp-a11y-360x640-hero.png. At 360x780 the canvas is 320x212 and reads fine.",
+   "fix": "Give the stage a minimum height (about 200px) on phones and let the hero exceed 100svh on short screens so the timeline scrolls just below the fold, or drop the supporting line to two lines and move Pause into the timeline bar."
+  },
+  {
+   "n": 209,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Reduced-motion still fallback overlaps the hero headline and supporting text at 1024",
+   "where": "components/Hero.tsx (still fallback layout); homepage hero at 1024x768 with prefers-reduced-motion",
+   "evidence": "docs/audit/tmp/resp-a11y-rm-1024-home-1-b.png: the fallback phone sits at about x=415-610 and covers the end of 'We make' and the words 'development for' / 'beta.' in the supporting paragraph. The live 3D version at the same size (resp-a11y-1024-home-fold.png) keeps the devices right of the text.",
+   "fix": "Constrain the fallback to the same right-hand column the canvas uses at lg (left edge at or beyond about 52% of the width) or scale it down between 1024 and 1279."
+  },
+  {
+   "n": 210,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Fixed nav has low contrast over light sections",
+   "where": "Running build header: 'fixed ... bg-[#0c1024]/70 backdrop-blur-xl', nav links text-[#a4aac7]; over Packages and Process sections at 768 and 1024",
+   "evidence": "Over paper #f6f7fc the 70% ink bar composites to roughly #525565 and the #a4aac7 14px links come out at about 3.2:1 (needs 4.5:1). Visible in docs/audit/tmp/resp-a11y-1024-home-5-tab1.png and resp-a11y-768-home-5.png (grey bar, washed-out links). The built header has no data-tone attribute; components/Nav.tsx on disk was edited after the build and now contains tone-switching code that is not yet live.",
+   "fix": "Ship the tone-aware nav already being written, and verify link contrast is at least 4.5:1 in both tones; or simply make the bar about 92% opaque."
+  },
+  {
+   "n": 211,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Header and footer links are far below 44px on touch tablets and phones",
+   "where": "Nav desktop links (md and up, so 768 and 1024 touch tablets), header CTA, logo link; footer links at every width",
+   "evidence": "Measured at 768 and 1024: header a 'Studios' 46x20, 'About' 37x20, 'FAQ' 26x20, 'Contact' 51x20, header 'Start a Project' 150x36, logo link 246x28. Footer at 360/768/1024: 'CREATE' 58x19, 'BUILD' 46x19, 'GROW \u2014 Beta' 102x19, 'All studios' 71x19, 'About' 43x19, 'FAQ' 30x19, 'Contact' 58x19, 'Privacy' 52x19, 'Terms' 43x19, footer logo 274x24, with 12px gaps between rows.",
+   "fix": "Give nav and footer links inline-flex with min-height 44px and horizontal padding (keep the visual spacing by reducing the list gap), and raise the header CTA to min-h-11."
+  },
+  {
+   "n": 212,
+   "severity": "major",
+   "kind": "mobile-break",
+   "title": "Packages cards at 1024: package names overflow the card and the CTA arrow wraps onto its own line",
+   "where": "components/Packages.tsx:22 (lg:grid-cols-4) and :31; homepage section 5 at 1024",
+   "evidence": "Card inner width is 180px. 'Professional' text is 198px (19px past the padding), 'Commerce' 184px, 'Maintenance' 213px (34px past the padding, 10px past the card edge). Every 'Request Quote \u2192' link breaks into two lines with the arrow orphaned. With five website packages the fifth card sits alone on a second row. Screenshots: docs/audit/tmp/resp-a11y-1024-home-5.png and resp-a11y-1024-home-5-tab1.png.",
+   "fix": "Use 2 columns up to about 1100px and 3 at lg for five items (or 4 only from xl), reduce the card title size at lg, and wrap the arrow with the last word in a nowrap span."
+  },
+  {
+   "n": 213,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Mobile menu does not contain focus and Escape only works from the toggle",
+   "where": "Running build mobile menu (#mobile-menu) at 360",
+   "evidence": "With the menu open, Tab goes Studios, About, FAQ, Contact, Start a Project and then straight into the page behind (hero 'Start a Project', 'Explore Studios', 'Book a table', '9:30'). Pressing Escape at that point left aria-expanded='true'. The page behind also scrolls with the menu open (scrollY reached 1500). Escape did close the menu when focus was on the toggle. Nav.tsx on disk (edited after the build) has a comment about scroll lock, inert and Escape, which is not in the running build.",
+   "fix": "Ship the pending Nav change and verify: page behind inert while open, body scroll locked, Escape closes from anywhere and returns focus to the toggle."
+  },
+  {
+   "n": 214,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Decorative mini-site buttons inside the 3D laptop are real Tab stops 9-14px tall",
+   "where": "components/HeroScreens.tsx:132 and :148 ('Book a table', '9:30', '11:00', '14:30'); homepage hero, all widths",
+   "evidence": "They are Tab stops 9-12 in the homepage order, between 'Explore Studios' and 'Pause video'. Measured sizes: 48x14 and about 21x12 at 1024, 25x7 and 10x6 at 768, 29x10 and 11x8 at 360. They are also focusable while the website mode is not the visible one.",
+   "fix": "Mark the in-screen demo UI as presentation for assistive tech and keyboard: tabIndex=-1 on those buttons (keep pointer clicks) or inert/aria-hidden on the screen container, with one sentence of alt text describing the demo."
+  },
+  {
+   "n": 215,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Pending nav-tone and focus-colour fix cannot work: no light section declares data-tone",
+   "where": "components/Nav.tsx:37-38, app/globals.css:35-38 versus components/Packages.tsx:10, components/ProcessFaq.tsx:12, components/PageShell.tsx:11",
+   "evidence": "Source on disk (edited after the running build) switches the nav colours and the --focus ring colour from the nearest [data-tone] ancestor. grep for data-tone across components/ and app/ finds it only on Nav, Footer (dark) and not-found (dark). The light sections (Packages, How We Work + FAQ, the light PageShell body) have none, so after a rebuild the nav still resolves to 'dark' over paper and the focus ring stays #22d3ee (about 1.7:1) there. The two verified contrast findings would survive the rebuild.",
+   "fix": "Add data-tone=\"light\" to the Packages and ProcessFaq sections and to the PageShell body section when light is true (and data-tone=\"dark\" on dark sections), then re-measure nav link contrast and focus-ring contrast over Packages after rebuilding."
+  },
+  {
+   "n": 216,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Video demo's caption word is sliced by the before/after divider in its default state",
+   "where": "components/Transformation.tsx:25 (v=55), :44-47; homepage section 3, Video Editing tab",
+   "evidence": "docs/audit/tmp/resp-a11y-vfy-360-video.png: the animated caption is centred in the edited frame, the divider starts at 55%, so only 'AT' of 'THAT' is visible and the 9:16 frame itself is cut in half. The first thing the 'dominant immersive demo' shows is a chopped word. The edited frame and caption are centred in the stage regardless of width, so the same geometry applies at 768 and 1024.",
+   "fix": "Start the split lower (about 25-30%) so the whole edited frame and caption are visible on load, or anchor the edited frame in the right-hand portion of the stage."
+  },
+  {
+   "n": 217,
+   "severity": "minor",
+   "kind": "mobile-break",
+   "title": "Hero timeline falls below the fold at 768x1024",
+   "where": "components/Hero.tsx:142; homepage hero at 768x1024",
+   "evidence": "Hero height is 1079px in a 1024px viewport; the mode tabs end at 976 but the timeline range ends at 1063, so the signature draggable playhead is cut off (docs/audit/tmp/resp-a11y-768-home-fold.png). The 3D stage above it is 704x330 with the devices small and a lot of empty space.",
+   "fix": "At md, tighten the headline block or cap the stage so tabs plus timeline fit within 100svh, and scale the devices up to use the freed width."
+  },
+  {
+   "n": 218,
+   "severity": "minor",
+   "kind": "mobile-break",
+   "title": "Live Transformation at 360: before/after labels collide and the marketing ad preview is cropped",
+   "where": "components/Transformation.tsx:41 and :50 (labels), marketing demo; homepage section 3 at 360",
+   "evidence": "'RAW \u00b7 16:9 \u00b7 NO CAPTIONS' spans x=36-238 and 'EDITED \u00b7 9:16 \u00b7 POP' spans x=173-324, a 65px overlap that reads as 'NO CAPTITED' at the split (docs/audit/tmp/resp-a11y-360-home-3.png). In the marketing tab the 'SIMULATED \u00b7 ILLUSTRATIVE ONLY' label sits on top of the ad header and the ad is cut at top and bottom (resp-a11y-360-home-3-tab2.png).",
+   "fix": "Shorten the labels on phones ('RAW' / 'EDITED') or stack them top-left and bottom-right; give the ad preview its own padding below the simulated label and scale it to fit the stage height."
+  },
+  {
+   "n": 219,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Before/after slider labels sit on the opposite side from what they describe",
+   "where": "components/Transformation.tsx:54 (<Slider left='Edited' right='Raw'>) and the website demo slider",
+   "evidence": "In the video demo the raw footage is on the left of the split and the edit on the right, but the slider row reads 'EDITED' on the left and 'RAW' on the right (resp-a11y-768-home-3.png). The website demo shows the finished site on the left and wireframe on the right while the labels read 'WIREFRAME' left and 'FINISHED' right (resp-a11y-360-home-3-tab1.png). The range also has no aria-valuetext (only aria-label 'Edited to Raw').",
+   "fix": "Swap the labels (or the clip direction) so each label is under its side of the image, and add aria-valuetext such as '55% raw'."
+  },
+  {
+   "n": 220,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Small contrast failures on accent text",
+   "where": "components/Studios.tsx (BUILD eyebrow on card), components/Transformation.tsx:89 (selected slot pill); also /studios",
+   "evidence": "'BUILD' 14px #8b5cf6 on #202342 measures 3.59:1; the selected time-slot pill '10:00' is 12px #0c1024 on #6f45f6 at 3.46:1. Both need 4.5:1.",
+   "fix": "Use the lighter lilac #c7a6ff or a lightened violet (about #a78bfa) for the BUILD eyebrow on surface; use white text on the violet slot pill."
+  },
+  {
+   "n": 221,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Touch targets under 44px inside the website demo",
+   "where": "components/Transformation.tsx:89; homepage section 3, Website Development tab at 360",
+   "evidence": "Slot buttons measure '10:00' 61x30, '12:30' 58x30, '16:00' 60x30. They are real controls (aria-pressed).",
+   "fix": "Add an invisible hit area (padding or ::after inset -7px) to reach 44px while keeping the pill look."
+  },
+  {
+   "n": 222,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Process step titles are wider than their columns at 768",
+   "where": "components/ProcessFaq.tsx (four-column steps from md); homepage section 6 at 768",
+   "evidence": "'Discover' text is 166px in a 152px column, leaving about 18px before 'Design' (resp-a11y-768-home-6.png); descriptions wrap to five short lines.",
+   "fix": "Use a 2x2 grid between 768 and 1023, or reduce the step title size at md."
+  },
+  {
+   "n": 223,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Hero timeline stage labels are truncated and tiny on phones",
+   "where": "components/Hero.tsx timeline segments (span.truncate); homepage hero at 360",
+   "evidence": "Labels render at 9px and are cut to 'WIREF\u2026', 'RESPO\u2026', 'CAPTIO\u2026' (measured text 67px in a 48px box); see resp-a11y-360-home-fold.png. The 'Marketing BETA' tab label also touches the tab's left edge at 360.",
+   "fix": "Use short mobile labels (WIRE / RESP / CAPS) or show the label only for the active segment at a readable size; tighten the Beta chip in the third tab."
+  },
+  {
+   "n": 224,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Form fields reference error ids that do not exist and are not marked required",
+   "where": "components/ContactForm.tsx:42-45; /contact",
+   "evidence": "name, email and message inputs carry aria-describedby='e-name' / 'e-email' / 'e-msg' while no element with those ids exists until an error is shown; none has required or aria-required although they are validated.",
+   "fix": "Set aria-describedby only when the error is rendered and add aria-required='true' (or a visible 'required' hint)."
+  },
+  {
+   "n": 225,
+   "severity": "minor",
+   "kind": "missing",
+   "title": "favicon.ico returns 404",
+   "where": "http://localhost:3456/favicon.ico",
+   "evidence": "Only console error across all pages: '404 http://localhost:3456/favicon.ico' on first homepage load.",
+   "fix": "Add app/icon.svg (MAKENDLESS mark in the prism gradient) so the request resolves."
+  },
+  {
+   "n": 226,
+   "severity": "minor",
+   "kind": "missing",
+   "title": "Running build is older than the source: several reported issues are already changed on disk and need re-testing",
+   "where": ".next/BUILD_ID (01:28) versus components/Nav.tsx, Footer.tsx, FinalCta.tsx, PageShell.tsx, ui.tsx (01:50-01:51), app/globals.css, app/icon.svg",
+   "evidence": "Running header class is 'bg-[#0c1024]/70' with no data-nav/data-tone attribute, while Nav.tsx on disk renders data-nav, min-h-11 links, inert + scroll lock + Escape handling. favicon 404 persists although app/icon.svg exists. So the header touch-target, mobile-menu and favicon findings describe the live build only; the h1 overflow (PageShell.tsx:7), Final CTA clipping (FinalCta.tsx:12), Studios 768 grid, tablist wiring, reduced-motion and Packages 1024 issues are unchanged in source.",
+   "fix": "Rebuild, then re-run the 360/768/1024 checks for the header, mobile menu and favicon before closing those findings; do not close the others on the strength of the rebuild."
+  },
+  {
+   "n": 227,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Sample-UI buttons hidden by the before/after clip stay keyboard-focusable",
+   "where": "components/Transformation.tsx:106 (finished SiteMock under clip-path) and :89 (slot buttons)",
+   "evidence": "Code: the finished site layer is hidden only with clip-path: inset(0 X% 0 0); its three slot buttons remain in the DOM and tab order at any slider value, so with the slider toward wireframe a keyboard user lands on invisible controls. Not exercised in the browser; observed from source only.",
+   "fix": "Set inert (or tabIndex=-1 on the slot buttons) when the slider value leaves them outside the revealed area."
+  },
+  {
+   "n": 228,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Solutions 'Startup' scene also animates under reduced motion",
+   "where": "components/Solutions.tsx:15",
+   "evidence": "The startup SVG has <animate attributeName=\"y2\" dur=\"1.6s\" repeatCount=\"indefinite\">; SMIL is not affected by the reduced-motion CSS rule in app/globals.css (confirmed for the Studios SMIL, whose x1 moved 144 -> 83 in 0.7s with reduced motion emulated). The auditor's reduced-motion finding lists Studios, Transformation and Final CTA only.",
+   "fix": "Include this element when converting SMIL to CSS keyframes or gating it behind a motion-allowed check."
+  }
+ ]
+}

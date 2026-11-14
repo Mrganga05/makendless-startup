@@ -1,0 +1,252 @@
+{
+ "scope": "hero",
+ "keep": [
+  "Headline treatment: raw grey text with dashed baselines wiped to white/prism by the playhead (Hero.tsx:39-56) is a distinctive, on-brand idea; exact copy and Syne are correct.",
+  "Intro: raw to finished in about 2.5s (p went 0 to 997 between 1.2s and 3.5s after navigation), text is server-rendered first and the canvas fades in afterwards.",
+  "Timeline pointer control: mouse drag gave 500/293/707 at 50/30/70%, track click jumps, touch drag works at 390, the playhead and timecode follow, and the focus ring on the track is clearly visible (hero-1440-slider-focus.png).",
+  "Mode tabs: click, tap, ArrowLeft/Right with wrap and roving tabindex all work; auto-cycle runs every 6s and stops after click, scrub or swipe (stayed on Marketing for 7s after a swipe).",
+  "Swipe at 390: scene swipe moved Video > Websites > Marketing > Websites, the tab strip swipe works, and a vertical drag starting on the scene still scrolls the page (scrollY 225).",
+  "Mobile recomposition at 390x844: one device per mode (phone for Video/Marketing, laptop for Websites), headline plus both CTAs above the fold (CTA bottom 392 of 844), targets 44px or taller (tabs 44, pause 44, slider 48, CTAs 48-50), 60fps, canvas DPR capped at 1.5.",
+  "Phone screen content in Video mode: 16:9 raw letterbox reframing to 9:16, grade wipe line, word-by-word captions and a 'CONCEPT DEMO' label read as real editing work (hero-1440-drag-mid.png, hero-390-raw.png).",
+  "Laptop wireframe-to-finished site with dashed placeholder blocks wiping to real blocks, labelled 'northlight-studio.example \u00b7 Concept demo'; the time-slot buttons do work once the layout is still (14:30 became pressed).",
+  "Honesty: Marketing ad frames carry 'Beta \u2014 illustrative demo', 'Sponsored' on a generic 'yourbrand', no numbers; the BETA chip is on the tab at every width.",
+  "No-3D fallback (hero-1440-no3d-video.png, hero-390-no3d-web.png) and reduced-motion (p=1000 immediately, no canvas, 0 infinite animations running, no auto-cycle, button reads 'Play video') are both calm, good-looking still compositions; the slider still drives them.",
+  "Metal phone body with side button and environment reflections, and frameloop='never' when the hero is off-screen (Hero3D.tsx:181)."
+ ],
+ "findings": [
+  {
+   "n": 19,
+   "severity": "blocker",
+   "kind": "off-spec",
+   "title": "Timeline and mode tabs fall below the fold on 768px-tall laptops",
+   "where": "components/Hero.tsx:142,149,151 (section min-h-[100svh], text column lg:py-10, xl:text-[4.7rem]); http://localhost:3456 at 1440x768, 1366x768, 1280x720",
+   "evidence": "Measured at 1440x768 and 1366x768: section height 848, dock top 707, dock bottom 848 with innerHeight 768. The tab row is sliced by the viewport edge and the timeline slider is entirely off-screen (docs/audit/tmp/hero-1440x768.png). At 1280x720 it is the same (dock 707-848). The draggable playhead is the hero's core mechanic and is invisible on first load at the most common laptop height.",
+   "fix": "Make the hero fit 100svh on short screens: add a max-height tier (e.g. @media (max-height: 820px)) that drops the headline to about 3.6rem, cuts lg:py-10 and the mt-5/mt-8 gaps, and hides the eyebrow, so text column plus the 141px dock is 768 or less. Verify at 1366x768 and 1280x720."
+  },
+  {
+   "n": 20,
+   "severity": "blocker",
+   "kind": "broken-control",
+   "title": "Mouse wheel over the laptop traps page scroll",
+   "where": "components/HeroScreens.tsx:124 (.hero-scroll overflow-y-auto overscroll-contain); Hero3D.tsx:202 (Html pointerEvents='auto'); 1440x900",
+   "evidence": "With the cursor over the laptop screen, 12 wheel ticks of 100px left window.scrollY at 0 in Video mode (inner scrollTop 110) and in Websites mode (inner 298). The same wheel input over the headline scrolled the page to 1200, and in Marketing mode to 1200. The laptop covers a large part of the right half, including when it is the blurred background device, so a visitor resting the cursor there cannot scroll past the hero.",
+   "fix": "Remove overscroll-contain so scroll chains to the page once the mini-site reaches its end, or make the mini site non-scrollable (overflow hidden, auto-scroll driven by p) and only enable inner scrolling when the laptop is the focused device and the user has clicked into it."
+  },
+  {
+   "n": 21,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "Hero breaks at 768x1024 (tablet): timeline cut off, devices tiny",
+   "where": "components/Hero.tsx:176 (scene sm:h-[330px] sm:flex-none) and :142; 768x1024",
+   "evidence": "Section height 1079 against innerHeight 1024; dock spans 909-1079, so the timeline track is cut off at the bottom edge (docs/audit/tmp/hero-768x1024.png). Phone and laptop render about 80px and 170px wide in a 330px band under a large empty text block, with the film strip and clips at thumbnail size. Spec requires 768 to be checked and recomposed.",
+   "fix": "At sm to lg let the scene flex to the remaining height instead of a fixed 330px, pull the camera closer (tablet-specific CAM distance), and constrain total height to 100svh so the dock stays visible."
+  },
+  {
+   "n": 22,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "Touch scrolling is trapped on phones in Websites mode",
+   "where": "components/HeroScreens.tsx:124 (.hero-scroll overflow-y-auto overscroll-contain) inside Hero3D.tsx:202 Html pointerEvents='auto'; 390x844 and 360x780, Websites mode",
+   "evidence": "docs/audit/tmp/herov-test3.mjs: four consecutive upward touch drags (100px each) starting on the laptop screen left window.scrollY at 0 at both 390 and 360, while only the mini-site's scrollTop changed. The same drag on the scene in Video mode scrolled the page by 85px. The laptop fills the band between the CTAs and the dock (183x141px at 390), which is exactly where a thumb starts a scroll, so a phone visitor in Websites mode (also reached by auto-cycle) cannot scroll past the hero from there. The auditor only reported the desktop mouse-wheel case.",
+   "fix": "Remove overscroll-contain and, on compact, make the mini-site non-scrollable (overflow hidden or touch-action: pan-y passthrough with pointer-events none on the scroller) so vertical drags always scroll the page."
+  },
+  {
+   "n": 23,
+   "severity": "major",
+   "kind": "mobile-break",
+   "title": "Scene collapses on short phones (360x640, 375x667): phone smaller than the Pause button",
+   "where": "components/Hero.tsx:176 (h-[200px] min-h-0 flex-1) and :178; 360x640, 375x667, 390x664",
+   "evidence": "Measured scene height: 72px at 360x640, 119px at 375x667, 102px at 390x664. In docs/audit/tmp/hero-360x640-video.png the 3D phone is about 30px wide and sits beside a Pause pill that is larger than it. At 360 the supporting line also wraps to three lines, which takes more height.",
+   "fix": "Guarantee a minimum scene height of about 200px on short phones by shrinking the headline one step and tightening gaps below about 700px height, or move the Pause control into the dock and let the device overlap behind the CTAs. Re-test at 360x640 and 375x667."
+  },
+  {
+   "n": 24,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "In Marketing mode the timeline changes nothing on the devices",
+   "where": "components/HeroScreens.tsx:91 and :156 (ad overlay clip-path depends only on `ad`, never on p); Hero.tsx:13 stages Brief/Creative/Format/Preview/Review",
+   "evidence": "docs/audit/tmp/hero-1440-reduced-marketing.png at p=0.4: the status says EDITING and the playhead is at Format, yet both ad frames are fully finished and the laptop chrome badge reads 'WIREFRAME' above a completed ad. Only the headline tint and stage chips react. The five Marketing stages are labels with no matching visual, which conflicts with the spec rule against decorative controls.",
+   "fix": "Drive the ad frames from p: Brief = empty placeholder frame with objective text, Creative = gradient and headline wipe in, Format = 9:16 vs feed crop, Preview = Sponsored header and CTA appear, Review = Beta label and final state. Hide or correct the WIREFRAME/LIVE badge when ad is true."
+  },
+  {
+   "n": 25,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Film strip and timeline clips read as plain coloured rectangles",
+   "where": "components/Hero3D.tsx:149-158 (boxGeometry 0.38x0.5 and w x 0.2, flat meshStandardMaterial, colours from STRIP)",
+   "evidence": "docs/audit/tmp/hero-1440-video-zoom.png and docs/audit/1440-home-01-hero.png: six flat teal-to-violet cards above the devices and four flat pastel bars below. No sprocket holes, no frame imagery, no waveform, no clip labels, no trim handles. Without context they look like colour swatches, which sits close to the spec's ban on abstract shapes and requirement that every 3D object depict the studio's work.",
+   "fix": "Keep the positions and landing animation but give them identity: one continuous film strip with a sprocket-hole texture and the three reel shots as frame thumbnails (CanvasTexture); clips as timeline tracks with rounded ends, a thumbnail or waveform texture, a clip name and a thin playhead crossing them."
+  },
+  {
+   "n": 26,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "HTML screens are not occluded by 3D bodies: phone screen shows through the laptop",
+   "where": "components/Hero3D.tsx:194-205 (drei Html transform without occlude, zIndexRange [40,10]); 1440x900 Websites mode and during scroll",
+   "evidence": "docs/audit/tmp/hero-1440-web-zoom.png: in Websites mode the phone sits behind the laptop, but its blurred screen is drawn on top of the laptop lid and base. docs/audit/tmp/hero-1440-scroll-250.png shows the same thing during scroll hand-off: the phone screen is pasted over the laptop deck. This breaks the illusion of solid objects.",
+   "fix": "Separate the devices so they never overlap in Websites mode (move PHONE[1].x further left or behind with a clear gap), or render screens as textures/occluded Html (occlude='blending'), or fade the back device's screen to 0 when its projected rect intersects the front device."
+  },
+  {
+   "n": 27,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Depth of field is a CSS blur on the screen only; bodies and props stay razor sharp",
+   "where": "components/HeroScreens.tsx:66 and :117 (filter: blur(1.6px) brightness(.72) on the back screen); no post-processing in Hero3D.tsx",
+   "evidence": "docs/audit/tmp/hero-1440-video-zoom.png: the laptop's site is soft while its aluminium edge, base and trackpad, plus the film strip far behind, are perfectly sharp. It reads as a blurry screen inside a sharp frame, not a lens effect, and there is no focus pull when the mode changes.",
+   "fix": "Either add a real DepthOfField pass (postprocessing, desktop only, focus distance lerped per mode) or fake it consistently: dim and desaturate the back device's meshes and soften the far props to match the screen blur, with the transition timed to the camera move."
+  },
+  {
+   "n": 28,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Laptop does not read as a physical product",
+   "where": "components/Hero3D.tsx:103-114 (LaptopBody: two slabs, one dark plane for the keyboard, one plane for the trackpad)",
+   "evidence": "docs/audit/tmp/hero-1440-marketing-zoom.png and docs/audit/tmp/hero-390-web.png: the deck is a featureless dark slab with a single dark rectangle where keys should be, no key grid, no hinge, no screen bezel or camera, and the lid is a thin plate. At 390 the base is also clipped by the right edge of the scene. The phone is more convincing (metal rail, side button) but has no camera or speaker detail and the screen's 30px corner radius does not match the glass slab.",
+   "fix": "Add a key-grid texture or instanced key caps on the keyboard plane, a hinge cylinder, a 3-4% black bezel with a camera dot around the screen, and a slightly thicker tapered base. On the phone add a second side button and match the HTML corner radius to the glass slab. Tighten the contact shadow so the devices sit on a surface."
+  },
+  {
+   "n": 29,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Auto-cycling modes cannot be paused by the Pause button, hover or keyboard focus",
+   "where": "components/Hero.tsx:112-116 (cycle interval) and :178 (pause only toggles `paused`)",
+   "evidence": "After clicking 'Pause video' (aria-pressed=true, label 'Play video'), the selected mode still changed from Video Editing to Website Development within 7s. With keyboard focus resting on the selected tab, it changed from Video Editing to Digital Marketing within 7s, so the content changes under a keyboard user. Content that auto-updates for more than 5s needs a pause mechanism (WCAG 2.2.2).",
+   "fix": "Make the pause button also call setCycling(false), and stop cycling on focusin or pointerenter within the dock and scene. Consider relabelling it 'Pause demo'."
+  },
+  {
+   "n": 30,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "Pause button is a no-op or misleading in several states",
+   "where": "components/Hero.tsx:178; components/HeroScreens.tsx:124 (hero-resize animation ignores `paused`), :91 (static ad overlay)",
+   "evidence": "At 390 in Websites mode only the laptop is shown and nothing on it is tied to `paused`; in Marketing mode the phone shows a static ad, so tapping 'Pause video' changes only its own label (docs/audit/tmp/hero-390-web.png, hero-390-marketing.png). At 1440 it pauses only the reel; the 7s responsive-resize loop, device bobbing and mode cycling continue.",
+   "fix": "Make one 'Pause demo' control that stops everything that moves on its own (reel clock, hero-resize, bob, auto-cycle), or hide the button in modes where no video is visible."
+  },
+  {
+   "n": 31,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Slider arrow keys move 0.1% per press",
+   "where": "components/Hero.tsx:234 (range min 0 max 1000, no step or key handler)",
+   "evidence": "Measured: ArrowRight took the value from 86 to 87 of 1000; PageUp moved 100; Home and End work. A keyboard user needs about 1000 arrow presses to scrub raw to finished, and one press produces no visible change.",
+   "fix": "Add onKeyDown: Arrow = plus or minus 5% (Shift+Arrow 1%), or set step={50} and keep pointer scrubbing smooth by handling pointer events separately. Update aria-valuetext to name the stage, e.g. 'Grade, 52% edited'."
+  },
+  {
+   "n": 32,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Demo buttons inside the devices stay in the tab order while hidden, blurred or covered",
+   "where": "components/HeroScreens.tsx:132,148 (Book a table, 9:30, 11:00, 14:30); ad overlay at :156",
+   "evidence": "Tab sequence in Marketing mode at 1440: after Explore Studios focus goes to 'Book a table', '9:30', '11:00', '14:30', each reported covered=true by elementFromPoint (they sit under the ad overlay), so focus disappears for four stops before reaching Pause and the tabs. In Video mode the same four are focusable inside the blurred background laptop. They render at about 28x15px and 60x17px.",
+   "fix": "Set inert (or tabIndex=-1 plus aria-hidden) on the mini-site whenever ad is true or back is true; only expose the buttons in Websites mode. Consider making the whole mini-site one focus stop with a label."
+  },
+  {
+   "n": 33,
+   "severity": "major",
+   "kind": "mobile-break",
+   "title": "At 1024x768 the laptop is cropped by the viewport and the timeline is clipped by 6px",
+   "where": "components/Hero.tsx:176 (lg:right-[-3%] lg:w-[60%]); Hero3D.tsx:11-14 (CAM/LAPTOP positions not width-aware); 1024x768",
+   "evidence": "docs/audit/tmp/hero-1024x768.png: the laptop's right edge is cut off at the window edge and the caption blocks overlap its screen. Section height is 774 against 768, so the track's bottom border is clipped.",
+   "fix": "Add a mid-width camera preset for 1024-1279 (pull back or shift LOOK left) so both devices fit inside the scene, and trim 8px from the dock or text column at this size."
+  },
+  {
+   "n": 34,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "'Book a table' and the mini-site nav/cards look clickable but do nothing",
+   "where": "components/HeroScreens.tsx:132 (button without onClick), :127 (Menu / Visit / Book spans with cursor-pointer and hover colour), :138 (cards with cursor-pointer and hover lift)",
+   "evidence": "DOM check in herov-test1.mjs: the 'Book a table' button's React props have no onClick (the three time-slot buttons do). It is a real focusable <button> with hover and active states, and it is the first stop in the tab order after Explore Studios. The nav items and the three cards also show a pointer cursor and hover effects with no action. Spec quality bar: every button does something real, no decorative controls; the hero spec calls for a live mini site.",
+   "fix": "Wire them: Book a table scrolls the mini-site to the 'Pick a time' block and highlights it; Menu/Visit/Book scroll to their blocks; cards toggle a selected state. Otherwise render them as non-interactive (div, no pointer cursor, no hover state)."
+  },
+  {
+   "n": 35,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "'Concept demo' and 'Beta - illustrative demo' labels are too small to read",
+   "where": "components/HeroScreens.tsx:53 (BetaLabel text-[10px]), :89 (CONCEPT DEMO text-[9px]), :120 (URL bar text-[10px]) scaled down by the 3D transform",
+   "evidence": "Measured label boxes including padding (herov-test3.mjs): at 360 wide 'CONCEPT DEMO' is 29x5.4px and 'Beta - illustrative demo' is 47x7.2px; at 390 they are 38x7.1 and 62x9.4; at 1440 they are 50x10.8 and 81x14.7 / 84x10.9. That puts the glyphs at roughly 3-4px on phones and 5-6px on desktop; in docs/audit/tmp/herov-390-mode2.png and herov-1440-mkt-p40.png the disclosure pills are smudges. The spec requires GROW demos to say 'Illustrative demo' and demo content to be captioned 'Concept demo'; the text exists in the DOM but a visitor cannot read it.",
+   "fix": "Move the disclosure out of the scaled screens: a normal-size caption (11-12px) pinned in the scene corner or dock that reads 'Concept demo' in Video/Websites and 'Beta - illustrative demo' in Marketing, keeping the in-screen pills as decoration."
+  },
+  {
+   "n": 36,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "During scroll hand-off the devices are sliced by the canvas box edges",
+   "where": "components/Hero.tsx:176 (scene lg:absolute lg:right-[-3%] lg:w-[60%], canvas clipped to 630-1398px at 1440); Hero3D.tsx:74 (dir * s * 2.1 pushes devices outward)",
+   "evidence": "docs/audit/tmp/herov-1440-scroll250.png (scrollY 250, settled): the phone's left side is cut by a straight vertical line at about x=641 and the laptop's right side by a straight line at x=1398, 42px short of the window edge, with empty page background beyond. Scene rect measured 630-1398. The same hard left edge cuts the wireframe grid in docs/audit/tmp/herov-1440-mkt-p40.png. It reads as a rendering fault rather than a designed exit.",
+   "fix": "Let the canvas span the full section width (inset-0, pointer-events none on empty areas) or reduce the outward travel so both devices stay inside the canvas, and fade the grid with a radial mask instead of the box edge."
+  },
+  {
+   "n": 37,
+   "severity": "minor",
+   "kind": "broken-control",
+   "title": "Laptop buttons become moving targets during the responsive-resize loop",
+   "where": "components/Hero3D.tsx:203 (resize when mode===1 && p>0.95); app/globals.css:44 (hero-resize 7s infinite); cursor parallax in Device (Hero3D.tsx:77)",
+   "evidence": "The 14:30 button's centre moved from y=602 to y=480 between two measurements about 1.5s apart, and a real mouse click at the first position hit the canvas, leaving 11:00 selected. The click only landed after the layout settled. Hit sizes are 28x15px.",
+   "fix": "Pause hero-resize while the pointer is over the laptop, and reduce parallax rotation while hovering a device so targets hold still."
+  },
+  {
+   "n": 38,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Headline and phone collide at 1440",
+   "where": "components/Hero.tsx:151 (xl:text-[4.7rem]) and :176 (scene w-[60%]); 1440x900",
+   "evidence": "h1 right edge measured at 744px; in Marketing mode the phone's left edge is at about 738px (docs/audit/tmp/hero-1440-w2m-400.png) and in the no-3D fallback at about 745px (hero-1440-no3d-video.png). The word 'impossible' touches the device with no breathing room.",
+   "fix": "Shift the scene or camera target about 40px right at xl, or cap the headline at 4.4rem between 1280 and 1535."
+  },
+  {
+   "n": 39,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Only Marketing gets a mask wipe; Video to Websites has no transition identity",
+   "where": "components/HeroScreens.tsx:91,156 (clip-path .75s); Hero3D.tsx Device and Rig lerps",
+   "evidence": "docs/audit/tmp/hero-1440-w2m-150.png shows the ad wiping in (top-down on the phone, left-right on the laptop), which works but uses two different directions. Video to Websites (hero-1440-v2w-450.png) is only a camera drift and a blur swap. During the switch the sliding tab pill overlaps the neighbouring label ('Website Development' text collides with the pill edge) and the stage chips re-rise.",
+   "fix": "Give each mode change one shared, directional wipe (e.g. a playhead line sweeping across both screens in the mode colour) and use the same direction on both devices. Shorten the pill slide or fade labels so they do not overlap mid-transition."
+  },
+  {
+   "n": 40,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Scroll hand-off is weak: props collapse and the next section is also dark",
+   "where": "components/Hero3D.tsx:70-77 (scroll offsets); Details clips; 1440 at scrollY 250-500",
+   "evidence": "docs/audit/tmp/hero-1440-scroll-250.png and hero-1440-scroll-500.png: the devices slide into each other, the four clips overlap into one striped bar, and the hero ends on a hard edge into another dark navy section (Studios), so there is no sense of a designed exit. The 3D grid also has a hard vertical cut-off at the scene's left edge (about x=630 in docs/screenshots/1440-raw.png).",
+   "fix": "Make scroll move the devices apart rather than together, keep clip spacing constant, fade the grid with a radial mask at the canvas edges, and add a deliberate closing beat (e.g. the dock's playhead line extending into the next section)."
+  },
+  {
+   "n": 41,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Status readout jumps sideways and stage chips lag during the intro",
+   "where": "components/Hero.tsx:221-229 (hint rendered with opacity 0 but still in layout; wordmark xl only), :238-240",
+   "evidence": "The RAW/EDITING/EDITED label sits at x=952 at p=0, x=762 mid-intro, x=921 after a scrub and x=829 when finished (docs/screenshots/1440-raw.png, docs/audit/tmp/hero-1440-intro-a.png, hero-1440-drag-mid.png). In hero-1440-intro-a.png the playhead is at 52% but only the RAW chip is lit. The hint says 'Drag to see the edit' with a down arrow in all three modes.",
+   "fix": "Give the status group fixed slots (absolute-position the hint above the playhead instead of in the flex row), and light chips directly from p with no entrance animation fighting the colour transition. Point the hint at the playhead and use mode-neutral wording."
+  },
+  {
+   "n": 42,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Tabs lack tabpanel wiring and Home/End keys",
+   "where": "components/Hero.tsx:203-219",
+   "evidence": "The three hero tabs have no id and no aria-controls, and the scene has no role=tabpanel. Pressing Home on the tablist left the selection on Digital Marketing \u2014 Beta.",
+   "fix": "Add ids and aria-controls pointing at the scene wrapper (role=tabpanel, aria-labelledby), and handle Home/End."
+  },
+  {
+   "n": 43,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Pause button overlaps the device on phones",
+   "where": "components/Hero.tsx:178 (absolute bottom-1 right-0); 390x844",
+   "evidence": "docs/audit/tmp/hero-390-marketing.png and hero-390-raw.png: the 127x44 Pause pill covers the phone's bottom-right corner; in hero-390-web.png it sits tight against the laptop base, which is itself clipped at the right edge.",
+   "fix": "Move the pause control into the dock's status row on mobile (icon-only, 44px), freeing the scene."
+  },
+  {
+   "n": 44,
+   "severity": "minor",
+   "kind": "mobile-break",
+   "title": "Timeline stage names are truncated with ellipses on phones",
+   "where": "components/Hero.tsx:240-241 (five equal chips, text-[9px], truncate); 390x844 and 360x780",
+   "evidence": "scrollWidth > clientWidth per chip (herov-test3.mjs): at 390 'WIREFRAME' and 'RESPONSIVE' are cut ('WIREFR...', 'RESPON...' in docs/audit/tmp/herov-390-mode1.png); at 360 also 'CAPTIONS', 'CREATIVE' and 'PREVIEW' (docs/audit/tmp/herov-360x640.png shows 'CAPTIO...'). The stage names are the only explanation of what the playhead does, and on phones two of five are unreadable in Websites mode. The Marketing tab label plus BETA badge also fills its 113px/103px cell edge to edge (scrollWidth 104 vs 103 at 360).",
+   "fix": "On compact use short stage names (Wire, Layout, Style, Mobile, Launch; Raw, Cut, Grade, Caps, Export) or show only the active stage name above the playhead with unlabeled segments; drop the BETA chip to a superscript dot at under 390."
+  }
+ ]
+}

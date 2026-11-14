@@ -1,0 +1,136 @@
+{
+ "scope": "final-cta",
+ "keep": [
+  "Exact spec copy: headline \"Let's make something worth remembering.\" and line \"Tell us what you're building. We'll help you take the next step.\" (FinalCta.tsx:32-33)",
+  "Prism gradient on \"worth remembering.\" at 1440: strong, on-brand, reads well (docs/audit/1440-home-07-final-cta.png)",
+  "CTA \"Start a Project\" works: click and Enter both land on /contact; 285x60px target; hover turns lilac and scales 1.05; visible 2px aqua focus ring",
+  "All 10 footer links work and return 200: / , /create, /build, /grow, /studios, /about, /faq, /contact, /privacy, /terms; each page shows its own h1, no 404s",
+  "Footer contains every required item: MAKENDLESS wordmark, CREATE, BUILD, GROW \u2014 Beta, (All) studios, About, FAQ, Contact, Privacy, Terms",
+  "No invented contact details: footer has no email, phone, address or social links; a grep for mailto/tel/social across app, components and data found only the env-driven NEXT_PUBLIC_CONTACT_EMAIL in ContactForm.tsx",
+  "Honest copyright line: \"\u00a9 2026 MAKENDLESS. Creative & Technology Studio.\" with no Ltd/Inc/trademark claim",
+  "Footer semantics: three <nav> landmarks with aria-labels, logical tab order (wordmark, Studios, Company, Legal), focus ring on every link",
+  "Same Footer component is reused on inner pages via PageShell (10 links present on /create, /studios, /contact, /privacy)",
+  "Light section 6 into dark section 7 alternates correctly (previous section background rgb(246,247,252))",
+  "No horizontal page overflow at 360, 390, 768, 1024, 1440 (scrollWidth - innerWidth = 0)",
+  "Footer column layout at 1440 and stacked layout at 390 are clean and legible; Syne only"
+ ],
+ "findings": [
+  {
+   "n": 126,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "Headline word \"remembering.\" is cut off at 360px and 768px",
+   "where": "components/FinalCta.tsx:32 (h2#cta-title, classes text-[2rem] sm:text-6xl md:text-7xl) inside section with overflow-hidden (line 27); http://localhost:3456 at 320, 360 and 768 wide",
+   "evidence": "Measured span rect for \"remembering.\": left 20 to right 377 at 360 viewport (17px past the edge) and at 320; left 32 to right 835 at 768 viewport (67px past the edge). h2 scrollWidth 357 vs clientWidth 320 at 360; 803 vs 704 at 768. Screenshots docs/audit/tmp/finalcta-360-cta2x.png and docs/audit/tmp/finalcta-768-cta.png show the final \"g.\" sliced off by the section edge.",
+   "fix": "Size the headline fluidly so the longest word always fits, e.g. font-size clamp(1.6rem, 8.2vw, 4.5rem) with the md step moved to lg, or drop to text-[1.75rem] below 390 and text-6xl at 768. Verify at 320, 360, 390, 768, 1024."
+  },
+  {
+   "n": 127,
+   "severity": "major",
+   "kind": "mobile-break",
+   "title": "Headline sits off-centre at 390px, touching the right edge",
+   "where": "components/FinalCta.tsx:32; http://localhost:3456 at 390 wide",
+   "evidence": "\"remembering.\" spans x=20 to 377 in a 390 viewport: 20px gutter on the left, 13px on the right, wider than the 350px h2 box (scrollWidth 357). Visible in docs/audit/390-home-07-final-cta.png where the full stop nearly touches the edge while every other line is centred.",
+   "fix": "Same fluid font-size fix as above; the word must fit inside the 20px gutters so text-align:center can actually centre it."
+  },
+  {
+   "n": 128,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "No real 3D or cinematic closing: section is two gradients and three lines",
+   "where": "components/FinalCta.tsx:27-35; section[aria-labelledby=cta-title]",
+   "evidence": "No canvas inside the section at any width (canvasInSection false; the only dynamic 3D import in components is Hero3D in Hero.tsx:7). Decoration is two radial-gradients (line 28) and an SVG of three straight lines at 30% opacity (lines 29-31). Spec asks for a \"refined cinematic closing\" and permits real 3D here depicting devices, frames or timelines. docs/audit/1440-home-07-final-cta.png reads as a generic dark SaaS CTA band.",
+   "fix": "Add one studio-specific closing visual behind or beside the headline: e.g. a lazy-loaded R3F scene reusing the Hero3D phone/laptop/Slab pieces settling into a final frame, or a timeline strip whose playhead reaches the end (\"EXPORT\") as the section scrolls in. Load after text, lower detail on phones, pause off-screen, still fallback, per the spec."
+  },
+  {
+   "n": 129,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "No brand motion: headline, line and CTA appear with no entrance or scroll animation",
+   "where": "components/FinalCta.tsx:32-34",
+   "evidence": "The component is a server component with no motion import. Measured in the section: 0 elements with a CSS animation, 0 elements with inline transform/opacity; the only animation is 3 SMIL <animate> opacity pulses on the lines. Spec quality bar asks for kinetic typography, mask reveals and scroll-driven transitions.",
+   "fix": "Give the closing its own motion signature distinct from other sections: a mask or per-word reveal on the headline when it enters view, the prism gradient sweeping across \"worth remembering.\", and the CTA arriving last. Use the existing `motion` dependency; keep a calm reduced-motion variant."
+  },
+  {
+   "n": 130,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Footer link touch targets are 19px tall",
+   "where": "components/FinalCta.tsx:16 (footer li a, ul space-y-3); 360 and 390 widths",
+   "evidence": "Every footer text link measures 19px high (e.g. FAQ 30x19, BUILD 46x19) with 12px between rows, so the tappable pitch is about 31px; the footer wordmark link is 274x24. Spec requires touch targets of at least 44px.",
+   "fix": "Make links block/inline-flex with min-h-11 and items-center (or py-3) and drop space-y-3 so each row is a 44px target; give the wordmark link py-2.5."
+  },
+  {
+   "n": 131,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "The three diagonal lines are abstract decoration, barely visible and cut by the nav",
+   "where": "components/FinalCta.tsx:29-31 (svg, opacity-30, w-[900px])",
+   "evidence": "In docs/audit/1440-home-07-final-cta.png and docs/audit/390-home-07-final-cta.png the lines fan from the top centre, pass behind the headline letters and stop mid-section; they do not depict any studio work (device, frame, timeline) and read as leftover scaffolding.",
+   "fix": "Replace with a motif that means something for the studio (timeline ticks and playhead, frame corner marks, a browser outline) or remove once the closing visual above exists."
+  },
+  {
+   "n": 132,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Final CTA and footer are the same flat colour, so the page end has no distinct close",
+   "where": "components/FinalCta.tsx:11 and :27 (both bg-[#0c1024])",
+   "evidence": "Computed background of the CTA section and the footer are both rgb(12,16,36), separated only by a 1px white/10 border; the violet glow is hard-cut at that border (docs/audit/tmp/finalcta-1440-footer-focus.png). Spec says no two neighbouring sections may look alike.",
+   "fix": "Differentiate the footer: let the glow bleed into it, use the surface token #202342 or a darker tone, or add a large cropped MAKENDLESS wordmark as the footer's signature element."
+  },
+  {
+   "n": 133,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "SVG line animation keeps running under prefers-reduced-motion",
+   "where": "components/FinalCta.tsx:30 (<animate repeatCount=\"indefinite\">); app/globals.css:34-36",
+   "evidence": "With reduced motion emulated, svg.animationsPaused() is false and line opacities changed from 0.77/0.55/0.32 to 0.75/0.98/0.80 over 1.7s. The global reduced-motion rule only shortens CSS animations and transitions; it does not touch SMIL.",
+   "fix": "Drive the pulse with a CSS keyframe class (covered by the existing media query) or render the <animate> only when reduced motion is not requested."
+  },
+  {
+   "n": 134,
+   "severity": "minor",
+   "kind": "off-spec",
+   "title": "Footer says \"All studios\" where the spec lists \"Studios\"",
+   "where": "components/FinalCta.tsx:6",
+   "evidence": "Footer text read from the DOM: \"STUDIOS | CREATE | BUILD | GROW \u2014 Beta | All studios\". The link works (/studios, 200) and the column heading is \"Studios\", but the heading is not a link.",
+   "fix": "Either rename the link to \"Studios\" or leave as is with owner approval; no functional change needed."
+  },
+  {
+   "n": 135,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Small footer text is 12px muted grey",
+   "where": "components/FinalCta.tsx:15 and :19 (text-xs text-[#a4aac7])",
+   "evidence": "Column headings and the copyright line compute to 12px in rgb(164,170,199) at every width; contrast is adequate on #0c1024 but the size is small on phones (docs/audit/390-home-08-footer.png).",
+   "fix": "Raise the copyright line to 13-14px on mobile; keep the tracked uppercase headings at 12px if desired."
+  },
+  {
+   "n": 136,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Footer wordmark does not line up with the nav wordmark at desktop",
+   "where": "components/FinalCta.tsx:12 (footer container max-w-7xl, px-5 md:px-8) vs the nav container in components/Nav.tsx; 1440 wide",
+   "evidence": "In docs/audit/tmp/verify-finalcta-focus2.png the header wordmark starts at about x=113 while the footer wordmark, column grid and copyright start at x=80. The two brand marks are on screen together at the end of the page, so the 33px offset is visible.",
+   "fix": "Use the same container width and side padding for the footer as the nav (or the reverse) so both wordmarks share one left edge."
+  },
+  {
+   "n": 137,
+   "severity": "minor",
+   "kind": "mobile-break",
+   "title": "At 320px the Start a Project button wraps to two lines",
+   "where": "components/FinalCta.tsx:34 (px-10 py-4 text-lg inline-block); 320 wide (below the spec's 360 minimum)",
+   "evidence": "Measured CTA box 280x88 at 320 versus 285x60 at 360 and up: the label breaks onto two lines and the pill fills the whole content width. The headline is also clipped at this width (line spans 20..377 in a 320 viewport). Page scrollWidth is 331 at 320, but that overflow comes from the Studios cards, outside this scope.",
+   "fix": "Add whitespace-nowrap and reduce horizontal padding on the smallest screens (e.g. px-7 sm:px-10); covered for the headline by the fluid font-size fix."
+  },
+  {
+   "n": 138,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Footer column labels are h2 headings on every page",
+   "where": "components/FinalCta.tsx:15 (<h2> inside each <nav aria-label>)",
+   "evidence": "Heading list read from the DOM ends: H2 \"Let's make something worth remembering.\", H2 \"Studios\", H2 \"Company\", H2 \"Legal\". The three footer labels sit at the same level as the page's section headlines, and each nav already has an aria-label with the same text, so screen-reader heading navigation gets three extra top-level sections on all ten pages.",
+   "fix": "Render the labels as <p> (the nav aria-label already names the group) or as h3."
+  }
+ ]
+}

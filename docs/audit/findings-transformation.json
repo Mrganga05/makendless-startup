@@ -1,0 +1,204 @@
+{
+ "scope": "transformation",
+ "keep": [
+  "All controls are real: measured DOM change for every button, tab and slider at both 1440 and 390 (transformation-results.json) - keep the state logic and the option set (Pause/Play, Reframe, Pop/Karaoke/Minimal, Desktop/Mobile, Midnight/Porcelain/Signal, time slots, Awareness/Traffic/Leads, Feed/Story).",
+  "Honest labelling in Marketing: 'SIMULATED \u00b7 ILLUSTRATIVE ONLY' badge, BETA chip on the tab, the sentence 'These are not live campaigns and show no performance results.', and zero digits in the whole panel (measured digits: []). Keep the wording.",
+  "Section footer line 'Original concept demonstrations built for this site. Not client work.' and the '(sample UI)' note on the booking line.",
+  "Headline 'See the difference.' with the prism gradient word, eyebrow, and the per-division tab accent colours (aqua / violet / lilac).",
+  "The functional sample UI idea in Web mode: selectable booking slots that update 'Table reserved: 12:30 (sample UI)', and theme switching that recolours the whole mock.",
+  "The caption timeline strip that highlights the current word in sync with the preview, and the live status badge 'EDITED \u00b7 9:16 \u00b7 POP' that reflects reframe and caption style.",
+  "Objective switching changes both ad copy and CTA label (Learn more / Visit site / Get in touch) - a meaningful change, not cosmetic.",
+  "No sideways scroll at 1440 or 390 (scrollWidth - innerWidth = 0 before and after all interactions); all pill buttons and tabs are 44px high; range input is 44px high and keyboard arrows work (55 -> 57); visible focus ring 2px solid cyan."
+ ],
+ "findings": [
+  {
+   "n": 60,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "Slider labels are mirrored against the picture, and the two modes run in opposite directions",
+   "where": "components/Transformation.tsx:44, 54 (video) and :106, 110 (web); 1440 and 390",
+   "evidence": "Video: label row is 'EDITED [slider] RAW' but the image shows RAW on the left and EDITED on the right (clip-path inset(0 0 0 v%)); dragging right removes the edit, and at 100 the edit is gone. Web: label row is 'WIREFRAME [slider] FINISHED' but the image shows the finished site on the LEFT and the wireframe on the RIGHT (inset(0 100-v% 0 0)); dragging right adds the finished site. So each label sits under the opposite half of the picture, and right means 'worse' in Video but 'better' in Web. Screenshots: docs/audit/1440-home-03-transformation.png, docs/audit/tmp/transformation-1440-web-default.png.",
+   "fix": "Use one convention in both modes, matching the hero: before on the left, after on the right, dragging right reveals more of the finished result. Video: change the edited clip to inset(0 ${100-v}% 0 0) is wrong for that layout - instead keep RAW as base, reveal EDITED from the left edge up to v%, labels 'Raw' left / 'Edited' right. Web: keep the reveal as is, but it already puts finished on the left, so labels stay 'Wireframe' / 'Finished' only if the layers are swapped so wireframe remains on the left of the handle; simplest is to name the labels by what dragging does ('Before' / 'After') and place the in-picture RAW / EDITED and WIREFRAME / FINISHED badges on the matching sides. Default both to about 60 so the finished state dominates."
+  },
+  {
+   "n": 61,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "No 3D, no device, no real footage - the demo is flat CSS rectangles",
+   "where": "components/Transformation.tsx:37-53, 72-94, 133-140; section[aria-labelledby=live-title]",
+   "evidence": "document.querySelectorAll('section[aria-labelledby=live-title] canvas').length = 0 at both widths. The 'raw footage' is a grey gradient with one grey rounded box (line 39-40); the 'edited reel' is a gradient panel with two radial blobs and one word; the website is a borderless div with three blank coloured tiles and a large empty lower third at 1440 (transformation-1440-web-default.png); the ad is a white card. There is no phone, laptop, browser chrome or video frame, although the spec permits real 3D here for devices / frames / timelines and asks for portfolio-grade work.",
+   "fix": "Keep the logic, upgrade the stage: put the reel inside a phone (reuse the Hero3D phone and the x100 Html-transform pattern, or a well-drawn CSS/SVG phone on small screens) and the site inside a browser/laptop frame with a URL bar; give the raw side something that reads as ungraded footage (flat, shaky-crop, no captions, waveform) and the edited side a graded scene with moving captions, a cut marker and a progress bar. Lazy-load the canvas, pause off-screen, provide the still fallback."
+  },
+  {
+   "n": 62,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "Not one dominant immersive demo - a 1024px card under stacked pills",
+   "where": "components/Transformation.tsx:157 (max-w-5xl), :37/:103/:133 (h-[340px] md:h-[420px]); 1440 and 390",
+   "evidence": "Measured stage is 1024x420 at a 1440x900 viewport (about 71% width, 47% height) and 350x340 at 390. At 390 the three tabs wrap to three full rows (143, 214 and 227px wide pills stacked, about 150px tall) before the stage, and tablist-to-controls is 784px of an 844px viewport. Below the stage sit a slider row, a timeline row and one or two rows of pills - the controls read as a form, not as compact overlays.",
+   "fix": "Let the stage go wide (max-w-7xl or full-bleed, about 70vh on desktop, about 60vh on phones), overlay the compact controls on or directly under the stage as a single toolbar, and turn the three mode tabs into one segmented control that fits a single row at 360-390 (shorter labels: Video / Website / Marketing Beta)."
+  },
+  {
+   "n": 63,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "Wide reframe is cropped by the stage at desktop",
+   "where": "components/Transformation.tsx:45 ('aspect-video w-[86%]'); 1440",
+   "evidence": "After clicking 'Reframe', the edited frame measures 881x495 inside a stage 1024x420 high, so 75px of the 16:9 frame is cut off top and bottom and its rounded corners and border disappear (docs/audit/tmp/transformation-1440-video-wide.png). The raw 16:9 placeholder on line 40 has the same overflow (visible as a full-height grey band in docs/audit/1440-home-03-transformation.png).",
+   "fix": "Constrain by height as well: e.g. 'aspect-video max-h-[88%] max-w-[86%] h-auto w-auto' with an explicit height, or size the stage with aspect-ratio so a 16:9 frame always fits."
+  },
+  {
+   "n": 64,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Caption word is clipped inside the 9:16 frame at desktop",
+   "where": "components/Transformation.tsx:45-47; 1440",
+   "evidence": "The vertical frame is about 208px wide and the caption is text-4xl in Syne ExtraBold; 'SCROLL' renders as 'SCROL' with the last letter cut by overflow-hidden (docs/audit/tmp/transformation-1440-video-full-edited.png). The word that names the benefit is the one that breaks.",
+   "fix": "Size captions relative to the frame (container query units or clamp), or reduce to text-2xl in the vertical frame; verify the longest word fits at every width."
+  },
+  {
+   "n": 65,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "Mobile site preview cuts off its own content, including the booking confirmation",
+   "where": "components/Transformation.tsx:104 (w-[190px], h-[86%]) and :84-93; 1440 and 390",
+   "evidence": "In Mobile mode the finished mock needs 434px but the frame is 361px tall at 1440 and 292px at 390 (scrollHeight vs clientHeight). At 390 the third slot '16:00' is half cut and the tiles and the 'Table reserved: ...' line are not visible at all, so tapping a slot shows no confirmation (docs/audit/tmp/transformation-390-web-mobile.png). 'BREW & CO.' and 'Menu \u00b7 Book' wrap onto two lines each. It is also just a 190px box, not a phone.",
+   "fix": "Lay the mobile mock out for its width (single-line header, slots in one row, smaller headline) so everything fits the frame, or make the frame taller / internally scrollable; draw it as a phone."
+  },
+  {
+   "n": 66,
+   "severity": "major",
+   "kind": "mobile-break",
+   "title": "Ad card overflows the stage on phones; CTA cut off and the 'Simulated' badge covers the card header",
+   "where": "components/Transformation.tsx:133-139; 390",
+   "evidence": "Feed placement at 390: the 250px card is taller than the 340px stage, so its top is cut, the 'Learn more' button is sliced at the bottom edge, and the SIMULATED badge sits over the avatar/header (docs/audit/tmp/transformation-390-mkt-default.png). Story placement at 390: card is 157x279 with 297-313px of content; 'Sponsored' reads 'Sponsore', the headline reads 'Ideas / imposs / to igno', and the CTA is a sliver (docs/audit/tmp/transformation-390-mkt-story-leads.png). At 1440 the feed card is flush against the stage top and bottom with no breathing room (transformation-1440-mkt-default.png).",
+   "fix": "Give the marketing stage enough height (or scale the card to fit with max-h and a smaller square creative), move the badge outside the card's area, and size the Story variant from a width that fits its text (min 200px) with the headline scaled down."
+  },
+  {
+   "n": 67,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Tab widget is not keyboard-complete and lacks ARIA wiring",
+   "where": "components/Transformation.tsx:160-172",
+   "evidence": "Pressing ArrowRight on the selected tab leaves 'Video Editing' selected (measured). Tabs have no id, no aria-controls and no roving tabindex; the tabpanel has no id and no aria-labelledby. The hero tablist does support arrow keys (scripts/shots.mjs:44), so behaviour is inconsistent within the same page.",
+   "fix": "Add ids, aria-controls, aria-labelledby, tabIndex 0 only on the selected tab, and Left/Right/Home/End handling - reuse the hero tab logic."
+  },
+  {
+   "n": 68,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Caption animation auto-plays and ignores reduced motion; keeps ticking off-screen",
+   "where": "components/Transformation.tsx:28-34",
+   "evidence": "With prefers-reduced-motion: reduce emulated, the caption text still changed within 1.7s and the button still read 'Pause preview'. With the section off-screen at the top of the page the caption also kept changing (setInterval every 700ms, re-rendering the component). The spec asks for a calm reduced-motion version and for motion to pause off-screen.",
+   "fix": "Initialise playing to false when matchMedia('(prefers-reduced-motion: reduce)') matches, and gate the interval with an IntersectionObserver so it only runs while the stage is visible."
+  },
+  {
+   "n": 69,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "Story placement clips the ad headline at desktop too, and the Feed card overflows the stage at 1440 with the Leads objective",
+   "where": "components/Transformation.tsx:135-138; 1440",
+   "evidence": "1440 Story: card is 194x344 with scrollWidth 238 > clientWidth 194; the creative reads 'Ideas / impossibl / to ignore' with the right edge sliced (docs/audit/tmp/verif-transformation-1440-mkt-story-leads.png). The auditor reported this only at 390. 1440 Feed + Leads: the longer copy makes the card 434px tall in a 420px stage (top at -7px), so the header is shaved and rounded corners are lost; Awareness is 418px with 1px to spare.",
+   "fix": "Size the headline to the card (smaller type or container-query units, allow wrap inside px-4 with break at word level and a min card width of ~220px for Story), and cap the feed card height (smaller creative, e.g. aspect-[4/3] or max-h) so every objective fits inside the stage with padding."
+  },
+  {
+   "n": 70,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "Most controls do nothing visible when the slider hides the 'after' layer",
+   "where": "components/Transformation.tsx:44-51 (video), :106 (web); 1440 and 390",
+   "evidence": "Video with slider at 100: clip-path is inset(0 0 0 100%), so the whole edited layer, its caption and the EDITED badge are invisible; Reframe, Pop/Karaoke/Minimal and Play/Pause then change only button labels and the timeline strip, never the stage (docs/audit/tmp/verif-transformation-1440-video-s100.png). Web with slider at 0: inset(0 100% 0 0) hides the finished mock, so Midnight/Porcelain/Signal and the time slots produce no visible change (verif-transformation-390-web-mobile-s0.png). Even at the default 55 in vertical mode the 9:16 reel sits at x=408-616 of 1024 with the divider at x=563, so the user sees only a ~50px sliver of the reel and a fragment of the caption (docs/audit/1440-home-03-transformation.png shows just a stub of a letter).",
+   "fix": "Make the default state show the finished result fully (after side dominant), clamp the slider (e.g. 8-92) or auto-nudge it toward 'after' when an edit-side control is used, and position the reel frame within the visible 'after' area instead of the stage centre."
+  },
+  {
+   "n": 71,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Wireframe and finished site do not line up, so the before/after reads as two unrelated pictures",
+   "where": "components/Transformation.tsx:76-81 vs :84-93; 1440 and 390",
+   "evidence": "docs/audit/tmp/verif-transformation-1440-web-default.png: at the divider the finished hero card (top ~219px, height ~132) meets a wireframe hero box at a different top/height (227-322), the tile rows are at different y positions (363-419 vs 339-403), the wireframe has a CTA box the finished site lacks, and the finished site has a nav + confirmation line the wireframe lacks. The right-aligned 'Menu \u00b7 Book' nav is never visible at the default slider value because it sits under the wireframe half. The lower third of the finished mock at 1440 is empty.",
+   "fix": "Derive both states from one layout (same blocks, same geometry): render the wireframe as dashed outlines of exactly the finished elements (nav, hero, slots, tiles, confirmation) so the divider slices through aligned shapes; fill the desktop mock to the frame height."
+  },
+  {
+   "n": 72,
+   "severity": "minor",
+   "kind": "mobile-break",
+   "title": "RAW and EDITED badges collide on phones",
+   "where": "components/Transformation.tsx:41, 50; 390",
+   "evidence": "At the default slider value the RAW badge's right edge is at x=238 and the EDITED badge's left edge at x=203 - a 35px overlap; the raw badge reads 'RAW \u00b7 16:9 \u00b7 NO CAPTIO' (docs/audit/390-home-03-transformation.png). In Karaoke the EDITED badge also covers the top-right corner of the reel frame (transformation-390-video-karaoke.png).",
+   "fix": "Shorten the badges on small screens ('RAW' / 'EDITED') and move the format details into the toolbar, or place the badges at the bottom corners."
+  },
+  {
+   "n": 73,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Karaoke subtitle line is left-aligned and off-centre",
+   "where": "components/Transformation.tsx:48",
+   "evidence": "The span is 'absolute bottom-6' with no horizontal inset, so 'IDEAS THAT STOP THE SCROLL' hugs the left edge of the frame and wraps to two lines while the main word is centred (docs/audit/tmp/transformation-390-video-karaoke.png). It also does not highlight the current word, so the style is a coloured box rather than karaoke.",
+   "fix": "Add inset-x-0 text-center px-3 and highlight the active word within the full line."
+  },
+  {
+   "n": 74,
+   "severity": "minor",
+   "kind": "broken-control",
+   "title": "Caption timeline looks like controls but is inert",
+   "where": "components/Transformation.tsx:56-60",
+   "evidence": "The five segments (IDEAS / THAT / STOP / THE / SCROLL) are styled as a row of button-like blocks but are aria-hidden divs with no handler; clicking does nothing. The spec says no decorative controls.",
+   "fix": "Make each segment a button that jumps the preview to that word (and pauses), or restyle it clearly as a passive timeline with a moving playhead."
+  },
+  {
+   "n": 75,
+   "severity": "minor",
+   "kind": "broken-control",
+   "title": "Before/after picture cannot be dragged directly",
+   "where": "components/Transformation.tsx:52, 107 (pointer-events-none divider)",
+   "evidence": "Mouse drag (1440) and touch drag (390) across the stage from 57% to 20% left the slider value unchanged at 57. The divider line has no handle, and the only way to move it is the separate range input below.",
+   "fix": "Add a visible grab handle on the divider and pointer handlers on the stage that set the same value; keep the range input as the keyboard path."
+  },
+  {
+   "n": 76,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Sample booking slots are below the touch-target minimum and stay focusable while hidden",
+   "where": "components/Transformation.tsx:88-89, 106",
+   "evidence": "The three slot buttons measure 61x30, 58x30 and 60x30px at both widths (spec: 44px minimum). With the slider at 0 the finished layer is fully clipped but the buttons still have tabIndex 0, so keyboard focus lands on invisible controls; at 390 with the slider at 50 the '16:00' slot is under the wireframe and not clickable.",
+   "fix": "Raise the slots to min-h-11, and set inert / tabIndex -1 on the finished layer's controls when they are clipped (or disable them below a threshold)."
+  },
+  {
+   "n": 77,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Slider has no meaningful accessible value",
+   "where": "components/Transformation.tsx:15",
+   "evidence": "aria-label is 'Edited to Raw' / 'Wireframe to Finished' and aria-valuetext is null, so a screen reader announces a bare number. Several labels are 10-11px (BETA chip 10px; badges and calendar cells 11px).",
+   "fix": "Add aria-valuetext such as '60% edited'; raise small text to at least 12px."
+  },
+  {
+   "n": 78,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Weekly calendar strip is a row of grey boxes with no role",
+   "where": "components/Transformation.tsx:141-143",
+   "evidence": "aria-label is set on a div with no role (measured role: null), so it is not announced. Visually it is seven identical grey tiles (141px wide at 1440, 45px at 390) that do not react to the objective or placement controls.",
+   "fix": "Give it role='list' (or a table) and make it part of the demo: tint Reel/Post/Story by type and highlight the day that matches the current placement."
+  },
+  {
+   "n": 79,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Demo state is lost on every mode switch and toggle buttons mis-report state",
+   "where": "components/Transformation.tsx:63, 146, 169-171",
+   "evidence": "Selected Karaoke, switched to Website Development and back: Karaoke aria-pressed = 'false' (state reset because each demo is conditionally mounted). 'Reframe: 16:9 wide' button reports aria-pressed=false and 'Placement: Feed' reports aria-pressed=false while their labels also change, so a screen reader hears e.g. 'Reframe: 16:9 wide, not pressed' - a label-changing toggle should not also carry aria-pressed. Play/Pause has no aria-pressed at all (null), inconsistent with the rest.",
+   "fix": "Lift demo state into the parent (or keep panels mounted and hidden) so settings persist across tabs; for label-swapping buttons drop aria-pressed, or better, replace them with two-option segmented controls (9:16 | 16:9, Feed | Story) matching the Desktop | Mobile pattern already used."
+  },
+  {
+   "n": 80,
+   "severity": "minor",
+   "kind": "off-spec",
+   "title": "In-demo ad uses lower-case 'makendless' and the video/web stages carry no in-frame 'Concept demo' label",
+   "where": "components/Transformation.tsx:136, 173",
+   "evidence": "Ad card header renders the brand as 'makendless' (spec: name is MAKENDLESS, exact spelling). The spec asks original demo content to be captioned 'Concept demo'; the only caption is a 12px muted line below all controls ('Original concept demonstrations built for this site. Not client work.'), which at 390 is below the fold of the stage (stage top ~y=240, caption at ~y=780 in verif-transformation-390-web-default.png). The marketing stage, by contrast, is correctly badged 'SIMULATED \u00b7 ILLUSTRATIVE ONLY' and contains no numbers (regex scan for %, $, 3+ digit numbers in the panel returned null) - keep that.",
+   "fix": "Render the brand as MAKENDLESS in the mock ad, and add a small 'Concept demo' chip inside the video and website stages (same style as the marketing badge, positioned so it never overlaps content)."
+  }
+ ]
+}

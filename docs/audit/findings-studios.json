@@ -1,0 +1,150 @@
+{
+ "scope": "studios",
+ "keep": [
+  "Headline copy exactly on spec: 'Three worlds. Endless possibilities.' with prism gradient on the second sentence; strong Syne display type at 1440 (60px).",
+  "Whole card is a single <Link> (not a small button): tap targets are large (350x423-455px at 390, 320x404-436px at 360) and all three navigate correctly to /create, /build, /grow (verified by click: h1 'Video Editing', 'Website Development', 'Digital Marketing').",
+  "Semantic structure: section[aria-labelledby=studios-title] > ul > li > a, aria-label on GROW includes '(Beta)' ('GROW: Digital Marketing (Beta)'), SVGs are aria-hidden.",
+  "Keyboard focus: Tab order create -> build -> grow, visible 2px cyan outline with 3px offset on each card (docs/audit/tmp/studios-focus-build.png), plus focus-visible lift mirrors hover, so nothing is hover-only.",
+  "Division accent colours match the spec (CREATE #22d3ee, BUILD #8b5cf6, GROW #c7a6ff) and data comes from data/site.ts single source of truth.",
+  "No horizontal overflow at 360/390/768/1024/1440 (scrollWidth - innerWidth = 0 at all five); only Syne is used in the section.",
+  "Mobile (360/390): the three cards stack full-width in a clear order and are easy to find and tap; BETA badge is visible there.",
+  "Staggered desktop composition (middle card raised) is a good starting idea for a non-grid layout; GROW's honest tagline 'We are learning in public. Join the beta list.' and the 'ILLUSTRATIVE' label on the bar chart are the right honesty instinct."
+ ],
+ "findings": [
+  {
+   "n": 45,
+   "severity": "blocker",
+   "kind": "broken-control",
+   "title": "BUILD gateway preview is an empty dashed box (layout blocks never render)",
+   "where": "components/Studios.tsx:24-25; selector #studios a[href=\"/build\"] svg rect; all widths",
+   "evidence": "The block array uses keys {x,y,w,h} and is spread with {...b}, so the rects get attributes 'x,y,w,h,rx,fill,opacity' - no width/height. Measured in DOM at 768/800/900/1024/1440: all four animated rects have getBBox() width 0, height 0. Visible in docs/audit/1440-home-02-studios.png, 390-home-02-studios.png and every frame of docs/audit/tmp/studios-phase-0..3.png: BUILD shows only a dashed outline on a blank panel while CREATE and GROW have content. The flagship website-development gateway looks unfinished.",
+   "fix": "Map to real SVG attributes: <rect x={b.x} y={b.y} width={b.w} height={b.h} .../>. Better: replace with a proper wireframe-to-finished mini browser preview (see the visual-weak finding)."
+  },
+  {
+   "n": 46,
+   "severity": "blocker",
+   "kind": "off-spec",
+   "title": "GROW Beta badge is clipped out of sight at tablet widths (768 to ~900px)",
+   "where": "components/Studios.tsx:53 (overflow-hidden), :57-62 (flex row with h3 + badge); http://localhost:3456/#studios at 768, 800, 900",
+   "evidence": "At 768 the badge's left edge is x=745 while the card's right edge is x=736, so it is 100% outside the overflow-hidden card: docs/audit/tmp/studios-768-cards.png and studios-768-full.png show the GROW card with no Beta indicator at all. At 800: badge 766-822 vs card right 768 (invisible). At 900: badge 833-889 vs card right 868 (cut in half). At 1024 it still overhangs the padding (badge right 972 vs inner right 967). Spec: 'GROW labelled Beta / Coming Soon everywhere' and 768 is a required check width.",
+   "fix": "Do not put the badge in a non-wrapping flex row beside the h3. Place the BETA pill on the verb line (GROW \u00b7 BETA) or absolutely in the preview corner, add min-w-0 to the text column and shrink-0 to the badge, and consider 'Beta - coming soon' wording. Re-test at 768/820/900/1024."
+  },
+  {
+   "n": 47,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "Studio names overflow and are cut off at 768 ('Website Developm')",
+   "where": "components/Studios.tsx:50 (md:grid-cols-3), :60 (h3 text-2xl); 768-~1000px",
+   "evidence": "At 768 cards are only 221px wide with 24px Syne Extrabold: BUILD h3 text right edge = 559px vs card right edge 495px (64px clipped; screenshot docs/audit/tmp/studios-768-cards.png reads 'Website Developm'). 'Digital Marketing' ends at 733 vs card inner edge 711 (touches the card border). Still overflowing at 900 (603 vs inner 558) and marginally at 1024 (644 vs 640).",
+   "fix": "Recompose for tablet: keep a single column or a 1-large + 2-stacked layout until lg (>=1024), or use fluid type (clamp ~1.1rem-1.5rem) plus min-w-0 / overflow-wrap on the h3. Three 221px columns is too narrow for Syne's wide extrabold."
+  },
+  {
+   "n": 48,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Gateways are generic cards with small looping SVG pictograms, not premium interactive visual gateways with service previews",
+   "where": "components/Studios.tsx:4-42 (Art), :53-66 (card); docs/audit/1440-home-02-studios.png",
+   "evidence": "All three cards share one identical template: rounded-[2rem] #202342 tile, 8:5 dark inset, label, title, one sentence, 'Enter studio \u2192', coloured blur glow. The 'previews' are abstract icons: four flat rectangles + a sine line (CREATE), a dashed empty box (BUILD), six purple bars (GROW). None shows an actual service: no reel frame with captions, no browser/site mock, no ad creative. No service names (V1-V5, T1-T5, M1-M3) appear although data/site.ts has them. This is exactly the 'generic SaaS cards' / 'repetitive glows' look the spec forbids, and reads as a template next to the hero.",
+   "fix": "Keep the three-link structure and staggered layout but make each card a tall visual gateway: CREATE = 9:16 reel frame with CSS-animated caption words, cut markers and a timeline strip; BUILD = mini browser chrome whose wireframe blocks resolve into a styled page; GROW = an illustrative social-ad card mock (no charts). Add 3-5 service chips from data/site.ts per card and make the visual fill most of the card (preview >= 60% of card height)."
+  },
+  {
+   "n": 49,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "No distinct motion identity per division; interaction is identical for all three",
+   "where": "components/Studios.tsx:14-15, 26, 35-36, 53, 55, 65",
+   "evidence": "Hover/focus behaviour is the same on every card: translate-y -8px (measured dy=-8), border to white/40, glow opacity 0.3->0.6, arrow shifts 6px (docs/audit/tmp/studios-hover-create.png). The only per-division difference is a tiny ambient SMIL loop (a line sliding, opacity pulsing - invisible because of the BUILD bug - and bars resizing). Nothing reacts to pointer, tap or scroll; there is no entrance/reveal motion at all for the heading or cards. Spec: 'distinct motion identity each', 'premium interactive gateways', 'varied professional motion ... not the same fade-up everywhere'.",
+   "fix": "Give each gateway its own language: CREATE = cut/scrub (playhead scrubs with pointer x or auto-plays in view, frames snap-cut, captions pop); BUILD = assemble (grid blocks draw in and snap to layout, wireframe->colour on hover/in-view); GROW = soft pulse/ripple signal with a calm 'beta' shimmer. Trigger on in-view (IntersectionObserver) so mobile gets it without hover, and add a mask/kinetic reveal for the headline."
+  },
+  {
+   "n": 50,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "Three dark sections in a row: hero, studios and Live Transformation all sit on the same ink",
+   "where": "components/Studios.tsx:46 (bg-[#0c1024]); app/page.tsx order Hero > Studios > Transformation",
+   "evidence": "Computed backgrounds: previous section (hero) rgb(12,16,36); #studios rgb(12,16,36); next section linear-gradient(rgb(12,16,36) -> rgb(32,35,66)). Seam screenshots docs/audit/tmp/studios-seam-top-1440.png and studios-seam-bottom-1440.png show no visible boundary: same navy, same cyan letter-spaced eyebrow, same white+prism headline pattern ('Three worlds. Endless possibilities.' vs 'See the difference.'). Spec: 'Dark cinematic and light editorial sections must ALTERNATE; no two neighbouring sections may look alike.'",
+   "fix": "Make Studios the first light editorial section: paper #F6F7FC background, dark text #13172B, cards as rich coloured/visual panels (or white panels with full-bleed accent previews), a different heading composition (e.g. headline left, short intro right, or oversized CREATE/BUILD/GROW wordmarks). Drop the coloured blur glows here."
+  },
+  {
+   "n": 51,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "SVG (SMIL) animations ignore prefers-reduced-motion",
+   "where": "components/Studios.tsx:14-15, 26, 35-36; app/globals.css:34-36",
+   "evidence": "With prefers-reduced-motion: reduce emulated, values still change over 1.2s: playhead x1 173.0 -> 277.0, GROW bar height 33.2 -> 37.2; 18 <animate> elements present. The global reduced-motion rule only shortens CSS animation/transition durations, which does not affect SMIL <animate>. These loops run forever (repeatCount=indefinite) with no pause control and also keep running off-screen.",
+   "fix": "Replace SMIL with CSS keyframe animations on classes (covered by the existing reduced-motion rule) or render a static finished frame when reduced motion is requested; pause when the section is off-screen."
+  },
+  {
+   "n": 52,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "GROW preview is a rising bar chart - implies performance growth for a beta service and is the 'dashboard look' the spec forbids",
+   "where": "components/Studios.tsx:33-39; #studios a[href=\"/grow\"] svg; all widths",
+   "evidence": "Six bars with heights [40,70,55,100,85,130] trending upward and animating taller, i.e. a growth/results chart, for a division the spec says must show no performance numbers and avoid dashboard visuals. The only disclaimer is SVG text 'ILLUSTRATIVE' (not the spec's wording 'Illustrative demo'), rendered at about 6px at 768 and aria-hidden. Seen in docs/audit/1440-home-02-studios.png and docs/audit/tmp/studiosverify-768-cards.png.",
+   "fix": "Replace the chart with a non-metric visual (e.g. an example social ad card / content calendar mock) and caption it in HTML text 'Illustrative demo' at 12px or more."
+  },
+  {
+   "n": 53,
+   "severity": "minor",
+   "kind": "performance",
+   "title": "Leftover dead code: style={{ animation: 'marquee 0s' }} on the CREATE playhead group",
+   "where": "components/Studios.tsx:12",
+   "evidence": "<g style={{ animation: \"marquee 0s\" }}> applies a 0-second keyframe animation that does nothing (marquee is defined in app/globals.css:31 for another purpose).",
+   "fix": "Remove the wrapper style; drive the playhead with a dedicated CSS keyframe."
+  },
+  {
+   "n": 54,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Cards are unbalanced on desktop: three different heights and misaligned content rows",
+   "where": "components/Studios.tsx:50-52 (md:items-end + md:-translate-y-8); 1440 and 1024",
+   "evidence": "At 1440 card heights are 462 / 494 / 470px and tops are at 473 / 409 / 465px, so GROW sits 8px higher than CREATE for no design reason (title wraps to two lines, tagline to one). At 1024: 395 / 427 / 427. In docs/audit/1440-home-02-studios.png the verb labels, titles and 'Enter studio' rows of the outer cards do not line up. Spec asks for 'balanced on desktop'.",
+   "fix": "Give cards equal height (grid items-stretch, flex-col with mt-auto on the CTA row) and apply the stagger as a deliberate, consistent offset; reserve two lines for the title."
+  },
+  {
+   "n": 55,
+   "severity": "minor",
+   "kind": "mobile-break",
+   "title": "Mobile is the desktop cards stacked, not recomposed; section is two full screens of near-identical tiles",
+   "where": "components/Studios.tsx:50; 390 and 360",
+   "evidence": "Section height is 1748px at 390 (viewport 844) and 1755px at 360; each card is 423-455px tall with the same layout as desktop (docs/audit/390-home-02-studios.png). All three are findable and tappable, but the third (GROW) starts ~1220px into the section and there is no overview of the three studios at a glance. At 360 the headline wraps to 4 lines (h2 height 160px vs 120px at 390). Spec: 'Mobile is recomposed, not shrunk.'",
+   "fix": "Recompose on phones: e.g. compact horizontal gateway rows (visual left, text right, ~180-220px tall) or a snap carousel with visible peeking and dots plus a three-chip CREATE/BUILD/GROW index under the headline so all three are discoverable in the first screen."
+  },
+  {
+   "n": 56,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "'ILLUSTRATIVE' label and BETA pill are too small to read",
+   "where": "components/Studios.tsx:39 (SVG text fontSize 11 in a 320 viewBox), :62 (text-[10px])",
+   "evidence": "The SVG label scales with the card: rendered text height is 7px at 768, 10px at 1024, 12-13px at 360/390, 15px at 1440 (it is also aria-hidden, so it is purely visual). The BETA pill is 10px type in a 56x25px pill at every width. The honesty signals are the least legible text in the section.",
+   "fix": "Render the 'Illustrative' caption and Beta label as HTML text at >= 12px (not scaled SVG text), with a filled lilac pill for Beta so it reads as a status, not decoration."
+  },
+  {
+   "n": 57,
+   "severity": "minor",
+   "kind": "missing",
+   "title": "Gateways carry no service content; 'Enter studio' label repeated three times",
+   "where": "components/Studios.tsx:59-65; data/site.ts:14-60",
+   "evidence": "Card text is only verb, name, one tagline and the identical visible link text 'Enter studio \u2192' x3 (innerText measured). The spec asks for 'beautiful service previews'; the five CREATE, five BUILD and three GROW services already exist in data/site.ts but none is surfaced here.",
+   "fix": "Show service chips or a short list per gateway from s.services (e.g. 'Short-form \u00b7 Long-form & podcast \u00b7 Ads \u00b7 Repurposing \u00b7 Motion graphics') and use distinct CTAs: 'Enter CREATE', 'Enter BUILD', 'Preview GROW (Beta)'."
+  },
+  {
+   "n": 58,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Link accessible name omits its visible text ('Enter studio', tagline) - Label in Name failure",
+   "where": "components/Studios.tsx:54 (aria-label) vs :64-65",
+   "evidence": "Each card link has aria-label 'CREATE: Video Editing' / 'BUILD: Website Development' / 'GROW: Digital Marketing (Beta)', which replaces all inner content, so the visible 'Enter studio' and the tagline (including 'Join the beta list') are never announced and voice-control users saying 'click Enter studio' get no match (WCAG 2.5.3). Measured via getAttribute('aria-label') and innerText on the live page.",
+   "fix": "Drop the aria-label and let the content name the link (keep the BETA text visible in the DOM), or use aria-labelledby/aria-describedby pointing at the h3 and tagline, with CTA text that is part of the name."
+  },
+  {
+   "n": 59,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Card stagger and height differences change arbitrarily between breakpoints (tablet layout is untuned)",
+   "where": "components/Studios.tsx:50-52; 768 and 900",
+   "evidence": "At 768 heights are 398/398/374 with tops 1520/1488/1544 (GROW is the shortest and sits lowest, CREATE title wraps to two lines); at 900 heights 426/402/402 with tops 1520/1512/1544, so the centre card is raised only 8px over CREATE but 32px over GROW. The 'raised centre' composition only holds at 1440. See docs/audit/tmp/studiosverify-768-cards.png.",
+   "fix": "Equal-height cards with a fixed two-line title slot and a deliberate offset, or hold the 3-column layout until lg."
+  }
+ ]
+}

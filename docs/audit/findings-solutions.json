@@ -1,0 +1,151 @@
+{
+ "scope": "solutions",
+ "keep": [
+  "Headline 'Made for what you're building.' with the prism gradient on 'you're building.' matches the spec and reads strongly at 1440 and 390.",
+  "The four customer types and their order match the spec; clicking or tapping really changes headline, blurb, chips, SVG and CTA href (verified for all four tabs at 1440, 1024, 768, 390, 360).",
+  "Copy in data/site.ts solutions (lines 96-99) is short, human and specific per audience, e.g. 'Be easy to find. Easy to book.' and 'Look ready before you are.'",
+  "Service chips are colour-coded by studio accent (CREATE aqua rgb(34,211,238), BUILD violet rgb(139,92,246), GROW lilac rgb(199,166,255)), and GROW is labelled 'Marketing (beta)' on Startup and Online store.",
+  "Data-driven structure: typed solutions array in data/site.ts as the single source, studio accents looked up from studios.",
+  "Mobile recomposition: 2x2 tab grid above the panel at 390/360, tabs 56-74px tall, CTAs 44-46px tall, no sideways scroll.",
+  "Both CTAs are real links: Explore Services goes to /studios (h1 'Three worlds. Endless possibilities.'), Start a Project goes to /contact?for=<id>.",
+  "Enter/Space on a focused tab selects it, and a 2px focus outline is present on tabs (measured outline: solid 2px, :focus-visible true).",
+  "No 3D is used here, which is correct per the spec (3D only in Hero, Live Transformation, Final CTA)."
+ ],
+ "findings": [
+  {
+   "n": 81,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Arrow keys do nothing on the customer-type tabs",
+   "where": "components/Solutions.tsx:28-32; section[aria-labelledby=\"sol-title\"] [role=tab]; http://localhost:3456 at 1440",
+   "evidence": "With focus on the first tab, pressing ArrowDown, ArrowRight, End and Home left selection and focus on 'Content creator' every time. There is no onKeyDown handler in the file. All four tabs have tabindex=null (no roving tabindex), so Tab walks through all four: measured order was Local business, Startup, Online store, Explore Services, Start a Project. The hero tablist on the same page does support arrows (scripts/shots.mjs tabKeyboard test), so behaviour is inconsistent.",
+   "fix": "Add an onKeyDown on the tablist: ArrowRight/ArrowDown next, ArrowLeft/ArrowUp previous, Home/End first/last, with wrap-around; move focus to the newly selected tab; set tabIndex={selected ? 0 : -1}. Reuse the hero tablist's pattern."
+  },
+  {
+   "n": 82,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "Start a Project passes ?for=<customer> but the contact form ignores it",
+   "where": "components/Solutions.tsx:44 and components/ContactForm.tsx:10; /contact?for=creator and /contact?for=store at 1440",
+   "evidence": "Clicking the CTA from Content creator lands on /contact?for=creator, from Online store on /contact?for=store. In both cases the service select value is 'other' ('Not sure yet') and the message textarea is empty. ContactForm only has options create/build/grow/other, so 'creator', 'local', 'startup', 'store' never match. The per-tab href is therefore cosmetic: the visitor's choice is lost.",
+   "fix": "Map the customer type in ContactForm: creator -> create, local/startup/store -> build (or add a 'What are you building?' field prefilled with the customer label), and show a visible line such as 'Starting a project for: Online store' so the selection carries through."
+  },
+  {
+   "n": 83,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "Fourth consecutive dark section; breaks the dark/light alternation rule",
+   "where": "components/Solutions.tsx:23 (bg-[#0c1024]); homepage section order",
+   "evidence": "Computed backgrounds in page order: hero rgb(12,16,36), studios rgb(12,16,36), live transformation gradient rgb(12,16,36)->rgb(32,35,66), solutions rgb(12,16,36), packages rgb(246,247,252), process/FAQ rgb(246,247,252), final CTA rgb(12,16,36). Solutions is the identical flat ink colour as Studios two sections up, and four dark sections run back to back before two light ones. Spec: dark cinematic and light editorial sections must alternate; no two neighbouring sections may look alike; avoid a uniformly dark site. Also the Transformation section ends at #202342 and Solutions starts at #0c1024, producing a hard seam.",
+   "fix": "Make this section the light editorial break: paper #F6F7FC background, dark text #13172B, with the selected-customer panel as the one dark or accent-tinted stage. Packages then needs to differ from it (the packages/process pair is already two light sections in a row), so coordinate: e.g. Solutions light, Packages light-tinted with a clearly different composition, or Solutions light and Packages on a surface-coloured band."
+  },
+  {
+   "n": 84,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "SVG scenes are crude placeholder icons, not business-specific visuals",
+   "where": "components/Solutions.tsx:8-17; screenshots docs/audit/tmp/solutions-1440-tab0.png to tab3.png and solutions-scene0-3.png",
+   "evidence": "Each scene is 5-10 flat primitives in a 300x200 viewBox: creator = one purple rectangle with a play triangle, two cyan bars and a progress line; local business = an empty browser outline with two grey bars, a pill and a single-stroke 'awning'; startup = a clip-art rocket; store = three identical purple squares with two bars each. No text, no content, no depth, nothing that says cafe/salon/booking, product, launch page or reel. They read as wireframe icons from a template, far below the hero and Live Transformation quality, and the rocket is a generic startup cliche unrelated to the studio's actual output.",
+   "fix": "Replace each scene with a richer CSS/SVG composition that depicts the deliverable for that customer: creator = one long timeline being cut into three vertical clips with caption bars; local business = a mini site with a services list, a date/time booking picker and a promo video tile; startup = a landing-page hero with headline bars, CTA and a launch video card; store = a product grid with image tiles, 'Request' style buttons, a cart badge and a product-video thumbnail. Use the division accents, layered cards and subtle motion; label as 'Concept demo' if they look like real UIs."
+  },
+  {
+   "n": 85,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "No transition or motion when switching customer type",
+   "where": "components/Solutions.tsx:34-46",
+   "evidence": "The panel content is swapped instantly: there is no animation class, no motion component and no CSS transition on the panel children (only 'transition' on the tab buttons). The section also has no scroll-in reveal. The spec's quality bar asks for varied professional motion (mask reveals, kinetic type) and for selection to 'meaningfully change' the visuals; here only a small icon and text snap.",
+   "fix": "Animate the swap with the already-installed motion library: mask or slide reveal for the scene, staggered headline/chips, and tint the panel border/glow with the dominant studio accent of the selected customer so the whole stage changes, not just the icon. Respect reduced motion with a simple crossfade."
+  },
+  {
+   "n": 86,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Tablet-landscape (1024) layout is badly proportioned: giant tabs, tiny scene, four-line headline",
+   "where": "components/Solutions.tsx:27-37 (lg:grid-cols-[320px_1fr] + md:grid-cols-2); http://localhost:3456 at 1024; screenshot docs/audit/tmp/solverify-1024-tab2.png",
+   "evidence": "At 1024 the four tab buttons are 320x145px each (mostly empty boxes), the scene shrinks to 227x141px inside a 608x604 panel with roughly 390px of empty panel under it, and the h3 breaks into four lines ('Look / ready / before you / are.') because the text column is only about 260px wide. The chips stack one per row. The auditor measured the sizes but rated it minor and did not report the headline break; in the screenshot this is the weakest state of the section.",
+   "fix": "Keep the stacked layout (tabs in a 4-across or 2x2 row above the panel) until about 1200px, or narrow the tab column to about 220px with items-start and fixed tab height; let the scene span the panel height; cap the h3 with a smaller size or text-balance at this width."
+  },
+  {
+   "n": 87,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Tab/panel ARIA wiring is incomplete",
+   "where": "components/Solutions.tsx:30 and :34",
+   "evidence": "DOM check on all four tabs: id=null, aria-controls=null; tabpanel has id=null and aria-labelledby=null. The panel is not announced as belonging to the selected tab and content changes are not exposed to assistive tech.",
+   "fix": "Give each tab id=`sol-tab-${id}` and aria-controls=\"sol-panel\"; give the panel id=\"sol-panel\", aria-labelledby the active tab id and tabIndex={0}."
+  },
+  {
+   "n": 88,
+   "severity": "minor",
+   "kind": "broken-control",
+   "title": "Startup rocket flame animation is dead code and SMIL ignores reduced motion",
+   "where": "components/Solutions.tsx:15",
+   "evidence": "<animate attributeName=\"y2\"> is placed inside a <path d=\"M150 150v35\">; a path has no y2 attribute, so nothing animates (the flame is static in solutions-1440-tab2.png). Under prefers-reduced-motion: reduce the SVG timeline still runs (animationsPaused() false, currentTime 0.32 -> 0.82), because the global CSS rule in app/globals.css:34-36 only covers CSS animations, not SMIL.",
+   "fix": "Drop the SMIL element; animate with a CSS keyframe (transform/scaleY on the flame) so the existing reduced-motion rule applies, or switch the element to <line> and gate it behind a reduced-motion check."
+  },
+  {
+   "n": 89,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Panel is under-filled and jumps in height between tabs",
+   "where": "section[aria-labelledby=\"sol-title\"] [role=tabpanel]; 1440, 1024, 360",
+   "evidence": "Panel heights per tab: 1440 = 368/404/368/404px; 1024 = 526/526/604/502px; 360 = 646/678/744/678px, so the layout below shifts on every selection (the tab column also stretches from 86px to about 95px per button at 1440, visible comparing solutions-1440-tab0.png and tab1.png). At 1440 the scene is only 355x237 inside an 800px panel, leaving an empty band below it; at 1024 the scene shrinks to 259x173 while the tab buttons balloon to 320x126 each.",
+   "fix": "Give the panel a fixed min-height per breakpoint (or reserve space for the longest headline and four chips), make the scene fill the panel height (remove aspect-[3/2] on md+ and use h-full), set the tab column to items-start with a fixed tab height, and switch to the stacked layout below about 1100px instead of the 320px side column."
+  },
+  {
+   "n": 90,
+   "severity": "minor",
+   "kind": "broken-control",
+   "title": "Service chips look like buttons but are not interactive",
+   "where": "components/Solutions.tsx:39-41",
+   "evidence": "The chips are <li> pills with a coloured 1px border and bold text (34px tall), visually identical in language to the outlined 'Explore Services' pill directly beneath them, but they have no link or handler. The spec says no decorative controls; a visitor will try to tap 'Booking website'.",
+   "fix": "Either link each chip to its studio page (/create, /build, /grow, ideally with an anchor to the service) or restyle them as a plain checklist (dot + text, no pill border) so they do not read as controls."
+  },
+  {
+   "n": 91,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Explore Services is the same generic link for every customer type",
+   "where": "components/Solutions.tsx:43",
+   "evidence": "href is /studios for all four tabs (verified: 'Explore Services->/studios' in every state), which lands on the three-studio overview rather than the services recommended for the selected customer.",
+   "fix": "Point it at the primary studio for the selection (creator -> /create, local/startup/store -> /build) or keep /studios but add a hash/parameter that highlights the recommended services."
+  },
+  {
+   "n": 92,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "A few lines lean towards outcome promises",
+   "where": "data/site.ts:96 and :99",
+   "evidence": "'Turn one long recording into a week of content' implies a deliverable volume that is not defined in any package, and 'Products that sell themselves.' is a results-style claim. The spec forbids invented guarantees; these are marketing phrasing rather than hard claims, so owner sign-off is enough.",
+   "fix": "Have the owner approve the wording or soften it, e.g. 'Turn one long recording into multiple platform-ready clips' and 'A store built to show your products well.'"
+  },
+  {
+   "n": 93,
+   "severity": "minor",
+   "kind": "off-spec",
+   "title": "Recommended-service chips do not match the service catalogue",
+   "where": "data/site.ts:96-99 versus data/site.ts:23-56",
+   "evidence": "Spec says data/site.ts is the single source of truth for services, but the chip titles are free-typed strings that match no catalogue title: 'Video editing', 'Content repurposing', 'Booking website', 'Landing page', 'Promotional content', 'Product video editing', 'Marketing (beta)'. 'Landing page' is only a bullet under T1 Business websites, so the Startup tab lists the same service twice ('Business website' + 'Landing page'). 'Booking website' is T3 'Booking systems & web apps'. A visitor who follows Explore Services will not find these names on /studios, /create or /build.",
+   "fix": "Reference catalogue codes in the solutions data (e.g. creator: V1, V4, V5; local: T1, T3, V3; startup: T1, V3, M-beta; store: T2, V3, M-beta) and render the catalogue title (or an approved short label stored next to the code), then link each chip to that service."
+  },
+  {
+   "n": 94,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Section headline orphans one word and splits the gradient phrase at desktop",
+   "where": "components/Solutions.tsx:26; 1440 screenshot docs/audit/tmp/solverify-1440-tab1.png",
+   "evidence": "At 1440 the h2 renders 'Made for what you're' on line one and the single word 'building.' on line two, cutting the prism-gradient phrase 'you're building.' in half. At 1024 the same headline breaks cleanly as 'Made for what / you're building.' (solverify-1024-tab2.png), which is clearly the intended composition.",
+   "fix": "Force the break before the gradient span on md+ (block span or <br className='hidden md:block'/>) or add text-balance so the gradient phrase stays on one line."
+  },
+  {
+   "n": 95,
+   "severity": "minor",
+   "kind": "mobile-break",
+   "title": "Phone tab grid has uneven rows because one label wraps",
+   "where": "components/Solutions.tsx:28-31; 390 and 360; screenshot docs/audit/tmp/solverify-390-tab2.png",
+   "evidence": "At 390 the tabs are 171px wide: 'Content creator' wraps to two lines, making row one 74px tall and row two 56px tall (measured 171x74, 171x74, 171x56, 171x56; same at 360 with 156px width). The 2x2 grid therefore looks unbalanced. Additionally at 360 the panel height changes 646/678/744/678 per tab, so the page below jumps on every tap.",
+   "fix": "Use text-[15px] or tighter padding (px-4) on phones so every label fits one line, or set a uniform min-h on all four tabs; reserve panel height for the longest state."
+  }
+ ]
+}

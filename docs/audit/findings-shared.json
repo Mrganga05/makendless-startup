@@ -1,0 +1,181 @@
+{
+ "scope": "shared",
+ "keep": [
+  "Wordmark treatment (MAKEND + prism-gradient LESS, wide tracking) in nav and footer - distinctive and consistent; keep exactly.",
+  "Syne-only font loading via next/font with display swap (layout.tsx:6); document.fonts confirms only Syne 400-800 plus its fallback is loaded on shipped pages.",
+  "Skip link (layout.tsx:18): first Tab stop, clearly visible white pill with cyan ring (tmp/foundation-skiplink-1440.png), and activating it moves the tab sequence past the header into main.",
+  "Global :focus-visible rule (globals.css:26) - 2px #22d3ee outline with 3px offset applies to every link/button; clearly visible on dark surfaces (tmp/foundation-footer-focus.png).",
+  "Global prefers-reduced-motion block (globals.css:34-36); computed scroll-behavior switches to auto under reduced motion.",
+  "Hamburger button: 44x44, correct aria-expanded / aria-controls / aria-label toggling ('Open menu'/'Close menu'), animated icon; mobile menu rows are 61px tall and the CTA 52px - comfortable targets.",
+  "Mobile menu closes on link tap and on wordmark tap, and unmounts cleanly when resized to desktop.",
+  "All nav and footer links resolve: /, /studios, /about, /faq, /contact, /create, /build, /grow, /privacy, /terms all HTTP 200; footer contains exactly the spec list including 'GROW \u2014 Beta'; no invented contact details.",
+  "Footer structure: three labelled <nav> groups with headings, honest copyright line, CREATE \u2022 BUILD \u2022 GROW tagline.",
+  "Per-page titles via the '%s \u2014 MAKENDLESS' template; exactly one h1 and one main per page; html lang='en'; themeColor set.",
+  "No horizontal overflow at 360/390/768/820/1024/1440 (scrollWidth == viewport); desktop nav fits at 768 without wrapping (tmp/foundation-nav-768.png).",
+  "PageShell dark hero band + light/dark body pattern with eyebrow/h1/intro - a sound reusable base; 'Explore Studios' anchor lands with the heading 160px below the fixed nav (not hidden)."
+ ],
+ "findings": [
+  {
+   "n": 1,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "Colour tokens are declared but never used - 320 hard-coded hex literals across components",
+   "where": "app/globals.css:3-17 vs components/*.tsx and app/*/page.tsx (e.g. components/Nav.tsx:23,28,30,41,45; components/PageShell.tsx:5,7,9,12; components/FinalCta.tsx:11,13,15,16,19)",
+   "evidence": "grep of #RRGGBB in app/ + components/ *.tsx: 320 occurrences, 69 distinct values, in 19 files (HeroScreens 75, Transformation 67, Hero3D 30, Hero 29, Solutions 24, Packages 18...). Uses of token utilities (bg-ink, text-muted, text-dark, bg-paper etc.): 0. Uses of var(--color-*/--prism): 5. Most-repeated literals are exactly the tokens: #13172b x44, #22d3ee x34, #a4aac7 x27, #0c1024 x27, #c7a6ff x25, #6f45f6 x20. Near-duplicate off-palette greys have crept in (#7a8099, #5b607a, #59607f beside token #5a6082). The BUILD accent #8b5cf6 (x19) has no token at all; the prism gradient lives in :root not @theme; globals.css itself hard-codes #6f45f6 (line 23) and #22d3ee (lines 26, 52). data/site.ts:21,36,52 also hard-codes accents. Spec: 'Centralised tokens in app/globals.css'.",
+   "fix": "Add missing tokens to @theme (--color-create #22d3ee, --color-build #8b5cf6, --color-grow #c7a6ff, --color-focus, gradient as --background-image-prism or keep --prism), then mechanically replace arbitrary values with utilities: bg-[#0c1024]->bg-ink, text-[#a4aac7]->text-muted, text-[#13172b]->text-dark, bg-[#f6f7fc]->bg-paper, etc. Collapse the stray greys onto muted / muted-dark. For Three.js materials and inline styles export a typed palette object from one file (e.g. data/tokens.ts) mirroring the CSS tokens. Start with the shared files (Nav, PageShell, FinalCta) then the sections."
+  },
+  {
+   "n": 2,
+   "severity": "major",
+   "kind": "missing",
+   "title": "No custom 404 - default Next.js page, off-brand and a dead end",
+   "where": "app/not-found.tsx does not exist; http://localhost:3456/nope-404 @1440",
+   "evidence": "tmp/foundation-404-1440.png: pure black (#000) body instead of ink, default system-font '404 | This page could not be found.', no footer, zero links inside main (measured: links [], hasFooter false). Title is the generic home title. Breaks 'Syne only' and the portfolio-grade bar; the only way out is the nav.",
+   "fix": "Add app/not-found.tsx using PageShell (eyebrow '404', on-brand headline such as 'This frame got cut.', short line, two real CTAs: Back to home, Start a Project) with metadata title 'Page not found'. Keep it CSS-only (no 3D)."
+  },
+  {
+   "n": 3,
+   "severity": "major",
+   "kind": "missing",
+   "title": "No favicon, app icons, Open Graph / Twitter metadata, robots or sitemap; public/ is empty",
+   "where": "app/layout.tsx:8-11; public/ (empty); /favicon.ico, /icon.png, /robots.txt, /sitemap.xml, /manifest.webmanifest",
+   "evidence": "curl: all five return 404. Every page load logs a console error '404 http://localhost:3456/favicon.ico'. Rendered <head> on all 10 routes has no link[rel=icon], no og:* and no twitter:* tags, no canonical (measured per page: og false, tw false, canon false, icon false). No metadataBase. Shared links will show a blank preview and the tab shows the default globe.",
+   "fix": "Add app/icon.svg (an 'M' or the prism LESS mark on ink) plus app/apple-icon.png, app/opengraph-image.tsx (generated with next/og: wordmark + headline on ink with prism gradient), openGraph/twitter blocks in layout metadata, app/robots.ts and app/sitemap.ts. metadataBase needs the real production domain - owner input; until then leave it environment-driven (NEXT_PUBLIC_SITE_URL) rather than inventing a domain."
+  },
+  {
+   "n": 4,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Mobile menu ignores Escape and has no outside-tap close",
+   "where": "components/Nav.tsx:20-47; tested at 390x844 and 360x640",
+   "evidence": "foundation-test.mjs: after opening, pressing Escape -> '#mobile-menu' still present (true); tapping the page below the panel -> still present (true). There is no keydown handler anywhere in Nav.tsx. Only the X button, a link tap or the wordmark close it. Spec: full keyboard support.",
+   "fix": "In Nav add a useEffect while open: keydown Escape -> setOpen(false) and return focus to the toggle button (ref); add a transparent backdrop button/div below the panel that closes on click; also close on pathname change via usePathname."
+  },
+  {
+   "n": 5,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Open mobile menu does not lock scroll or contain focus - page scrolls and tabs behind it",
+   "where": "components/Nav.tsx:40-47; 390 and 360 widths",
+   "evidence": "With menu open, scrollTo(1500) succeeded (scrollY 1500, body overflow-y auto) and the panel floats over mid-page content with no dimming (tmp/foundation-menu-390-scrolled.png shows Studios cards scrolling under the open menu). Tab order from the toggle: Studios, About, FAQ, Contact, Start a Project, then straight into 'PAGE-BEHIND Start a Project', 'PAGE-BEHIND Explore Studios' (hero). main has no inert attribute; the panel has no dialog semantics. The hero canvas and timeline remain interactive directly under the panel (docs/audit/390-mobile-menu.png).",
+   "fix": "While open: set document.documentElement.style.overflow='hidden' (restore on close), set inert on <main> (or trap Tab within header), and render a full-height ink backdrop (fixed inset-0 top-16, bg-ink/80 backdrop-blur) so the menu reads as a deliberate full-screen overlay rather than a dropdown over a live 3D scene."
+  },
+  {
+   "n": 6,
+   "severity": "major",
+   "kind": "mobile-break",
+   "title": "Mobile menu is cut off in landscape - Start a Project unreachable",
+   "where": "components/Nav.tsx:23,41; viewport 667x375 (phone landscape, still below md)",
+   "evidence": "Measured: menu bottom = 417px, viewport height = 375px; header is position:fixed with overflow visible and the menu has overflow-y visible, so the overflow cannot be scrolled to. tmp/foundation-menu-landscape.png shows the white 'Start a Project' pill sliced by the bottom edge with only ~34px of its 52px visible.",
+   "fix": "Give the panel max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain (and tighten row padding under a max-height media query), or switch the panel to a fixed inset-x-0 top-16 bottom-0 scrollable overlay."
+  },
+  {
+   "n": 7,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Sticky nav turns muddy grey over light sections and link contrast drops below AA",
+   "where": "components/Nav.tsx:23 (bg-[#0c1024]/70 backdrop-blur-xl) and :28 (text-[#a4aac7]); home Packages / Process sections and every light PageShell body, 1440 and 390",
+   "evidence": "tmp/foundation-navlight-1440.png and tmp/foundation-menu-over-light-390.png: over #f6f7fc the bar becomes a washed slate grey (70% ink over paper computes to about rgb(82,85,101)) with dark smears of blurred headline text bleeding through, and a heavy grey slab against the clean editorial section. Nav links #a4aac7 on that grey = about 3.2:1 contrast (needs 4.5:1 for 14px text). On mobile the grey bar sits on top of the solid-ink menu panel, so the header and its own menu are two different colours.",
+   "fix": "Make the bar section-aware or simply more opaque: bg-ink/92 with backdrop-blur (keeps the glass feel on dark, stays ink over light), or use an IntersectionObserver / data-theme on sections to swap to a paper/85 bar with dark text over light sections. Raise link colour to #c9cde0 or white/80. When the mobile menu is open force the bar to solid ink."
+  },
+  {
+   "n": 8,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Desktop nav and footer link hit areas are far below 44px (desktop nav is what touch tablets get at 768+)",
+   "where": "components/Nav.tsx:28,30 (header links) and components/FinalCta.tsx:16 (footer links); measured at 768, 1024, 1440, 390, 360",
+   "evidence": "Measured rects: header links Studios 46x20, About 37x20, FAQ 26x20, Contact 51x20; header CTA 150x36; wordmark link 246x28. Footer links are 19px tall at every width including 390/360 (CREATE 58x19, FAQ 30x19, Terms 43x19) on a 36px pitch (space-y-3). Spec: touch targets >= 44px. A 768px iPad portrait gets the 20px-tall desktop links.",
+   "fix": "Header: make links inline-flex h-11 items-center px-3 (reduce gap-8 to gap-2 to compensate) and CTA h-11. Footer: links as inline-flex min-h-11 items-center with space-y-0 (or py-3 -my-1), so each row is a 44px target without changing the visual rhythm much."
+  },
+  {
+   "n": 9,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Focus ring colour is nearly invisible on light sections",
+   "where": "app/globals.css:26 and :52 (outline: 2px solid #22d3ee) applied site-wide including bg-[#f6f7fc] sections",
+   "evidence": "The single global ring colour #22d3ee against paper #f6f7fc computes to roughly 1.7:1 contrast (WCAG non-text minimum is 3:1); it is strong only on ink (see tmp/foundation-footer-focus.png). Light sections are Packages, Process+FAQ and the body of most internal pages including the contact form.",
+   "fix": "Tokenise the ring: --color-focus: #22d3ee by default, and inside light sections (a .theme-light / [data-theme=light] wrapper applied by PageShell light and the light home sections) set it to violet #6f45f6 (about 5:1 on paper). Alternatively use a two-tone ring: outline 2px #22d3ee plus box-shadow 0 0 0 5px #0c1024."
+  },
+  {
+   "n": 10,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "TODO-FOR-OWNER.md does not exist although the spec requires missing owner inputs to be logged there",
+   "where": "project root /Users/raghusai/Desktop/CLAUDE 2.0/MAKENDLESSNWEBSITE (find . -name 'TODO*' outside node_modules returns nothing; docs/ holds only SPEC-WORKING.md, audit, screenshots)",
+   "evidence": "Spec 'Honest content': 'Missing items go to TODO-FOR-OWNER.md'. The foundation already has several open owner items with nowhere recorded: Privacy and Terms are placeholders (app/privacy/page.tsx:6-7, app/terms/page.tsx), no production domain for metadataBase / sitemap, no favicon or brand mark asset, no contact details, no form delivery service.",
+   "fix": "Create TODO-FOR-OWNER.md at the root listing: approved Privacy and Terms text, production domain, logo/favicon artwork, contact details, form delivery service, OG image sign-off. Do not invent any of these values."
+  },
+  {
+   "n": 11,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "Privacy and Terms are publicly linked, indexable pages that show an internal working note",
+   "where": "app/privacy/page.tsx:6-7, app/terms/page.tsx:6-7; linked from the footer on every page (components/FinalCta.tsx:8)",
+   "evidence": "Visible intro: 'Draft placeholder. Requires owner and legal review before launch.' and body 'MAKENDLESS has not yet approved formal Privacy policy text...'. Honest (nothing invented, keep that), but it is a build note addressed to the owner shown to visitors, and there is no robots/noindex anywhere (grep for robots|noindex in app/ returns nothing; /robots.txt is 404), so both placeholders would be indexed. The light body under it is a single sentence on a large empty paper panel.",
+   "fix": "Keep the honesty, but reword for visitors ('Our privacy policy is being finalised. For questions, use the Start a Project form.'), add metadata robots: { index: false } on both pages until approved text exists, and record the dependency in TODO-FOR-OWNER.md. Do not write policy text."
+  },
+  {
+   "n": 12,
+   "severity": "minor",
+   "kind": "missing",
+   "title": "Every page shares the same meta description",
+   "where": "app/*/page.tsx metadata exports (e.g. app/about/page.tsx:3, app/create/page.tsx:3)",
+   "evidence": "Each page exports only { title }; measured description on all 10 routes is the identical home string 'We make ideas impossible to ignore. Premium video editing...'. /grow title is just 'GROW \u2014 MAKENDLESS' with no Beta marker.",
+   "fix": "Add a one-sentence description per page drawn from data/site.ts (no new claims), and title GROW as 'GROW (Beta)'."
+  },
+  {
+   "n": 13,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "No current-page indication in the navigation",
+   "where": "components/Nav.tsx:27-29 and :42-44",
+   "evidence": "On /about every header link has aria-current null and identical colour rgb(164,170,199); same in the mobile menu. Users get no 'you are here' cue.",
+   "fix": "Use usePathname(); set aria-current='page' and an active style (white text plus a 2px prism underline) on the matching link in both desktop and mobile lists."
+  },
+  {
+   "n": 14,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Footer is nested inside <main> and reads as a plain link sitemap",
+   "where": "components/PageShell.tsx:13, components/FinalCta.tsx:4-22 rendered within app/layout.tsx:20 <main id=\"main\">; docs/audit/1440-home-08-footer.png, 390-home-08-footer.png",
+   "evidence": "DOM check: document.querySelector('main footer') is truthy on every page, so the footer is not exposed as the page contentinfo landmark and the skip link target contains it (on /about the first Tab after skipping lands on the footer wordmark). Visually it is a flat ink panel with three default-weight link columns and no closing gesture - competent but template-level next to the hero; a large empty area sits under the wordmark at 1440.",
+   "fix": "Render <Footer/> once in app/layout.tsx after </main> and remove it from PageShell and FinalCta. Polish without restarting: oversized outlined/prism MAKENDLESS wordmark as a closing band, GROW link with a small Beta pill instead of the dash text, a thin prism hairline as the top border, and hover underline motion per division colour."
+  },
+  {
+   "n": 15,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Mobile menu appears with no transition and duplicates the Contact destination",
+   "where": "components/Nav.tsx:5-10, 40-46; docs/audit/390-mobile-menu.png",
+   "evidence": "The panel is conditionally mounted ({open && ...}) with no enter/exit motion, so it snaps in over the live hero; it is a plain list of four words. Both 'Contact' and 'Start a Project' point to /contact in the desktop bar and in the menu, while the three studios (the core offer) are not reachable from the mobile menu at all without going through /studios.",
+   "fix": "Animate the overlay (mask/clip-path reveal with staggered link rise, instant under reduced motion). Consider replacing the redundant 'Contact' text link with nothing, or in the mobile overlay add a compact CREATE / BUILD / GROW (Beta) row in division colours under 'Studios'. Keep primary nav simple per spec."
+  },
+  {
+   "n": 16,
+   "severity": "minor",
+   "kind": "broken-control",
+   "title": "Mobile menu stays open across browser Back / history navigation",
+   "where": "components/Nav.tsx:21 (open state lives in the persistent layout, only reset by onClick handlers)",
+   "evidence": "At 390x844: navigate / -> /about via menu, reopen menu, history back -> URL is http://localhost:3456/ and #mobile-menu is still mounted (afterBack: true in docs/audit/tmp/foundation-verify2.mjs). The user lands on a different page with the menu covering it.",
+   "fix": "useEffect on usePathname() -> setOpen(false); same effect can host the Escape handler and scroll lock."
+  },
+  {
+   "n": 17,
+   "severity": "minor",
+   "kind": "mobile-break",
+   "title": "Header wordmark touches the menu button at 320px (no shrink, no gap)",
+   "where": "components/Nav.tsx:14,25 (text-lg + tracking-[0.18em], fixed 246px wide) at 320px viewport",
+   "evidence": "Measured at 320x640: wordmark link right edge = 266.5px, toggle button left edge = 266.5px (gap 0); at 360 the gap is 29.5px. 246px wordmark + 44px button + 40px padding = 330px > 320px. Horizontal overflow is masked only by body overflow-x:hidden. 320 is below the spec's minimum check width (360), hence minor. Screenshot: docs/audit/tmp/foundation-v-hdr-320.png.",
+   "fix": "Scale the wordmark on very small screens (text-base and tracking-[0.12em] below 360px, or clamp font-size) and add gap-3 + min-w-0 to the header row."
+  },
+  {
+   "n": 18,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Final CTA beam animation ignores prefers-reduced-motion",
+   "where": "components/FinalCta.tsx:30 (SVG <animate repeatCount=\"indefinite\">) vs app/globals.css:34-36",
+   "evidence": "The global reduced-motion rule only shortens CSS animation/transition durations; SMIL <animate> elements are not governed by CSS animation-duration, so the three pulsing beam lines keep looping indefinitely for reduced-motion users. Observed in code; the reduced-motion block has no rule targeting SVG animate and the component has no matchMedia guard.",
+   "fix": "Replace the SMIL animate with the existing CSS 'beam' keyframe (globals.css:29) applied via style/class on each line with animation-delay, so the global reduced-motion rule covers it."
+  }
+ ]
+}

@@ -1,0 +1,169 @@
+{
+ "scope": "packages",
+ "keep": [
+  "Headline 'Find your starting point.' with the violet accent and the eyebrow: exact spec wording, strong Syne display type at 1440 and 390.",
+  "Honest intro copy (Packages.tsx:14): 'Every project is quoted from its real scope, effort and timeline... Prices are confirmed in a written proposal.' No invented prices, revision counts, delivery times or guarantees anywhere in data/site.ts:68-85.",
+  "'Request Quote' as the next action on every CREATE/BUILD card and 'Join the beta list' on GROW; all 10 links resolve to /contact?service=<studio>-<package> and pre-select the correct studio option (measured: create x4, build x5, grow x1).",
+  "GROW honesty: BETA chip on the tab plus the notice 'Digital marketing is in beta... No campaigns are offered yet.' and the contact option reads 'GROW \u2014 Digital marketing (beta interest)'.",
+  "Light paper background gives the required dark/light alternation and a brighter, clean feel.",
+  "Touch targets: tabs are 44px high, card links are 44px+ high at every width tested; visible focus ring on tabs (outline 2px solid, seen in packages-1440-focus.png).",
+  "No horizontal overflow at 360, 390, 768, 1024, 1440 (scrollWidth - innerWidth = 0 for every tab state); no page errors; Syne is the only computed font.",
+  "Package data lives in typed data/site.ts (Package interface) and maps cleanly to the service catalogue (Starter/Creator/Professional/Custom; Starter/Business/Commerce/Custom/Maintenance).",
+  "Mobile card text is readable at 390 (14px body, 20px titles, single column, no clipping on CREATE tab)."
+ ],
+ "findings": [
+  {
+   "n": 96,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Looks like a generic SaaS pricing table",
+   "where": "components/Packages.tsx:22-35; docs/audit/1440-home-05-packages.png; docs/audit/tmp/packages-1440-tab1.png",
+   "evidence": "Four or five identical 243x310-330px white rounded cards in a row, each with title, grey subtitle, three dot bullets and a purple text link. No imagery, no division colour (CREATE and BUILD cards are pixel-identical in styling; bullets are aqua on both), no hierarchy between packages, no editorial composition. The spec explicitly says 'not a generic SaaS pricing table' and 'avoid generic SaaS cards'.",
+   "fix": "Keep the data and tabs but recompose the panel as an editorial layout: e.g. a large numbered list/accordion or a split view with one featured package detail (who it is for, deliverables, scope, add-ons, CTA) and a compact selector for the others; tint each category with its division accent (CREATE aqua, BUILD violet, GROW lilac) and add a small CSS/SVG motif per package (reel frame, browser wireframe) instead of bare bullets."
+  },
+  {
+   "n": 97,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "Scope info / exclusions missing from every package",
+   "where": "data/site.ts:61-66 (Package interface) and components/Packages.tsx:25-30",
+   "evidence": "The Package interface has only name, for, deliverables, addons. The spec for section 5 lists 'Package name, suitable customer, typical deliverables, scope info, optional additions, clear next action'. No card renders any scope line (what is included/not included, what the client supplies, that revisions and timeline are set in the proposal).",
+   "fix": "Add a `scope` field (and optionally `notIncluded`) to Package and render it as its own labelled row, using only non-invented statements, e.g. 'Scope: confirmed in a written proposal; revisions and timeline agreed before work starts' plus owner-approved exclusions. Put any exclusions the owner must decide into TODO-FOR-OWNER.md."
+  },
+  {
+   "n": 98,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "Chosen package is dropped on the contact page",
+   "where": "components/ContactForm.tsx:11 (`.split(\"-\")[0]`); tested via docs/audit/tmp/packages-test.mjs",
+   "evidence": "All 10 links carry the package in the URL (/contact?service=build-commerce etc.) but the form keeps only the studio: for every link the select shows just 'CREATE \u2014 Video editing' / 'BUILD \u2014 Website development' / 'GROW \u2014 ...', the page text never mentions the package name (pageMentionsPackage=false for all 10) and the message textarea is empty. Clicking 'Request Quote' on Commerce and on Maintenance lands on an identical form (packages-contact-1-2.png).",
+   "fix": "Parse the full param in ContactForm, show a visible 'Requesting a quote for: BUILD \u2014 Commerce' chip (removable) and include it as a hidden/visible field in the submitted payload and mailto body; validate the slug against data/site.ts packages."
+  },
+  {
+   "n": 99,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Tablist has no arrow-key support and incomplete ARIA wiring",
+   "where": "components/Packages.tsx:15-22",
+   "evidence": "Focusing the selected tab and pressing ArrowRight leaves selection on 'Video Editing' (kbArrow result). Tabs have no id, aria-controls or roving tabindex (all null); the panel is a <ul role=\"tabpanel\"> with no aria-labelledby, and role=tabpanel on the UL removes list semantics so its <li> children are orphaned list items. The hero tablist does support arrow keys (scripts/shots.mjs tests it), so behaviour is inconsistent within the site.",
+   "fix": "Add Left/Right/Home/End handling with roving tabindex, give each tab an id and aria-controls, wrap the list in a <div role=\"tabpanel\" id aria-labelledby tabIndex={0}> and keep the <ul> inside it."
+  },
+  {
+   "n": 100,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "'Maintenance' title overflows its card at 1024 and is jammed at 1440",
+   "where": "components/Packages.tsx:25 (h3 text-xl) with lg:grid-cols-4 / xl:grid-cols-5; docs/audit/tmp/packages-1024-tab1.png and packages-1440-tab1.png",
+   "evidence": "At 1024 the card is x=32, w=228 (right edge 260px) but the word 'Maintenance' runs to about x=270, past the card border. At 1440 (card 243px wide) the word ends about 5px from the card edge, inside the 24px padding. 'Professional' on the CREATE tab is likewise almost edge to edge.",
+   "fix": "Stop forcing five narrow columns: use at most 3-4 columns with wider cards (or the editorial list layout), or reduce title size / use clamp() and overflow-wrap so wide Syne ExtraBold words fit inside the padding."
+  },
+  {
+   "n": 101,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "GROW tab is one small orphaned card with weak copy",
+   "where": "data/site.ts:83-85; components/Packages.tsx:22,37; docs/audit/tmp/packages-1440-tab2.png",
+   "evidence": "At 1440 a single 243px card sits at the left of a 1280px panel with roughly 1000px of empty space beside it; the title wraps to two lines and the CTA arrow drops alone onto a second line (link height 64px). The deliverable 'Informative beta descriptions' is not a deliverable and reads like placeholder text. The beta notice is a separate strip below rather than part of the composition.",
+   "fix": "Give GROW its own full-width beta layout: a wide lilac-tinted 'Coming soon' panel that lists the three planned areas (M1-M3) as 'planned, not yet offered', merges the beta notice into it, and has one clear 'Join the beta list' button. Replace 'Informative beta descriptions' with honest wording such as 'Updates when beta opens'."
+  },
+  {
+   "n": 102,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "No motion at all; tab change is an instant swap",
+   "where": "components/Packages.tsx (whole file); measured with section.getAnimations({subtree:true})",
+   "evidence": "0 animations in the section; the only transition is the tab pill colour. Cards have no entrance, no hover/focus state (only the link underlines on hover) and the panel content pops in. Section height also jumps between tabs at 1440 (854px / 834px / 930px), shifting everything below. The spec asks for varied professional motion and per-division identity.",
+   "fix": "Add a restrained panel transition on tab change (staggered mask/slide reveal, reduced-motion safe), a card hover/focus state, and reserve a min-height for the panel so the page below does not jump."
+  },
+  {
+   "n": 103,
+   "severity": "major",
+   "kind": "mobile-break",
+   "title": "Mobile is the desktop grid stacked, producing a very long section",
+   "where": "components/Packages.tsx:15,22; docs/audit/390-home-05-packages.png; docs/audit/tmp/packages-390-tab*.png",
+   "evidence": "At 390 the section is 1816px tall on CREATE and 2106px on BUILD (about 2.5 phone screens of near-identical cards). The three tabs wrap into three separate left-aligned rows of different widths (143 / 214 / 227px) taking about 150px of height. The spec says mobile must be recomposed, not shrunk.",
+   "fix": "On phones use a full-width three-segment control (short labels: Video / Web / Marketing BETA) and collapse packages into an accordion or a horizontal snap carousel with a position indicator, showing one package in full at a time."
+  },
+  {
+   "n": 104,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "Selected category is lost on Back from the contact page",
+   "where": "components/Packages.tsx:7 (useState with no persistence); docs/audit/tmp/packagesverify-test2.mjs",
+   "evidence": "Selected Website Development, followed 'Request Quote' to /contact?service=build-starter, then history back: scroll position is restored to the packages section (scrollY 3825, section top 46px) but aria-selected is ['true','false','false'], so the visitor is returned to the Video Editing packages, not the BUILD ones they were comparing. Likewise the server HTML only contains the CREATE panel ('Maintenance' and 'Beta interest list' are absent from the fetched HTML), so no tab is addressable by URL.",
+   "fix": "Keep the selected category in the URL (hash or ?packages=build via router.replace) or sessionStorage, and initialise state from it so Back and deep links restore the tab."
+  },
+  {
+   "n": 105,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "'Join the beta list' implies a list that does not exist",
+   "where": "components/Packages.tsx:32; components/ContactForm.tsx:26-36",
+   "evidence": "The link goes to the general Start a Project form with GROW pre-selected; there is no beta-list mechanism and, with no NEXT_PUBLIC_CONTACT_EMAIL, submitting ends in 'Form checked. Delivery channel pending... this message was not sent anywhere.' The card promises 'Early-access updates'.",
+   "fix": "Rename to 'Register beta interest' until a real list/delivery channel is approved, and keep the 'Early-access updates' promise only if the owner commits to sending them."
+  },
+  {
+   "n": 106,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Empty fifth column and awkward orphan rows",
+   "where": "components/Packages.tsx:22 (`sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5`); docs/audit/1440-home-05-packages.png; docs/audit/tmp/packages-1024-tab1.png, packages-768-tab1.png",
+   "evidence": "At 1440 the CREATE tab's four cards end at x=1101 leaving a 259px empty column on the right, so the grid looks left-heavy under a full-width headline. On BUILD at 1024 and 768 the fifth card (Maintenance) sits alone on its own row with empty space beside it.",
+   "fix": "Set the column count from the number of packages (4 columns for CREATE), and treat Maintenance as a distinct full-width 'after launch' strip rather than a fifth equal card."
+  },
+  {
+   "n": 107,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "CTA arrow wraps onto its own line at 1024",
+   "where": "components/Packages.tsx:31-33; docs/audit/tmp/packages-1024-tab0.png / tab1.png",
+   "evidence": "At 1024 every 'Request Quote \u2192' link is 64px high (two lines) with the arrow alone on line two; the same happens for 'Join the beta list \u2192' at 1440 and 1024.",
+   "fix": "Make the arrow a non-wrapping inline element (whitespace-nowrap on the link or a no-break space before the arrow) and style the CTA as a proper button so it reads as the primary action."
+  },
+  {
+   "n": 108,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Small supporting text sizes",
+   "where": "components/Packages.tsx:18 (text-[10px] BETA chip), :30 (text-xs Optional line), :12 (text-xs eyebrow)",
+   "evidence": "Computed sizes: BETA chip 10px, 'Optional:' add-ons line 12px, eyebrow 12px at all widths including 360/390. The add-ons line is real content, not decoration.",
+   "fix": "Raise the add-ons line to 13-14px on mobile and the BETA chip to at least 11-12px."
+  },
+  {
+   "n": 109,
+   "severity": "minor",
+   "kind": "missing",
+   "title": "Section has no anchor id",
+   "where": "components/Packages.tsx:10",
+   "evidence": "The <section> has aria-labelledby but no id, so nothing (nav, studio pages, Solutions CTAs) can deep-link to packages and a tab cannot be opened by URL.",
+   "fix": "Add id=\"packages\" and optionally read a hash/query (e.g. #packages?tab=build) to pre-select the category."
+  },
+  {
+   "n": 110,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Focus ring on package links is low-contrast and misshapen on the light cards",
+   "where": "app/globals.css:26 (outline: 2px solid #22d3ee); components/Packages.tsx:31 (mt-auto pt-6 on the link); docs/audit/tmp/packagesverify-1440-focus-link-sec.png",
+   "evidence": "Keyboard focus on 'Request Quote' gives computed outline rgb(34,211,238) 2px on a white card: roughly 1.8:1 against #fff, below the 3:1 expected for focus indicators. Because the link carries pt-6, the ring is a 193x44px box with 24px of empty space above the text, which looks like a layout bug in the screenshot. (The tab buttons get a dark rgb(19,23,43) outline, which is fine.)",
+   "fix": "Use a dark or violet focus colour inside light sections (e.g. #13172b or #6f45f6) and move the spacing from padding on the link to margin, or turn the CTA into a real button shape so the ring hugs it."
+  },
+  {
+   "n": 111,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "Eyebrow says 'Packages & pricing' but the section contains no pricing",
+   "where": "components/Packages.tsx:12",
+   "evidence": "The section label reads 'PACKAGES & PRICING' in every screenshot, yet no price, range or pricing model appears (correctly, per the no-invented-prices rule). The only pricing statement is 'Prices are confirmed in a written proposal'. A visitor scanning for a price finds a label promising one and nothing behind it.",
+   "fix": "Keep the spec section name internally but label it honestly on the page, e.g. 'Packages & quotes' or 'Packages, quoted to scope', and keep the existing intro sentence."
+  },
+  {
+   "n": 112,
+   "severity": "minor",
+   "kind": "off-spec",
+   "title": "GROW tab presents the beta as a 'package' with deliverables",
+   "where": "data/site.ts:83-85; components/Packages.tsx:23-34; docs/audit/tmp/packagesverify-1440-tab2.png",
+   "evidence": "The GROW panel reuses the package card template: a package name ('Beta interest list'), a 'for' line and three bulleted 'deliverables' ('Early-access updates', 'Informative beta descriptions', 'No commitments'). The spec says GROW stays Beta / Coming Soon; nothing in the panel says 'Coming soon' or names the planned areas (M1-M3 in data/site.ts:53-57), and a non-service is styled exactly like a purchasable service.",
+   "fix": "Give GROW its own non-package state: a 'Coming soon / in beta' panel listing the three planned areas as not yet offered, the existing beta notice, and one honest interest CTA. Do not render it through the Package card."
+  }
+ ]
+}

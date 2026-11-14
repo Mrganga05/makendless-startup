@@ -1,0 +1,206 @@
+{
+ "scope": "internal-pages",
+ "keep": [
+  "Service catalogue is accurate and complete against the spec: V1-V5, T1-T5, M1-M3 all render from data/site.ts (single source of truth), with no invented prices, timelines, revision counts, clients or statistics on any internal page.",
+  "GROW Beta labelling on /grow: eyebrow 'GROW \u00b7 BETA', the lilac disclaimer box ('Nothing here is a guarantee of leads, sales or return on ad spend'), and the CTA wording 'Join the beta list' (components/StudioPage.tsx:8-9,19). Keep the wording; restyle only.",
+  "Studio CTAs work and pre-select the form: clicking the CTA on /create, /build, /grow lands on /contact?service=<id> with the select set to 'CREATE \u2014 Video editing', 'BUILD \u2014 Website development', 'GROW \u2014 Digital marketing (beta interest)' respectively (verified by puppeteer).",
+  "About copy is honest and on-spec: 'small team of video editors, web developers and client managers', no names, no headcount, no incorporation/trademark claims, no awards (app/about/page.tsx:12).",
+  "FAQ answers cover all six spec topics without inventing guarantees ('We don't promise timelines we haven't scoped'); light editorial FAQ body with hairline dividers reads calm and clean at 1440 and 390.",
+  "Privacy/Terms are openly labelled 'Draft placeholder. Requires owner and legal review before launch.' \u2014 no invented policy text.",
+  "Syne is the only computed font family on all 8 pages at all 4 widths.",
+  "Keyboard basics: skip link is first tab stop, every link shows a 2px solid cyan focus outline, whole studio card on /studios is a single focusable link; mobile menu button is 44x44 with aria-expanded.",
+  "Per-page <title> template ('CREATE \u2014 MAKENDLESS' etc.) and the footer link set matching the spec (CREATE, BUILD, GROW \u2014 Beta, Studios, About, FAQ, Contact, Privacy, Terms).",
+  "Typed data model in data/site.ts (studios, packages, solutions, process, faqs) \u2014 richer pages should be built on it rather than replacing it."
+ ],
+ "findings": [
+  {
+   "n": 157,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "/build H1 'Website Development' is clipped off-screen on phones",
+   "where": "components/PageShell.tsx:8 (h1 text-4xl, no wrap/clamp); http://localhost:3456/build at 360 and 390",
+   "evidence": "Measured h1 scrollWidth 391px vs clientWidth 350px at 390 (320px at 360); documentElement scrollWidth 411 vs clientWidth 390/360. body has overflow-x:hidden (globals.css:22) so the word is simply cut: docs/audit/390-page-build.png shows 'Development' with the final 't' chopped at the right edge.",
+   "fix": "Use a fluid heading size in PageShell (e.g. text-[clamp(1.75rem,8.5vw,3.75rem)]) plus overflow-wrap/hyphens or text-balance, and verify the longest single word ('Development', 'possibilities.') fits at 360. Do not rely on body overflow-x:hidden to mask overflow."
+  },
+  {
+   "n": 158,
+   "severity": "blocker",
+   "kind": "off-spec",
+   "title": "CREATE, BUILD and GROW pages are one identical template \u2014 no division visual or motion identity",
+   "where": "components/StudioPage.tsx:1-22; app/create|build|grow/page.tsx (4 lines each); docs/audit/1440-page-create.png vs 1440-page-grow.png",
+   "evidence": "The three pages share the same hero band, same #202342 rounded-3xl cards in a 2-col grid, same white pill CTA. The only per-division difference is the 6px bullet and code-label colour (s.accent). Measured on all three at every width: document.getAnimations().length = 0, media elements in main = 0. Spec: 'Each division has its own visual and motion identity' and 'Portfolio-grade ... not a template'.",
+   "fix": "Keep StudioPage's data plumbing but give each division its own hero and section treatment using CSS/SVG/video motion (no R3F \u2014 spec restricts 3D to homepage sections): CREATE = timeline/playhead, vertical reel frames, caption-pop kinetic type in aqua; BUILD = wireframe-to-UI grid, browser chrome, responsive resize motif in violet; GROW = clearly 'Illustrative demo' ad-card/calendar motif in lilac with no numbers. Reuse the homepage Studios/Transformation preview pieces."
+  },
+  {
+   "n": 159,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "/studios card headings overflow their cards at 768 (and marginally at 1024)",
+   "where": "app/studios/page.tsx:9-13 (md:grid-cols-3 with text-2xl h2); http://localhost:3456/studios at 768 and 1024",
+   "evidence": "At 768: h2 'Website Development' scrollWidth 260 vs clientWidth 171, 'Digital Marketing' 193 vs 171, card link 284 vs 219. Screenshot docs/audit/tmp/internalverify-768-studios.png shows 'Developme\u2026' running out of the BUILD card under the GROW card, and 'Marketing' touching the GROW card edge. At 1024 'Website Development' is still 260 vs 257. The auditor only measured the H1 at phone widths.",
+   "fix": "Keep one column until lg (or two columns at md), and/or use a fluid h2 size with overflow-wrap so 'Development' fits; re-measure at 768 and 1024."
+  },
+  {
+   "n": 160,
+   "severity": "major",
+   "kind": "mobile-break",
+   "title": "/studios H1 'possibilities.' overflows at 360px",
+   "where": "app/studios/page.tsx:8 + components/PageShell.tsx:8; http://localhost:3456/studios at 360",
+   "evidence": "h1 scrollWidth 342 vs clientWidth 320; document scrollWidth 362 vs 360. Screenshot docs/audit/tmp/internal-360-studios.png shows the full stop of 'possibilities.' touching/cut by the right edge. Fits at 390 (350/350) with zero spare room.",
+   "fix": "Same fluid H1 clamp as above; test at 360."
+  },
+  {
+   "n": 161,
+   "severity": "major",
+   "kind": "missing",
+   "title": "Studio pages are content-thin: three bullets per service, nothing else",
+   "where": "components/StudioPage.tsx:10-19; /create /build /grow",
+   "evidence": "Main word counts (incl. nav/footer text): /create 129, /build 119, /grow 114. No packages (data/site.ts:68-85 has 4 CREATE, 5 BUILD, 1 GROW package that are never shown here), no process steps, no who-it's-for, no concept demo, no FAQ, no cross-link to other studios, a single CTA at the very bottom. 5 cards in a 2-col grid leave an orphan card and an empty half-row at 1440 (1440-page-create.png, 1440-page-grow.png).",
+   "fix": "Build each studio page from existing data: service catalogue (fix the orphan with a 3+2 / featured-first layout), the division's packages with 'Request Quote' links (/contact?service=<id>-<package>), relevant customer types from solutions, the 4-step process, a 'Concept demo' visual, 2-3 relevant FAQs, and next/previous studio links. Add a CTA in the hero as well as at the end."
+  },
+  {
+   "n": 162,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "All eight pages are the same dark shell with the same violet corner glow",
+   "where": "components/PageShell.tsx:5,12",
+   "evidence": "Section backgrounds measured: /studios, /create, /build, /grow, /about = rgb(12,16,36) hero + rgb(12,16,36) body + dark footer (three consecutive identical dark blocks, no boundary). Only /faq, /privacy, /terms pass light. Hero uses one hard-coded radial-gradient(\u2026 rgba(111,69,246,.35)) for every page, and the eyebrow is always #08bbd4 \u2014 so the BUILD and GROW eyebrows are aqua (CREATE's colour) instead of violet/lilac (see 1440-page-grow.png 'GROW \u00b7 BETA' in aqua). Spec: dark and light sections must alternate; avoid a uniformly dark site and repetitive glows.",
+   "fix": "Give PageShell an accent prop (eyebrow + glow colour per division) and hero variants; alternate dark hero / light editorial body / dark CTA on the studio, studios and about pages; replace the repeated corner glow with division-specific art."
+  },
+  {
+   "n": 163,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "/studios overview is three small text cards \u2014 weaker than the homepage studios section it is linked from",
+   "where": "app/studios/page.tsx:9-17; docs/audit/1440-page-studios.png",
+   "evidence": "Page body is 394px tall at 1440 (total page 1173px incl. footer), 82 words, three ~200px cards with verb, name, one-line tagline; no service list, no previews, no arrow/affordance, no CTA. The homepage 'Explore Services' button (components/Solutions.tsx:43) sends users here, but no services are listed. Hover is the only feedback (translate/border).",
+   "fix": "Make this a real overview: large gateway per studio with its service codes/titles (V1-V5, T1-T5, M1-M3), a preview visual, explicit 'Explore CREATE \u2192' affordance, GROW Beta chip, and a closing Start a Project CTA. Reuse the homepage Studios gateway component at larger scale rather than a second, lesser card design."
+  },
+  {
+   "n": 164,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "About page is a three-card stub with no CTA or links",
+   "where": "app/about/page.tsx:7-12; docs/audit/1440-page-about.png",
+   "evidence": "Body is 446px tall at 1440; three cards that repeat the studio taglines plus one paragraph. main contains zero links (mainLinks = []) \u2014 the cards are not linked to /create /build /grow and there is no Start a Project CTA. The Grow card has no Beta chip (beta is only mentioned in body text).",
+   "fix": "Expand with honest, non-invented content: how the studio works (process from data), principles (scope in writing, honest about beta, human review), who it serves, link each card to its studio page, add a Beta chip on Grow, end with a Start a Project CTA. No names, headcount or history unless the owner supplies them."
+  },
+  {
+   "n": 165,
+   "severity": "major",
+   "kind": "off-spec",
+   "title": "No motion at all on any internal page",
+   "where": "components/PageShell.tsx, StudioPage.tsx, app/*/page.tsx",
+   "evidence": "document.getAnimations().length = 0 on all 8 pages at all widths (and therefore no distinct reduced-motion variant either). Only interaction is a hover translate on /studios cards. Spec quality bar: 'Varied professional motion: kinetic typography, mask reveals, scroll-driven transitions'.",
+   "fix": "Add a mask/line reveal on the page H1, staggered reveal for service rows, and one division-specific looping CSS/SVG motif per studio page; gate all of it behind prefers-reduced-motion."
+  },
+  {
+   "n": 166,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Footer links are 19px tall \u2014 below the 44px touch-target rule",
+   "where": "components/FinalCta.tsx:16 (footer shown on every internal page); 360/390 widths",
+   "evidence": "Measured at 360 and 390: CREATE 58x19, BUILD 46x19, GROW \u2014 Beta 102x19, All studios 71x19, About 43x19, FAQ 30x19, Contact 58x19, Privacy 52x19, Terms 43x19, spaced by space-y-3 (12px). Header wordmark link is 246x28. Spec: touch targets >= 44px.",
+   "fix": "Make footer links block/inline-flex with min-h-11 and vertical padding (py-3) and drop the space-y; give the wordmark link min-h-11."
+  },
+  {
+   "n": 167,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "GROW 'Join the beta list' CTA leads to the generic project form \u2014 there is no beta list",
+   "where": "components/StudioPage.tsx:20; data/site.ts GROW tagline ('Join the beta list.'); components/ContactForm.tsx:35,46; /grow -> /contact?service=grow",
+   "evidence": "Clicked the /grow CTA at 1440: it lands on /contact?service=grow with H1 'Let's make something worth remembering.', the select preset to 'GROW \u2014 Digital marketing (beta interest)' and a submit button labelled 'Start a Project' (docs/audit/tmp/internalverify-1440-contact-from-grow.png). Nothing on the destination mentions a beta list, and ContactForm.tsx:35 states the inbox is not connected and the message 'was not sent anywhere'. The page promises a list that cannot currently be joined.",
+   "fix": "Reword to an honest action such as 'Register beta interest', and when service=grow change the contact heading and submit label to match. Keep the truthful 'not sent' result state until a delivery service is approved."
+  },
+  {
+   "n": 168,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "FAQ answers promise things the site cannot back up",
+   "where": "data/site.ts faqs (rendered by app/faq/page.tsx:9); components/ContactForm.tsx:35",
+   "evidence": "FAQ 1 says 'Use Start a Project\u2026 We'll follow up', but the form's own result text says the message was not sent anywhere, so no follow-up is possible. FAQ 4 says 'Revision limits are defined per package', but no package in data/site.ts carries a revision limit and the spec forbids inventing revision counts. FAQ 6 answers 'Yes' to ongoing support as a policy without owner confirmation.",
+   "fix": "Soften to what is true today (revisions and support are agreed in the written proposal), remove 'defined per package', and add these answers to TODO-FOR-OWNER.md for owner approval. Fix the follow-up promise once a delivery route exists."
+  },
+  {
+   "n": 169,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "About page states an AI-usage policy the spec does not supply",
+   "where": "app/about/page.tsx:12",
+   "evidence": "Copy: 'we use AI tools to move faster while people review every final result.' Nothing in docs/SPEC-WORKING.md states this practice; it reads as a process commitment ('every final result'). It is not an AI service offering, so it does not breach the no-AI-service rule, but it is an unverified claim.",
+   "fix": "Get owner confirmation or remove the sentence; list it in TODO-FOR-OWNER.md."
+  },
+  {
+   "n": 170,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "FAQ page is a static copy of the six homepage FAQs with no next step",
+   "where": "app/faq/page.tsx:8-10; docs/audit/1440-page-faq.png",
+   "evidence": "Same six items as data/site.ts:109-116 used on the homepage; no grouping, no links in main (mainLinks = []), the answer 'Use Start a Project\u2026' is not a link, and the page ends without a CTA. Answer lines run the full 1024px measure (~150 characters per line at 1440).",
+   "fix": "Cap answers at ~65ch, link 'Start a Project' inline, add a 'Still have a question?' CTA band, and consider grouping (Getting started / Quotes & revisions / Delivery & support). Any extra questions need owner-approved answers."
+  },
+  {
+   "n": 171,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "Legal placeholders are honest but would ship as-is, and Terms copy is grammatically off",
+   "where": "app/privacy/page.tsx:6-7; app/terms/page.tsx:6-7; docs/audit/1440-page-privacy.png",
+   "evidence": "Both pages show one sentence in a 240px body. Terms reads 'has not yet approved formal Terms policy text' (templated string). No TODO-FOR-OWNER.md exists in the repo (find returned nothing) although the spec says missing items go there. Placeholder pages have no noindex.",
+   "fix": "Keep the honesty; fix wording ('formal Terms of Service text'), add robots noindex metadata to both until approved, add a link back to Contact, and create TODO-FOR-OWNER.md listing privacy/terms text."
+  },
+  {
+   "n": 172,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "No current-page indication in navigation",
+   "where": "components/Nav.tsx:27-29,42-44",
+   "evidence": "document.querySelectorAll('[aria-current]').length = 0 on every page; nav links are all the same muted colour regardless of route (see 1440-page-about.png \u2014 'About' not highlighted). CREATE/BUILD/GROW pages also have no breadcrumb or back link to /studios.",
+   "fix": "Use usePathname to set aria-current='page' and an active style; add a 'Studios /' breadcrumb or sibling-studio switcher on division pages."
+  },
+  {
+   "n": 173,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Heading semantics: footer column labels are H2s; FAQ questions are not headings",
+   "where": "components/FinalCta.tsx:15; app/faq/page.tsx:9",
+   "evidence": "Heading outline on /faq is H1 then H2 'Studios', H2 'Company', H2 'Legal' only \u2014 the six questions are dt elements, so the only H2s on the page are footer labels. Same footer H2s appear at the same level as service titles on studio pages.",
+   "fix": "Render footer labels as non-heading text (the nav already has aria-label) or H3; keep the dl but that is acceptable, or use h2 per question."
+  },
+  {
+   "n": 174,
+   "severity": "minor",
+   "kind": "missing",
+   "title": "Every internal page shares the homepage meta description; no OG tags, favicon, robots or sitemap; default unstyled 404",
+   "where": "app/layout.tsx:8-11; app/*/page.tsx metadata; app/ (no not-found.tsx, icon, robots.ts, sitemap.ts); public/ is empty",
+   "evidence": "meta description identical on all 8 pages; og:title absent; canonical absent; /favicon.ico 404 (console error logged on first load), /robots.txt 404, /sitemap.xml 404. /nope renders Next's default '404 \u2014 This page could not be found.' under the nav with no footer or link home (docs/audit/tmp/internal-1440-404.png).",
+   "fix": "Add per-page description + openGraph in each metadata export, app/icon, robots.ts, sitemap.ts, and a branded app/not-found.tsx using PageShell with links to Home/Studios/Contact."
+  },
+  {
+   "n": 175,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Hero band leaves large dead space and inconsistent heights",
+   "where": "components/PageShell.tsx:5,12 (pb-16 + md:py-24)",
+   "evidence": "At 1440 there is ~160px of empty dark between the intro line and the first card on studio pages (1440-page-create.png: intro at y\u2248285, cards at y\u2248460) with no divider, since hero and body are the same colour. Hero heights vary 363-438px purely by H1 wrapping.",
+   "fix": "Tighten spacing or fill the hero with division art on the right; make the hero-to-body transition intentional (colour change, rule, or overlap)."
+  },
+  {
+   "n": 176,
+   "severity": "minor",
+   "kind": "off-spec",
+   "title": "GROW page title and H1 carry no Beta label",
+   "where": "app/grow/page.tsx:3 (metadata title 'GROW'); components/StudioPage.tsx:8 (H1 = s.name)",
+   "evidence": "document.title on /grow is 'GROW \u2014 MAKENDLESS'; the H1 is 'Digital Marketing' with Beta only in the small aqua eyebrow and the notice box below. The shared meta description does say '(beta)'. The spec requires GROW to be labelled Beta / Coming Soon everywhere, and the tab title and search-result title are the most visible labels.",
+   "fix": "Set the title to 'GROW (Beta)' and put a Beta chip beside the H1 on /grow, plus the Grow card on /about."
+  },
+  {
+   "n": 177,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Mobile menu does not close on Escape and has no direct studio links",
+   "where": "components/Nav.tsx:5-10,30-45; tested on /build at 390",
+   "evidence": "After opening the menu and pressing Escape, #mobile-menu was still in the DOM. The menu lists only Studios, About, FAQ, Contact, Start a Project (docs/audit/tmp/internalverify-390-menu.png), so on a phone CREATE/BUILD/GROW are reachable only via /studios or the 19px footer links. The spec asks for full keyboard support.",
+   "fix": "Add an Escape key handler that closes the menu and returns focus to the toggle; add CREATE, BUILD and GROW \u2014 Beta links under Studios in the mobile menu."
+  }
+ ]
+}

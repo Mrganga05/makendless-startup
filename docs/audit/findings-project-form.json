@@ -1,0 +1,180 @@
+{
+ "scope": "project-form",
+ "keep": [
+  "Honesty baseline: with no NEXT_PUBLIC_CONTACT_EMAIL, a valid submit makes zero non-GET requests (measured) and the panel explicitly says the message 'was not sent anywhere'. No false 'sent' message. Keep that principle, rewrite the wording.",
+  "The validation rules and friendly error copy ('Please tell us your name.', 'Enter a valid email address.', 'Tell us a little more (at least 10 characters).') and the noValidate + custom-message approach.",
+  "aria-invalid toggles correctly per field and aria-describedby points at the error span once it exists (name/email/message).",
+  "Every control is wrapped in a <label>, so all four have accessible names; autocomplete=name/email are set; email input is type=email.",
+  "Keyboard: logical tab order (skip link, nav, name, email, select, textarea, button), Enter in an input submits, and all controls show the 2px #22d3ee focus-visible outline (globals.css:26).",
+  "Touch sizing: inputs 54px, select 51px, button 56px tall; 16px input font size so iOS does not zoom on focus; full-width submit button on mobile.",
+  "Syne is applied to inputs, select and labels (computed font-family verified); one H1; page title 'Start a Project \u2014 MAKENDLESS'.",
+  "Spec copy is used verbatim: 'Let's make something worth remembering.' / 'Tell us what you're building. We'll help you take the next step.'",
+  "GROW option is honestly labelled 'GROW \u2014 Digital marketing (beta interest)'.",
+  "?service=create|build|grow (and create-starter etc.) correctly preselects the studio in the select.",
+  "No invented contact details, response times or policies anywhere on the page."
+ ],
+ "findings": [
+  {
+   "n": 139,
+   "severity": "blocker",
+   "kind": "off-spec",
+   "title": "Result panel shows developer text to the visitor and is a dead end",
+   "where": "components/ContactForm.tsx:31-37; screenshot docs/audit/tmp/contact-1440-valid-result.png",
+   "evidence": "After a valid submit the form is replaced by: 'Form checked. Delivery channel pending. The inquiry inbox isn't connected yet, so this message was not sent anywhere. The team needs to set NEXT_PUBLIC_CONTACT_EMAIL or a form backend before launch.' It is honest, but it exposes an environment variable name to customers, discards everything the visitor typed (form unmounted, no state kept), and the panel contains 0 links/buttons (measured: resultDom.links = 0) - no way back to the form, no copy of the brief, no next step. The spec asks for a fully built success state AND an honest one; this is a developer placeholder, not a designed state.",
+   "fix": "Keep the honesty, redesign the state for a customer: a designed 'Your brief is ready - but not sent' panel that shows a readable summary of what they entered, a 'Copy brief' button (clipboard), an 'Edit brief' button that restores the form with values intact, and plain wording such as 'Online sending isn't switched on yet, so nothing has been sent.' Remove the env var name from user-facing copy (keep it in README/TODO-FOR-OWNER). Build the real success state ('Brief received') behind a delivery flag so it can never render while no delivery service is configured."
+  },
+  {
+   "n": 140,
+   "severity": "blocker",
+   "kind": "missing",
+   "title": "No loading state and no submission-error state exist",
+   "where": "components/ContactForm.tsx:11-29 (only `err` and `done` state)",
+   "evidence": "State is just err + done. Submit to result took 69ms with no pending UI; the button never disables or changes label; there is no code path for a failed delivery (no try/catch, no error panel, no retry). Spec: 'Fully built: fields, validation, loading, success and error states.'",
+   "fix": "Model status as idle | validating/submitting | success | not-delivered | error. Add a submit adapter (single function returning ok / not-configured / failed) with no service wired. While pending: disable the button, aria-busy on the form, label 'Checking your brief...'. Error state: role=alert panel with the visitor's data preserved and a Retry button. Not-configured maps to the honest 'not sent' panel; success is only reachable when the adapter reports real delivery."
+  },
+  {
+   "n": 141,
+   "severity": "blocker",
+   "kind": "mobile-break",
+   "title": "Sideways scrolling at 360 and 390: H1 word 'remembering.' overflows the viewport",
+   "where": "components/PageShell.tsx:8 (h1 text-4xl) on /contact at 360 and 390; screenshots docs/audit/390-page-contact.png, docs/audit/tmp/contact-390-top2.png",
+   "evidence": "Measured at both 360 and 390: documentElement.scrollWidth = 421 vs clientWidth 360/390; h1 font 36px, h1.scrollWidth 401 > clientWidth 320/350; the gradient span's second line spans x=20 to 421. The screenshot shows 'remembering' cut off at the right edge with the full stop lost, and the existing 390 audit screenshot is 421px wide for the same reason. Spec: 'No sideways scrolling.' (Side effect seen in testing: the widened layout viewport offsets the visual viewport, so coordinate taps landed 64px off.)",
+   "fix": "Use a fluid size for the page H1, e.g. font-size: clamp(1.75rem, 8.2vw, 3.75rem) so 'remembering.' fits in 320px of content width at 360, and add overflow-wrap: anywhere / hyphens as a safety net. Re-measure scrollWidth === clientWidth at 360, 390 and 768."
+  },
+  {
+   "n": 142,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "?for= preselection does nothing (Solutions section CTA context is lost)",
+   "where": "components/ContactForm.tsx:10 and :44; link source components/Solutions.tsx:44",
+   "evidence": "Solutions links to /contact?for=creator|local|startup|store. ContactForm does `(service || for || 'other').split('-')[0]` and then checks it against create/build/grow/other, so every ?for= value falls back to 'Not sure yet'. Measured: ?for=local, ?for=creator, ?for=startup, ?for=store all give select value 'other', no other visible change on the page.",
+   "fix": "Add a real 'I am a...' field (Content creator / Local business / Startup / Online store / Other - values from data/site.ts solutions) and preselect it from ?for=. Optionally also preselect the studio from that solution's first recommended service. Show a small removable context chip, e.g. 'Starting as: Local business'."
+  },
+  {
+   "n": 143,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "Package name from 'Request Quote' links is thrown away",
+   "where": "components/ContactForm.tsx:10; link source components/Packages.tsx:31",
+   "evidence": "Packages links to /contact?service=create-starter, create-creator, create-professional, create-custom (hrefs read from the live homepage). The form keeps only the part before the first hyphen: ?service=create-starter gives select 'create', textarea empty, and no mention of 'Starter' anywhere on the page (visibleContext false). A visitor who clicked a specific package arrives at a form that has forgotten it, and the mailto body (line 25) would not include it either.",
+   "fix": "Parse studio and package separately, validate both against data/site.ts, and add a dependent 'Package' select (options for the chosen studio plus 'Not sure / Custom') preselected from the query. Show it in the brief summary and include it in the submitted payload."
+  },
+  {
+   "n": 144,
+   "severity": "major",
+   "kind": "missing",
+   "title": "Form is too thin for a real project brief",
+   "where": "components/ContactForm.tsx:42-46 (fields: name, email, service, message only)",
+   "evidence": "DOM field list is exactly [name, email, service, message]. Nothing captures who the customer is, which package, project type, existing links, timing or budget, so every inquiry would need a follow-up round. No field is marked required or optional (0 elements with required/aria-required), and there is no helper text or placeholder guidance on the message box.",
+   "fix": "Add, without inventing any policy or figure: (1) Customer type (four spec types + other); (2) Package / service detail driven by data/site.ts (V1-V5, T1-T5, M1-M3 as multi-select chips per studio); (3) Business or channel name (optional); (4) Links - current website, channel or sample footage (optional URL field); (5) Timing as free text or neutral choices ('As soon as possible / Within a month or two / Flexible / Not sure') with no promised delivery times; (6) Budget as an optional free-text field ('Share a rough budget if you have one') - do NOT add price brackets, since no prices are approved; (7) Preferred contact method only if the owner approves phone/WhatsApp (owner decision); (8) A consent line linking to /privacy. Mark required fields visibly and with aria-required, and add a short hint under the message field (what to include). Consider a 2-3 step layout (You / Project / Details) so the longer form stays calm on mobile."
+  },
+  {
+   "n": 145,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Page looks like an unstyled template: single narrow column, 160px dead gap, half the screen empty",
+   "where": "app/contact/page.tsx:8-9, components/PageShell.tsx:5-12; screenshots docs/audit/1440-page-contact.png, docs/audit/tmp/contact-1440-preselect-build.png",
+   "evidence": "At 1440 the form occupies x=208-880 and the right ~45% of the page is empty flat #0c1024. Measured gap between the hero text block and the form: 160px (pb-16 + py-24 of two stacked same-colour sections). At 1440x900 the first field starts at y=620, so only Name, Email and the top of the select are above the fold. Header and body are the same dark colour, so the spec's dark/light alternation and 'portfolio-grade, not a template' bar are not met. The select uses the native browser chevron, which looks out of place against the custom rounded fields.",
+   "fix": "Recompose as a two-column layout at >=1024: form on the left, on the right a sticky 'What happens next' rail built from the existing DISCOVER / DESIGN / CREATE / DELIVER steps plus a live brief summary that fills in as the visitor types (CSS/SVG only, no 3D on this page per spec). Pull the form up so it starts above the fold (cut the gap to ~48px or merge the sections). Put the form on a light paper (#F6F7FC) card or section for contrast with the dark header. Replace the service select with three large studio choice cards using the division accents (aqua / violet / lilac, GROW tagged Beta), and style any remaining select with appearance-none plus a custom chevron."
+  },
+  {
+   "n": 146,
+   "severity": "major",
+   "kind": "a11y",
+   "title": "Errors are not announced and focus is not managed",
+   "where": "components/ContactForm.tsx:22-23, 42-45",
+   "evidence": "After an empty submit: 0 elements with role=alert or aria-live in the document, and document.activeElement stays on the BUTTON (measured) - a screen-reader user hears nothing. After a successful submit the focused button is unmounted and focus drops to BODY; the role=status div is inserted already populated, which many screen readers do not announce. At 768 the first error ended up at y=97 only by luck of scroll position; nothing scrolls the first invalid field into view.",
+   "fix": "On failed validation, focus the first invalid field (and scroll it into view with scroll-margin for the fixed header) and render a role=alert summary above the form ('3 fields need attention') with links to each field. On result, move focus to the result heading (tabIndex=-1) and keep a persistent, initially empty live region that the message is written into."
+  },
+  {
+   "n": 147,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "Visitor is only told that nothing gets sent after writing the whole brief",
+   "where": "app/contact/page.tsx:8 (intro) and components/ContactForm.tsx:41-47; screenshots docs/audit/tmp/verify-contact-390-top.png, verify-contact-1440-result.png",
+   "evidence": "The page intro says \"Tell us what you're building. We'll help you take the next step.\" and the button says 'Start a Project'. Nothing on the form before submit says delivery is not connected. Only after a valid submit does the panel say 'this message was not sent anywhere', at which point the typed text is discarded. The post-submit message is honest, but the page before submit implies a working inquiry channel. The panel also uses the aqua success-style tint with role=status, so at a glance it reads as a confirmation.",
+   "fix": "While no delivery adapter is configured, show a calm notice above the form or next to the button (for example 'Online sending isn't switched on yet. You can prepare your brief here and copy it.') and label the button to match (for example 'Review my brief'). Give the not-delivered panel a neutral or amber treatment, distinct from the real success state. Drive both from one 'delivery configured' flag."
+  },
+  {
+   "n": 148,
+   "severity": "major",
+   "kind": "broken-control",
+   "title": "'Join the beta list' buttons lead to the generic project form; no beta list flow exists",
+   "where": "components/StudioPage.tsx:19, components/Packages.tsx:32 -> /contact?service=grow; components/ContactForm.tsx:44-46",
+   "evidence": "Opening /contact?service=grow only sets the select to 'GROW \u2014 Digital marketing (beta interest)'. The heading, intro, message label ('Tell us what you're building', minimum 10 characters required) and the 'Start a Project' button are unchanged, and submitting ends in the same 'not sent anywhere' panel. A CTA that promises joining a list delivers a project brief form that records nothing.",
+   "fix": "When service=grow, switch the form to a beta-interest variant: heading and button 'Register beta interest', message optional, a visible GROW Beta tag, and the same honest not-delivered handling. Alternatively rename the CTAs to 'Register interest' until a list actually exists, and record the list as an owner decision in TODO-FOR-OWNER.md."
+  },
+  {
+   "n": 149,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Error text is nested inside the <label>, polluting the accessible name; aria-describedby points at missing ids when valid",
+   "where": "components/ContactForm.tsx:42-45",
+   "evidence": "After an empty submit the Name input's label text is 'NamePlease tell us your name.' (input.labels[0].textContent), so the error is read as part of the name and again as the description. In the initial state aria-describedby references e-name / e-email / e-msg, none of which exist in the DOM (measured exists:false).",
+   "fix": "Use <label htmlFor> + sibling input + sibling error <p id> outside the label; only set aria-describedby when the error (or a hint) is rendered. Add aria-required='true' to required fields."
+  },
+  {
+   "n": 150,
+   "severity": "minor",
+   "kind": "broken-control",
+   "title": "Errors do not clear when the visitor fixes the field",
+   "where": "components/ContactForm.tsx:14-23 (validation only inside submit)",
+   "evidence": "With 'bad@email' flagged, typing '.com' to make it valid left 'Enter a valid email address.' and aria-invalid=true in place (measured afterFixTyping) until the next submit.",
+   "fix": "Make fields controlled (also needed to preserve values across states) and re-validate a field on change once it has been flagged, or on blur."
+  },
+  {
+   "n": 151,
+   "severity": "minor",
+   "kind": "performance",
+   "title": "Form is missing from server HTML (blank until JS hydrates)",
+   "where": "app/contact/page.tsx:9 (<Suspense fallback={null}>) + useSearchParams in ContactForm.tsx:9",
+   "evidence": "curl of /contact returns 0 occurrences of '<form' and contains BAILOUT_TO_CLIENT_SIDE_RENDERING; with JavaScript disabled the page has no form at all (noJS.form = false). The main content of the page pops in after hydration with an empty hole before it.",
+   "fix": "Render the form on the server: read searchParams in the page (server component) and pass initial values as props, or at minimum give Suspense a skeleton fallback with the same dimensions. Add a <noscript> note."
+  },
+  {
+   "n": 152,
+   "severity": "minor",
+   "kind": "broken-control",
+   "title": "Validation is loose and inputs are unbounded",
+   "where": "components/ContactForm.tsx:19-21",
+   "evidence": "Name 'X', email 'a@b.c' and message 'aaaaaaaaaa' pass and reach the result panel (junkAccepted = true). No maxlength on any field (0 elements with maxlength). Submit button has no explicit type attribute.",
+   "fix": "Trim values, require a 2+ character TLD, add sensible maxlength (name 80, message ~2000 with a live counter), and set type='submit' explicitly. When a delivery service is later approved, add a honeypot field."
+  },
+  {
+   "n": 153,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "mailto branch (if the env var is set) claims the mail app is opening without knowing",
+   "where": "components/ContactForm.tsx:24-28, 34-35 (code path not active in the running build)",
+   "evidence": "Code reading only: when NEXT_PUBLIC_CONTACT_EMAIL is set, the form sets window.location.href to a mailto: URL and replaces itself with 'Your email app should be opening.' If no mail client is configured nothing happens, the typed brief is gone, and the address is never shown as a fallback. The mailto body also omits any package/customer-type context.",
+   "fix": "In that branch keep the brief on screen, show the address as visible selectable text with 'Copy address' and 'Copy brief' buttons, and word it as 'If your email app didn't open, copy the brief below and email it to ...'. Never describe this as sent."
+  },
+  {
+   "n": 154,
+   "severity": "minor",
+   "kind": "missing",
+   "title": "favicon.ico returns 404",
+   "where": "http://localhost:3456/favicon.ico (observed while loading /contact)",
+   "evidence": "Console error 'Failed to load resource: 404' and response log shows /favicon.ico 404 on the contact page load.",
+   "fix": "Add app/icon.svg (or favicon.ico) with the MAKENDLESS mark."
+  },
+  {
+   "n": 155,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Invalid fields have no visual error state on the field itself",
+   "where": "components/ContactForm.tsx:39, 42-45; screenshot docs/audit/tmp/verify-contact-1440-empty.png",
+   "evidence": "The 'field' class has a fixed border-white/15 and there is no aria-invalid styling. In the screenshot the invalid textarea and the valid select have identical borders; the only signal is small pink text (rgb(255,138,160)) below the field, with no icon. The error is carried by colour and position alone and is easy to miss on a long mobile form.",
+   "fix": "Style [aria-invalid='true'] with an error border or ring and add a small icon or 'Error:' prefix to the message. Keep the existing 2px cyan focus outline, which works well."
+  },
+  {
+   "n": 156,
+   "severity": "minor",
+   "kind": "missing",
+   "title": "No privacy link or data-use note beside a form that collects name and email",
+   "where": "components/ContactForm.tsx:41-47; app/contact/page.tsx",
+   "evidence": "The form contains only four fields and a button. The only link to /privacy on the page is in the footer (footer hrefs: /, /create, /build, /grow, /studios, /about, /faq, /contact, /privacy, /terms). Nothing near the submit button says how the details will be used.",
+   "fix": "Add one line under the button linking to /privacy, worded to match whatever the existing Privacy page says. Do not invent a retention or response policy; anything undecided goes to TODO-FOR-OWNER.md."
+  }
+ ]
+}

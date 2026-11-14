@@ -1,0 +1,134 @@
+{
+ "scope": "process-faq",
+ "keep": [
+  "Headline 'From idea to delivery.' with violet accent word, eyebrow 'How we work', and the exact four steps DISCOVER / DESIGN / CREATE / DELIVER in an <ol> - matches spec wording and order",
+  "FAQ covers all six spec topics (start, requirements, quote, revisions, timelines, ongoing support) with no invented numbers: no revision counts, no day counts, no prices; 'We don't promise timelines we haven't scoped' is exactly the right honest tone",
+  "Accordion mechanics: real <button> inside a heading, aria-expanded + aria-controls, hidden attribute on panels, single-open behaviour, click-again closes; Enter and Space both toggle; Tab moves between questions (all measured in processfaq-test.mjs)",
+  "Visible focus ring on FAQ buttons: 2px solid #22d3ee, 3px offset, :focus-visible matches",
+  "Touch targets: FAQ buttons measure 64px high (88px when wrapped) at 360/390/768/1024/1440",
+  "No horizontal overflow at 360, 390, 768, 1024, 1440 (scrollWidth - innerWidth = 0)",
+  "Scroll-linked prism line concept on desktop/tablet: when it runs it tracks scroll smoothly (e.g. 1440: 16 -> 340 -> 663 -> 987 -> 1152px as the list moves from 670px to 270px from viewport top) and under prefers-reduced-motion it still just follows scroll with no autonomous animation",
+  "Calm, elegant typographic FAQ layout at 1440 (sticky-feeling left title + hairline-divided list) - not a generic card grid; Syne only (computed font-family Syne on headings and body)",
+  "Server-rendered state is sensible without JS: first answer open, others hidden",
+  "GROW honesty preserved in the support answer: 'Digital marketing is still in beta.'"
+ ],
+ "findings": [
+  {
+   "n": 113,
+   "severity": "blocker",
+   "kind": "off-spec",
+   "title": "Process/FAQ is the same light colour as Packages directly above - two light sections merge",
+   "where": "components/ProcessFaq.tsx:12-13 and components/Packages.tsx:10; homepage at 1440 and 390",
+   "evidence": "Computed background of both section[aria-labelledby=pkg-title] and section[aria-labelledby=proc-title] is rgb(246,247,252) at every width; Packages bottom = Process top (4725px at 1440) with no gap. The only separator is a 1px 10%-opacity hairline (border-t border-[#13172b]/10). Screenshots docs/audit/tmp/processfaq-1440-boundary.png and processfaq-390-boundary.png show one continuous pale page running from the package cards into 'How we work'. Spec: 'Dark cinematic and light editorial sections must ALTERNATE; no two neighbouring sections may look alike.' From Solutions onward the order is ... Packages (light) -> Process (light) -> Final CTA.",
+   "fix": "Give section 6 its own surface. Simplest within the token set: make Process+FAQ a dark ink (#0C1024) / surface (#202342) section with light text and the prism line glowing on dark, then keep Final CTA distinct (e.g. deeper cinematic with 3D). Alternative if Final CTA must be the only dark neighbour: keep Packages paper and render the process band as a full-bleed dark strip with the FAQ on paper below it. Either way remove the hairline-only divider and the shared pb/pt hack (section has no top padding of its own)."
+  },
+  {
+   "n": 114,
+   "severity": "major",
+   "kind": "mobile-break",
+   "title": "No progression motion at all on phones - the line is display:none and nothing replaces it",
+   "where": "components/ProcessFaq.tsx:17 (`hidden ... md:block`), homepage at 360 and 390",
+   "evidence": "At 390 and 360 the track computes display:none, width 0 at every scroll position (line@390 / line@360 in processfaq-test.mjs output). The only element in the section with an inline style / motion value is that one line (sectionStyled = ['DIV background: var(--prism); width: ...']). docs/audit/390-home-06-process-faq.png shows four static dots stacked 184px apart with no connector. Spec: 'Four steps ... with motion that clarifies progression' and 'Mobile is recomposed, not shrunk'.",
+   "fix": "On <md render a vertical rail: a 2px track running down the left through the centres of the four dots (left: 21px, top/bottom inset to first/last dot) with the same scroll-linked prism fill using scaleY (transform-origin top). Pair it with per-step activation (see next finding) so each dot lights as the fill reaches it."
+  },
+  {
+   "n": 115,
+   "severity": "major",
+   "kind": "visual-weak",
+   "title": "Motion does not actually clarify progression - steps never change state, line overshoots step 04",
+   "where": "components/ProcessFaq.tsx:17-25; 1440 and 768",
+   "evidence": "All four dots are identical static bg-[#13172b] circles; headings and copy never react. In docs/audit/tmp/processfaq-1440-line-cold-instant.png the fill stops mid-way between 03 and 04 with nothing indicating which step is 'current'. Geometry: track spans x=144..1296 but the last dot ends at x=1076, so the line continues 220px past 'Deliver' to the container edge - the journey visually ends in empty space rather than at delivery. The line is a 2px hairline, which at 1440 reads as a decorative rule (docs/audit/1440-home-06-process-faq.png). Whole section has one animated property; no kinetic type or mask reveal, versus the spec's 'varied professional motion'.",
+   "fix": "Keep the scroll-linked line but (1) end the track at the centre of dot 04 (right: calc(25% - 22px) or compute from the grid), (2) derive an active index from scrollYProgress (useMotionValueEvent -> thresholds 0/0.33/0.66/1) and switch each reached dot to the prism gradient / division accent with a small scale pop, dim not-yet-reached headings to ~40% opacity and bring them to full as the fill arrives, (3) thicken the fill to 3px with a leading glow dot as a playhead (echoes the hero timeline), (4) add a mask/clip reveal on the H2. Use transform scaleX rather than width for the fill."
+  },
+  {
+   "n": 116,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "Copy states operational policies the owner has not confirmed",
+   "where": "data/site.ts:105, 106, 113, 115",
+   "evidence": "'An assigned owner and team produce the work, with an internal quality review.' (105) and '...then deliver securely.' (106) assert a QA process and a security property; 'Revision limits are defined per package and written into your proposal.' (113) asserts a per-package revision policy, yet no package in data/site.ts carries any revision information (grep 'revision' only hits lines 104/106/113); 'Yes. Ongoing video editing and website maintenance arrangements can be agreed after delivery.' (115) is an unconditional yes. Spec: 'Never invent ... policies, revision counts, delivery times, guarantees ... Missing items go to TODO-FOR-OWNER.md' - and no TODO-FOR-OWNER.md exists anywhere in the repo (find returned nothing).",
+   "fix": "Soften to what is certain and log the rest for the owner: 105 -> 'We produce the work and review it before it reaches you.'; 106 -> 'You review, we make the agreed revisions, then hand over the final files.' (drop 'securely'); 113 -> 'The number of revision rounds is agreed with you and written into your proposal before work starts.'; 115 -> 'Ongoing editing and website maintenance can be arranged - ask when you get in touch. Digital marketing is still in beta.' Create TODO-FOR-OWNER.md listing: revision policy, QA step, delivery method, ongoing-support terms."
+  },
+  {
+   "n": 117,
+   "severity": "major",
+   "kind": "content-honesty",
+   "title": "'We'll follow up' promise contradicts the unconnected contact form",
+   "where": "data/site.ts:110 vs components/ContactForm.tsx:35",
+   "evidence": "First FAQ answer (open by default on the homepage): 'Use Start a Project and tell us what you're building. We'll follow up to understand your goal...'. ContactForm.tsx:35 currently tells the user 'The inquiry inbox isn't connected yet, so this message was not sent anywhere.' So the most visible FAQ answer promises a follow-up the site cannot presently trigger.",
+   "fix": "Until a delivery channel is approved, phrase it without a promise of contact: 'Use Start a Project to tell us what you're building. From there we work out your goal, scope and next steps together.' Add the missing inbox to TODO-FOR-OWNER.md; restore 'We'll follow up' once it is connected."
+  },
+  {
+   "n": 118,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "FAQ open/close has no transition - content snaps",
+   "where": "components/ProcessFaq.tsx:34 (hidden attribute toggle)",
+   "evidence": "50ms after click the new panel is already fully shown and the previous one gone; section getAnimations({subtree:true}).length = 0 during the toggle. With single-open behaviour the rows below jump instantly. The +/\u2212 glyph is a plain text swap. Fine functionally but reads as unfinished next to the spec's 'calm, elegant'.",
+   "fix": "Animate height with grid-template-rows 0fr->1fr (or motion AnimatePresence height:auto) over ~250ms, and rotate a single plus icon 45deg instead of swapping characters. Keep the hidden/inert semantics for closed panels and skip the transition under prefers-reduced-motion."
+  },
+  {
+   "n": 119,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Accordion panels lack region labelling; heading level jumps under a visual H3",
+   "where": "components/ProcessFaq.tsx:33-34",
+   "evidence": "DOM check: buttons have no id, panels have role=null and aria-labelledby=null (faqInitial in test output). Heading outline is H2 > H3 Discover..Deliver > H3 'Questions, answered plainly.' > H4 questions, which is valid, but the FAQ group is a sibling of the step titles rather than its own sub-section.",
+   "fix": "Add id={`faq-btn-${i}`} to each button and role=\"region\" aria-labelledby on each panel (WAI-ARIA accordion pattern). Optionally wrap the FAQ block in its own <section aria-labelledby> so the outline separates process from FAQ."
+  },
+  {
+   "n": 120,
+   "severity": "minor",
+   "kind": "missing",
+   "title": "Step numbers and section have no anchor; homepage FAQ cannot be linked to",
+   "where": "components/ProcessFaq.tsx:12; nav/footer FAQ links",
+   "evidence": "Section element has no id (sectionId = ''), and the section contains 0 links. Both 'FAQ' links on the page point to /faq (a separate page rendering the same faqs array, app/faq/page.tsx:9). The section also has no CTA after six answers that all point to a proposal.",
+   "fix": "Add id=\"process\" on the section and id=\"faq\" on the FAQ block (with scroll-margin-top for the fixed header). Add a quiet text link under 'Specifics are confirmed in your proposal before work starts.' -> 'Start a Project' (/contact) and 'All questions' (/faq)."
+  },
+  {
+   "n": 121,
+   "severity": "minor",
+   "kind": "visual-weak",
+   "title": "Large dead space under the FAQ title on desktop; 768 step columns are cramped",
+   "where": "components/ProcessFaq.tsx:18, 28-29; 1440 and 768",
+   "evidence": "docs/audit/1440-home-06-process-faq.png: left column holds a two-line title and one sentence, then ~360px of empty paper beside the six questions. docs/audit/tmp/processfaq-768-mid.png: four columns at 768 give ~150px text columns, step copy wraps to five lines each and 'Discover'/'Design' titles nearly touch (gap-8 with 2xl extended Syne).",
+   "fix": "Make the left FAQ column sticky (lg:sticky lg:top-28 self-start) and put the Start a Project / All questions links there to fill it with purpose. At md (768-1023) use a 2x2 grid for the steps (md:grid-cols-2 lg:grid-cols-4) with the rail redrawn accordingly, or keep four columns only from lg."
+  },
+  {
+   "n": 122,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Homepage FAQ answers are unreachable without JavaScript and hidden from find-in-page",
+   "where": "components/ProcessFaq.tsx:34; server HTML of http://localhost:3456/",
+   "evidence": "The server-rendered HTML has the hidden attribute on faq-1 to faq-5 (curl output: id=\"faq-1\" hidden=\"\" and so on). Before hydration or with JS off, five of six answers cannot be opened, and Ctrl+F will not find text in closed panels. The /faq page uses a static dl, so the content exists elsewhere, but the homepage section never links to it (0 links in the section).",
+   "fix": "Use hidden=\"until-found\" or native details/summary with name=\"faq\" for single-open behaviour so answers work without JS and are searchable, or add an 'All questions' link to /faq inside the section."
+  },
+  {
+   "n": 123,
+   "severity": "minor",
+   "kind": "performance",
+   "title": "Scroll-linked motion runs on phones although nothing is painted, and animates layout width on desktop",
+   "where": "components/ProcessFaq.tsx:8-9,17",
+   "evidence": "At 390 and 360 the fill's inline style keeps updating on scroll (0% -> 14.4% -> 29.0% -> 43.4% -> 62.8%) while its parent is display:none and its measured width is 0. On desktop the animated property is width (0 -> 1152px), a layout property, not a transform.",
+   "fix": "Drive the fill with scaleX or scaleY (transform-origin left or top) and reuse the same motion value for the mobile vertical rail, so the listener is doing visible work at every width."
+  },
+  {
+   "n": 124,
+   "severity": "minor",
+   "kind": "content-honesty",
+   "title": "More unconfirmed process promises in the copy beyond those the auditor listed",
+   "where": "data/site.ts:104, 106, 111, 113",
+   "evidence": "Line 111: 'We'll send a clear list after discovery.' Lines 106 and 113: 'You review consolidated feedback' and 'We collect consolidated feedback so each round is focused' describe a specific feedback procedure. Line 104: every engagement gets 'a written proposal' covering 'scope, timeline, revisions and price'. None is backed by an owner-confirmed source, and no TODO-FOR-OWNER.md exists. The spec (line 56) says never to invent policies and to send missing items to that file.",
+   "fix": "Keep the proposal-first framing, which is safe and honest, but add 'written proposal contents, consolidated-feedback procedure, post-discovery asset list' to a new TODO-FOR-OWNER.md and soften any the owner cannot confirm."
+  },
+  {
+   "n": 125,
+   "severity": "minor",
+   "kind": "a11y",
+   "title": "Step list is announced with double numbering and no step state for assistive tech",
+   "where": "components/ProcessFaq.tsx:18-21",
+   "evidence": "The steps are an ol whose li each start with a visible span containing '01' to '04', which is not aria-hidden. A screen reader announces '1 of 4, 01, Discover'. The decorative track div is not aria-hidden either, although it is empty so harmless.",
+   "fix": "Add aria-hidden=\"true\" to the number badge span, since the ol already conveys order, and to the track wrapper."
+  }
+ ]
+}
