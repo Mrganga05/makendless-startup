@@ -1,26 +1,6 @@
 import Link from "next/link";
 import { Wordmark } from "./Nav";
 
-export function Footer() {
-  const cols: [string, [string, string][]][] = [
-    ["Studios", [["CREATE", "/create"], ["BUILD", "/build"], ["GROW — Beta", "/grow"], ["All studios", "/studios"]]],
-    ["Company", [["About", "/about"], ["FAQ", "/faq"], ["Contact", "/contact"]]],
-    ["Legal", [["Privacy", "/privacy"], ["Terms", "/terms"]]],
-  ];
-  return (
-    <footer className="border-t border-white/10 bg-[#0c1024] px-5 py-14 md:px-8">
-      <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
-        <div><Link href="/" className="text-xl"><Wordmark /></Link><p className="mt-3 text-sm tracking-[0.3em] text-[#a4aac7]">CREATE • BUILD • GROW</p></div>
-        {cols.map(([h, ls]) => (
-          <nav key={h} aria-label={h}><h2 className="text-xs font-bold uppercase tracking-[0.3em] text-[#a4aac7]">{h}</h2>
-            <ul className="mt-4 space-y-3">{ls.map(([l, href]) => (<li key={l}><Link href={href} className="hover:text-[#22d3ee]">{l}</Link></li>))}</ul></nav>
-        ))}
-      </div>
-      <p className="mx-auto mt-12 max-w-7xl text-xs text-[#a4aac7]">© {new Date().getFullYear()} MAKENDLESS. Creative &amp; Technology Studio.</p>
-    </footer>
-  );
-}
-
 export default function FinalCta() {
   return (
     <>
@@ -33,7 +13,6 @@ export default function FinalCta() {
         <p className="mx-auto mt-6 max-w-xl text-lg text-[#a4aac7]">Tell us what you&apos;re building. We&apos;ll help you take the next step.</p>
         <Link href="/contact" className="mt-10 inline-block rounded-full bg-white px-10 py-4 text-lg font-extrabold text-[#13172b] transition hover:scale-105 hover:bg-[#c7a6ff]">Start a Project</Link>
       </section>
-      <Footer />
     </>
   );
 }

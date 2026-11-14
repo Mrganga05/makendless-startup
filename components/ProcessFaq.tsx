@@ -9,7 +9,7 @@ export default function ProcessFaq() {
   const w = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section className="bg-[#f6f7fc] px-5 pb-24 text-[#13172b] md:px-8 md:pb-32" aria-labelledby="proc-title">
+    <section data-tone="light" className="bg-[#f6f7fc] px-5 pb-24 text-[#13172b] md:px-8 md:pb-32" aria-labelledby="proc-title">
       <div className="mx-auto max-w-6xl border-t border-[#13172b]/10 pt-24">
         <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#6f45f6]">How we work</p>
         <h2 id="proc-title" className="mt-4 text-4xl font-extrabold md:text-6xl">From idea to <span className="text-[#6f45f6]">delivery.</span></h2>

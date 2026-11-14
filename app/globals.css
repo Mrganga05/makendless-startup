@@ -1,4 +1,13 @@
 @import "tailwindcss";
+@import "./styles/hero.css";
+@import "./styles/studios.css";
+@import "./styles/transformation.css";
+@import "./styles/solutions.css";
+@import "./styles/packages.css";
+@import "./styles/process.css";
+@import "./styles/cta.css";
+@import "./styles/form.css";
+@import "./styles/pages.css";
 
 @theme {
   --font-sans: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
@@ -14,6 +23,15 @@
   --color-dark: #13172b;
   --color-muted: #a4aac7;
   --color-muted-dark: #5a6082;
+  /* division accents */
+  --color-create: #22d3ee;
+  --color-build: #8b5cf6;
+  --color-grow: #c7a6ff;
+  /* extra surfaces */
+  --color-ink-deep: #080b1a;
+  --color-surface-2: #161a38;
+  --color-paper-2: #ebeefa;
+  --color-line: #d9dcec;
 }
 
 :root { --prism: linear-gradient(115deg, #22d3ee 0%, #8b5cf6 52%, #c7a6ff 100%); }
@@ -23,7 +41,12 @@ body { background: var(--color-ink); color: var(--color-light); font-family: var
 ::selection { background: #6f45f6; color: #fff; }
 
 .prism-text { background: var(--prism); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.focus-ring:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #22d3ee; outline-offset: 3px; }
+/* Focus: aqua on dark surfaces, violet on light ones (sections declare data-tone). */
+:root { --focus: #22d3ee; }
+[data-tone="light"] { --focus: #5b2ff0; }
+[data-tone="dark"] { --focus: #22d3ee; }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+[role="tabpanel"]:focus-visible { outline-offset: 6px; }
 
 @keyframes shimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
 @keyframes beam { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
@@ -51,3 +74,27 @@ body { background: var(--color-ink); color: var(--color-light); font-family: var
 .hero-range:focus-visible { outline: none; }
 .hero-range:focus-visible + .hero-track-ring { outline: 2px solid #22d3ee; outline-offset: 3px; }
 .hero-scroll { scrollbar-width: thin; scrollbar-color: #c5c9dc transparent; }
+
+/* ---------- shared motion (components/ui.tsx) ---------- */
+.rv-mask-up { overflow: hidden; }
+.rv-mask-up > .rv-inner { transform: translateY(108%); transition: transform .95s cubic-bezier(.2,.8,.2,1) var(--rv-delay, 0s); }
+.rv-mask-up.rv-in > .rv-inner { transform: none; }
+.rv-wipe-right { clip-path: inset(0 100% 0 0); transition: clip-path 1.05s cubic-bezier(.65,0,.2,1) var(--rv-delay, 0s); }
+.rv-clip-down { clip-path: inset(0 0 100% 0); transition: clip-path 1s cubic-bezier(.65,0,.2,1) var(--rv-delay, 0s); }
+.rv-wipe-right.rv-in, .rv-clip-down.rv-in { clip-path: inset(0 0 0 0); }
+.rv-scale-in { opacity: 0; transform: scale(.94); transition: opacity .7s ease var(--rv-delay, 0s), transform .9s cubic-bezier(.2,.8,.2,1) var(--rv-delay, 0s); }
+.rv-fade { opacity: 0; transition: opacity .9s ease var(--rv-delay, 0s); }
+.rv-scale-in.rv-in, .rv-fade.rv-in { opacity: 1; transform: none; }
+.kh-word { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: .1em; margin-bottom: -.1em; }
+.kh-inner { display: inline-block; transform: translateY(112%); transition: transform .95s cubic-bezier(.2,.8,.2,1); }
+.kh-in .kh-inner { transform: none; }
+/* mobile menu */
+@keyframes nav-sheet-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+@keyframes nav-item-in { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+.nav-sheet:not([hidden]) { animation: nav-sheet-in .28s ease-out both; }
+.nav-sheet-item { animation: nav-item-in .4s cubic-bezier(.2,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .rv-mask-up > .rv-inner, .kh-inner { transform: none !important; }
+  .rv-wipe-right, .rv-clip-down { clip-path: none !important; }
+  .rv-scale-in, .rv-fade { opacity: 1 !important; transform: none !important; }
+}

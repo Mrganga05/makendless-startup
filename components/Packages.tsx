@@ -7,7 +7,7 @@ export default function Packages() {
   const [id, setId] = useState<StudioId>("create");
   const studio = studios.find((s) => s.id === id)!;
   return (
-    <section className="bg-[#f6f7fc] px-5 py-24 text-[#13172b] md:px-8 md:py-32" aria-labelledby="pkg-title">
+    <section data-tone="light" className="bg-[#f6f7fc] px-5 py-24 text-[#13172b] md:px-8 md:py-32" aria-labelledby="pkg-title">
       <div className="mx-auto max-w-7xl">
         <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#6f45f6]">Packages &amp; pricing</p>
         <h2 id="pkg-title" className="mt-4 text-4xl font-extrabold md:text-6xl">Find your <span className="text-[#6f45f6]">starting point.</span></h2>

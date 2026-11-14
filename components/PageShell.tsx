@@ -1,4 +1,3 @@
-import { Footer } from "./FinalCta";
 export default function PageShell({ eyebrow, title, intro, children, light }: { eyebrow: string; title: React.ReactNode; intro?: string; children?: React.ReactNode; light?: boolean }) {
   return (
     <>
@@ -10,7 +9,6 @@ export default function PageShell({ eyebrow, title, intro, children, light }: { 
         </div>
       </section>
       <section className={`px-5 py-16 md:px-8 md:py-24 ${light ? "bg-[#f6f7fc] text-[#13172b]" : "bg-[#0c1024]"}`}><div className="mx-auto max-w-5xl">{children}</div></section>
-      <Footer />
     </>
   );
 }
