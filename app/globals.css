@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
+  /* PRISM ATELIER — proposed variant (open to refinement) */
+  --color-ink: #0c1024;
+  --color-surface: #202342;
+  --color-paper: #f6f7fc;
+  --color-violet: #6f45f6;
+  --color-violet-soft: #c7a6ff;
+  --color-aqua: #08bbd4;
+  --color-aqua-bright: #22d3ee;
+  --color-light: #f6f8ff;
+  --color-dark: #13172b;
+  --color-muted: #a4aac7;
+  --color-muted-dark: #5a6082;
+}
+
+:root { --prism: linear-gradient(115deg, #22d3ee 0%, #8b5cf6 52%, #c7a6ff 100%); }
+
+html { scroll-behavior: smooth; }
+body { background: var(--color-ink); color: var(--color-light); font-family: var(--font-syne), system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+::selection { background: #6f45f6; color: #fff; }
+
+.prism-text { background: var(--prism); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.focus-ring:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #22d3ee; outline-offset: 3px; }
+
+@keyframes shimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+@keyframes beam { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes caretpulse { 0%,100% { transform: scale(1);} 50% { transform: scale(1.12);} }
+@keyframes marquee { to { transform: translateX(-50%); } }
+@keyframes pop { 0% { transform: scale(.7); opacity: 0;} 60% { transform: scale(1.12); opacity: 1;} 100% { transform: scale(1);} }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}
