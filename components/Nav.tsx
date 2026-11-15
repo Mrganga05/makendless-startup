@@ -9,13 +9,8 @@ const links = [
   { href: "/faq", label: "FAQ" },
 ];
 
-export function Wordmark({ className = "" }: { className?: string }) {
-  return (
-    <span className={`font-extrabold tracking-[0.18em] ${className}`}>
-      MAKEND<span className="prism-text">LESS</span>
-    </span>
-  );
-}
+export { Wordmark } from "./brand";
+import { Wordmark } from "./brand";
 
 /**
  * Fixed navigation. It reads `data-tone="light" | "dark"` from whatever section is under it and switches

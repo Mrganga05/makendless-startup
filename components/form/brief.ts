@@ -54,7 +54,7 @@ type Params = Record<string, string | string[] | undefined>;
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 
 /**
- * Link contract: /contact?service=create|build|grow&package=<slug>&for=creator|local|startup|store
+ * Link contract: /contact?service=create|build|grow&need=<service code(s), e.g. V1 or V1,V4>&package=<slug>&for=creator|local|startup|store
  * Also accepts the older combined form ?service=create-starter. Unknown values are ignored.
  */
 export function initialFromParams(params: Params): BriefValues {
@@ -65,7 +65,10 @@ export function initialFromParams(params: Params): BriefValues {
   const pkg = packagesFor(studio).some((p) => p.slug === rawPkg) ? rawPkg : "";
   const rawWho = first(params.for).toLowerCase();
   const who = WHO_OPTIONS.some((w) => w.id === rawWho) ? rawWho : "";
-  return { name: "", email: "", business: "", who, studio, services: [], pkg, links: "", timing: "", budget: "", message: "" };
+  const valid = new Set(servicesFor(studio).map((x) => x.code.toUpperCase()));
+  const rawNeed = ([] as string[]).concat(params.need ?? []).flatMap((x) => String(x).split(","));
+  const services = [...new Set(rawNeed.map((x) => x.trim().toUpperCase()).filter((x) => valid.has(x)))];
+  return { name: "", email: "", business: "", who, studio, services, pkg, links: "", timing: "", budget: "", message: "" };
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)*\.[A-Za-z]{2,}$/;

@@ -1,4 +1,4 @@
 import type { Metadata } from "next";
 import StudioPage from "../../components/StudioPage";
-export const metadata: Metadata = { title: "BUILD" };
+export const metadata: Metadata = { title: "BUILD — Website Development", description: "Website design and development: business websites, e-commerce stores, booking systems and custom web apps, redesigns and ongoing maintenance. Responsive and accessible.", alternates: { canonical: "/build" }, openGraph: { title: "BUILD — Website Development — MAKENDLESS", description: "Website design and development: business websites, e-commerce stores, booking systems and custom web apps, redesigns and ongoing maintenance. Responsive and accessible.", url: "/build", images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "MAKENDLESS — We make ideas impossible to ignore." }] } };
 export default function Page() { return <StudioPage id="build" />; }

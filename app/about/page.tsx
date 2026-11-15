@@ -3,7 +3,7 @@ import PageShell from "../../components/PageShell";
 import { ButtonLink, Arrow, Eyebrow, KineticHeading, Reveal } from "../../components/ui";
 import { process } from "../../data/process";
 
-export const metadata: Metadata = { title: "About", description: "MAKENDLESS is a small creative and technology studio: video editing, website development and, in beta, digital marketing." };
+export const metadata: Metadata = { alternates: { canonical: "/about" }, title: "About", description: "MAKENDLESS is a small creative and technology studio: video editing, website development and, in beta, digital marketing." };
 
 const pillars = [
   { verb: "CREATE", color: "text-create", text: "Visual content that holds attention: short-form, long-form, promotional video and motion graphics." },

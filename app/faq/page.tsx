@@ -3,7 +3,7 @@ import PageShell from "../../components/PageShell";
 import { Arrow, ButtonLink } from "../../components/ui";
 import { faqs } from "../../data/process";
 
-export const metadata: Metadata = { title: "FAQ", description: "How to start a project with MAKENDLESS, what we need, how quotes and revisions work, timelines and support." };
+export const metadata: Metadata = { alternates: { canonical: "/faq" }, title: "FAQ", description: "How to start a project with MAKENDLESS, what we need, how quotes and revisions work, timelines and support." };
 
 export default function Page() {
   return (

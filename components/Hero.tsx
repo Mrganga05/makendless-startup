@@ -3,6 +3,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BrowserScreen, PhoneScreen, seg } from "./HeroScreens";
+import { Wordmark } from "./brand";
 
 const Hero3D = dynamic(() => import("./Hero3D"), { ssr: false, loading: () => null });
 const useIsoLayout = typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -231,7 +232,7 @@ export default function Hero() {
               </span>
               {hint && <span className="whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-[#13172b] sm:px-2.5 sm:text-[11px] transition-opacity duration-500" style={{ opacity: p > 0.9 ? 1 : 0 }}>Drag to see the edit ↓</span>}
               <span className="font-mono text-xs tabular-nums text-[#a4aac7]" aria-hidden="true">{timecode}</span>
-              <span className="hidden text-sm font-extrabold tracking-[0.18em] transition-all duration-700 xl:block" style={{ opacity: seg(p, 0.9, 1), letterSpacing: `${0.6 - seg(p, 0.9, 1) * 0.42}em` }} aria-hidden="true">MAKEND<span className="prism-text">LESS</span></span>
+              <span className="hidden text-sm font-extrabold tracking-[0.18em] transition-all duration-700 xl:block" style={{ opacity: seg(p, 0.9, 1), letterSpacing: `${0.6 - seg(p, 0.9, 1) * 0.42}em` }} aria-hidden="true"><Wordmark /></span>
             </div>
           </div>
 

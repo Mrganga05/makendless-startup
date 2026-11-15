@@ -80,37 +80,54 @@ export default function StudioPage({ id }: { id: StudioId }) {
             </p>
           </div>
 
-          <ol className="mt-12 divide-y divide-line border-y border-line">
-            {s.services.map((sv, i) => (
-              <li key={sv.code}>
-                <Reveal kind={i % 2 ? "fade" : "wipe-right"}>
-                  <article className="grid gap-6 py-9 md:grid-cols-[110px_1fr] lg:grid-cols-[110px_1.1fr_1fr] lg:gap-10">
-                    <p className={`text-sm font-extrabold tracking-[0.25em] ${L.text === "text-grow" ? "text-violet" : id === "create" ? "text-[#0891b2]" : "text-violet"}`}>{sv.code}</p>
-                    <div>
-                      <h3 className="text-2xl font-extrabold leading-tight sm:text-3xl">{sv.title}</h3>
-                      {sv.summary && <p className="mt-3 max-w-lg text-[16px] leading-relaxed text-muted-dark">{sv.summary}</p>}
-                      {sv.forWho && <p className="mt-4 text-[15px]"><span className="font-bold">For: </span><span className="text-muted-dark">{sv.forWho}</span></p>}
-                    </div>
-                    <div className="grid gap-5 sm:grid-cols-2 md:col-start-2 lg:col-start-auto">
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">{beta ? "Planned scope" : "Includes"}</p>
-                        <ul className="mt-3 space-y-2 text-[15px]">
-                          {sv.items.map((it) => (<li key={it} className="flex gap-2.5"><span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${L.dot}`} />{it}</li>))}
-                        </ul>
+          <ol className="mt-12 grid gap-5">
+            {s.services.map((sv, i) => {
+              const codeColor = id === "create" ? "text-[#0891b2]" : "text-violet";
+              const href = `/contact?service=${id}&need=${sv.code}`;
+              return (
+                <li key={sv.code} id={sv.code.toLowerCase()} className="scroll-mt-24">
+                  <Reveal kind={i % 2 ? "fade" : "wipe-right"}>
+                    <article className="group grid overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-line transition duration-300 hover:shadow-[0_30px_70px_-45px_rgba(19,23,43,.55)] lg:grid-cols-[1.15fr_1fr]">
+                      {/* what it is */}
+                      <div className="flex flex-col p-6 sm:p-8">
+                        <div className="flex items-center gap-3">
+                          <span className={`grid h-11 min-w-11 place-items-center rounded-full px-2 text-sm font-extrabold ring-1 ring-line ${codeColor}`}>{sv.code}</span>
+                          {beta && <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet">In development</span>}
+                        </div>
+                        <h3 className="mt-5 text-2xl font-extrabold leading-tight sm:text-[1.9rem]">{sv.title}</h3>
+                        {sv.summary && <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted-dark">{sv.summary}</p>}
+                        {sv.forWho && (
+                          <p className="mt-5 rounded-2xl bg-paper px-4 py-3 text-[15px] leading-relaxed">
+                            <span className="font-bold">Made for: </span><span className="text-muted-dark">{sv.forWho}</span>
+                          </p>
+                        )}
+                        <div className="mt-auto flex flex-wrap items-center gap-3 pt-7">
+                          <ButtonLink href={href} tone="light">{beta ? `I'm interested in ${sv.code}` : `Start a ${sv.code} project`} <Arrow /></ButtonLink>
+                          {!beta && <span className="text-sm text-muted-dark">Opens the brief with this service selected.</span>}
+                        </div>
                       </div>
-                      {sv.extras && sv.extras.length > 0 && (
+                      {/* what you get */}
+                      <div className="grid content-start gap-7 border-t border-line bg-paper/60 p-6 sm:grid-cols-2 sm:p-8 lg:border-l lg:border-t-0 lg:grid-cols-1">
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Can be added</p>
-                          <ul className="mt-3 flex flex-wrap gap-2">
-                            {sv.extras.map((x) => (<li key={x} className={`rounded-full px-3 py-1.5 text-[13px] font-semibold ${L.chip}`}>{x}</li>))}
+                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">{beta ? "Planned scope" : "Includes"}</p>
+                          <ul className="mt-3 space-y-2.5 text-[15px]">
+                            {sv.items.map((it) => (<li key={it} className="flex gap-3"><span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${L.dot}`} />{it}</li>))}
                           </ul>
                         </div>
-                      )}
-                    </div>
-                  </article>
-                </Reveal>
-              </li>
-            ))}
+                        {sv.extras && sv.extras.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Can be added</p>
+                            <ul className="mt-3 flex flex-wrap gap-2">
+                              {sv.extras.map((x) => (<li key={x} className={`rounded-full px-3 py-1.5 text-[13px] font-semibold ${L.chip}`}>{x}</li>))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  </Reveal>
+                </li>
+              );
+            })}
           </ol>
 
           {s.supporting && s.supporting.length > 0 && (

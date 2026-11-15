@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import PageShell from "../../components/PageShell";
 import { ButtonLink } from "../../components/ui";
 
-export const metadata: Metadata = { title: "Terms", description: "The Terms page for MAKENDLESS is being prepared." };
+export const metadata: Metadata = { alternates: { canonical: "/terms" }, title: "Terms", description: "The Terms page for MAKENDLESS is being prepared." };
 
 export default function Page() {
   return (

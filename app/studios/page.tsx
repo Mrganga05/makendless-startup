@@ -5,7 +5,7 @@ import { StudioWorld } from "../../components/StudioPage";
 import { Arrow, BetaBadge, Reveal } from "../../components/ui";
 import { studios } from "../../data/studios";
 
-export const metadata: Metadata = { title: "Studios", description: "Three studios: CREATE (video editing), BUILD (website development) and GROW (digital marketing, in beta)." };
+export const metadata: Metadata = { alternates: { canonical: "/studios" }, title: "Studios", description: "Three studios: CREATE (video editing), BUILD (website development) and GROW (digital marketing, in beta)." };
 
 export default function Page() {
   return (

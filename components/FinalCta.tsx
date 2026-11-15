@@ -17,7 +17,7 @@ const WORDS: { w: string; accent?: boolean; m?: boolean; d?: boolean }[] = [
   { w: "worth", accent: true, m: true }, { w: "remembering.", accent: true },
 ];
 
-const ENABLE_CTA_3D = false;
+const ENABLE_CTA_3D = true;
 
 export default function FinalCta() {
   const [nearRef, near] = useInView<HTMLElement>({ once: true, margin: "700px 0px", threshold: 0 });

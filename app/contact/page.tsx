@@ -5,7 +5,7 @@ import { Eyebrow } from "../../components/ui";
 import { CONTACT_EMAIL } from "../../lib/site";
 import { readSimulate } from "../../lib/submit-brief";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/contact" },
   title: "Start a Project",
   description: "Tell MAKENDLESS what you're building. Write a short project brief for video editing or website development, or register interest in the marketing beta.",
 };

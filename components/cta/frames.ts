@@ -153,9 +153,18 @@ export function drawEndCard() {
   const total = widths.reduce((s, x) => s + x, 0) + gap * (word.length - 1);
   let x = (W - total) / 2;
   const x6 = x + widths.slice(0, 6).reduce((s, v) => s + v, 0) + gap * 6;
+  const em = g.measureText("E"), capTop = H * 0.47 - em.actualBoundingBoxAscent, capH = em.actualBoundingBoxAscent + em.actualBoundingBoxDescent;
   [...word].forEach((ch, i) => {
-    g.fillStyle = i < 6 ? "#ffffff" : prism(g, x6, 0, x6 + total * 0.36, 0);
-    g.fillText(ch, x, H * 0.47); x += widths[i] + gap;
+    if (ch === "E") {
+      // studio "E": spine + CREATE / BUILD / GROW bars (same proportions as components/brand.tsx)
+      const sx = widths[i] / 92, sy = capH / 100;
+      const bar = (bx: number, by: number, bw: number, bh: number, col: string) => { g.fillStyle = col; rr(g, x + bx * sx, capTop + by * sy, bw * sx, bh * sy, 3); g.fill(); };
+      bar(0, 0, 22, 100, "#ffffff"); bar(0, 0, 92, 22, "#22d3ee"); bar(30, 39, 54, 22, "#8b5cf6"); bar(0, 78, 92, 22, "#c7a6ff");
+    } else {
+      g.fillStyle = i < 6 ? "#ffffff" : prism(g, x6, 0, x6 + total * 0.36, 0);
+      g.fillText(ch, x, H * 0.47);
+    }
+    x += widths[i] + gap;
   });
   g.fillStyle = prism(g, W * 0.3, 0, W * 0.7, 0); rr(g, W * 0.36, H * 0.62, W * 0.28, 5, 2.5); g.fill();
   return c;
