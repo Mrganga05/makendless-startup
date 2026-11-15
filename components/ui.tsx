@@ -1,7 +1,7 @@
 "use client";
 /* Shared UI primitives. Every section should use these instead of re-implementing tabs, reveals, buttons and labels. */
 import Link from "next/link";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useId, useRef, useState } from "react";
 
 export const EASE = "cubic-bezier(.2,.8,.2,1)";
 
@@ -23,16 +23,22 @@ export function useInView<T extends Element>(opts: { once?: boolean; margin?: st
   const ref = useRef<T>(null);
   const [inView, setInView] = useState(false);
   const { once = false, margin = "0px", threshold = 0.15 } = opts;
+  const watched = useRef<{ el: Element | null; io: IntersectionObserver | null; done: boolean }>({ el: null, io: null, done: false });
+  /* Runs after every render: (re)attaches when the element first appears or is swapped, so conditionally
+     rendered targets are observed too (a one-shot effect missed them and they stayed "off-screen" forever). */
   useEffect(() => {
-    const el = ref.current;
+    const w = watched.current, el = ref.current;
+    if (w.done || el === w.el) return;
+    w.io?.disconnect();
+    w.el = el;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { setInView(true); if (once) io.disconnect(); }
+    w.io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setInView(true); if (once) { w.done = true; w.io?.disconnect(); } }
       else if (!once) setInView(false);
     }, { rootMargin: margin, threshold });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [once, margin, threshold]);
+    w.io.observe(el);
+  });
+  useEffect(() => () => watched.current.io?.disconnect(), []);
   return [ref, inView] as const;
 }
 
@@ -96,8 +102,12 @@ export function Reveal({ children, kind = "mask-up", delay = 0, className = "", 
   const [ref, inView] = useInView<HTMLElement>({ once: true, margin: "0px 0px -8% 0px" });
   const T = Tag as "div";
   return (
-    <T ref={ref as React.Ref<HTMLDivElement>} className={`rv rv-${kind} ${inView ? "rv-in" : ""} ${className}`} style={{ ["--rv-delay" as string]: `${delay}s` }}>
-      {kind === "mask-up" ? <span className="rv-inner block">{children}</span> : children}
+    /* The observed host is never clipped; the clip/mask lives on the inner span (an element clipped to nothing
+       never reports as intersecting, so it could never reveal itself). */
+    <T ref={ref as React.Ref<HTMLDivElement>} className={className}>
+      <span className={`block rv rv-${kind} ${inView ? "rv-in" : ""}`} style={{ ["--rv-delay" as string]: `${delay}s` }}>
+        {kind === "mask-up" ? <span className="rv-inner block">{children}</span> : children}
+      </span>
     </T>
   );
 }
@@ -111,10 +121,12 @@ export function KineticHeading({ text, accent, as: Tag = "h2", className = "", i
   return (
     <Tag ref={ref} id={id} aria-label={accent ? `${text} ${accent}` : text} className={`kh ${inView ? "kh-in" : ""} ${className}`}>
       {all.map((x, i) => (
-        <span key={i} aria-hidden="true" className="kh-word">
-          <span className={`kh-inner ${x.a ? accentClass : ""}`} style={{ transitionDelay: `${i * 0.07}s` }}>{x.w}</span>
+        <Fragment key={i}>
+          <span aria-hidden="true" className="kh-word">
+            <span className={`kh-inner ${x.a ? accentClass : ""}`} style={{ transitionDelay: `${i * 0.07}s` }}>{x.w}</span>
+          </span>
           {i < all.length - 1 ? " " : ""}
-        </span>
+        </Fragment>
       ))}
     </Tag>
   );

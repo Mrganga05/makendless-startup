@@ -58,7 +58,6 @@ function Line({ text, i, g, accent, intro }: { text: string; i: number; g: numbe
 export default function Hero() {
   const [p, setP] = useState(0);
   const [mode, setMode] = useState(0);
-  const [t, setT] = useState(0);
   const [paused, setPaused] = useState(false);
   const [gl, setGl] = useState<boolean | null>(null);
   const [ready, setReady] = useState(false);
@@ -101,13 +100,6 @@ export default function Hero() {
     return () => io.disconnect();
   }, []);
 
-  /* demo reel clock (drives cuts, captions and the on-screen counter) */
-  useEffect(() => {
-    if (paused || !inView) return;
-    const id = setInterval(() => setT((x) => (x + 0.1) % 6), 100);
-    return () => clearInterval(id);
-  }, [paused, inView]);
-
   /* auto-cycle modes every 6s until the visitor interacts */
   useEffect(() => {
     if (!cycling || !inView) return;
@@ -142,7 +134,7 @@ export default function Hero() {
     <section ref={section} className="relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-[#0c1024] pt-16" aria-labelledby="hero-title" style={{ ["--accent" as string]: M.color }}>
       {/* background: mode-tinted glow + slow prismatic sweep */}
       <div className="pointer-events-none absolute inset-0 -z-10 transition-[background] duration-1000" style={{ background: `radial-gradient(55% 55% at 74% 42%, ${M.color}${edited ? "3d" : "1f"}, transparent 70%), radial-gradient(40% 40% at 10% 95%, rgba(8,187,212,.14), transparent 70%)` }} />
-      <div className="pointer-events-none absolute inset-y-[-20%] left-0 -z-10 w-[38%] opacity-[.13] blur-3xl" style={{ background: "var(--prism)", animation: "hero-sweep 22s linear infinite", opacity: 0.05 + p * 0.1 }} />
+      <div className="pointer-events-none absolute inset-y-[-20%] left-0 -z-10 w-[38%]" style={{ background: "linear-gradient(90deg, transparent, rgba(34,211,238,.55) 35%, rgba(139,92,246,.55) 65%, transparent)", willChange: "transform", animation: "hero-sweep 22s linear infinite", opacity: 0.05 + p * 0.1 }} />
 
       <div className="relative mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 md:px-8 lg:flex-row lg:items-center">
         {/* TEXT */}
@@ -168,14 +160,14 @@ export default function Hero() {
           </p>
           <div className="mt-4 flex gap-2.5 sm:mt-8 sm:gap-3">
             <Magnetic className="flex-1 sm:flex-none"><Link href="/contact" className="block rounded-full bg-white whitespace-nowrap px-2 py-3.5 text-center text-[13px] min-[390px]:text-sm font-extrabold text-[#13172b] transition-colors hover:bg-[#c7a6ff] sm:px-8 sm:text-base">Start a Project</Link></Magnetic>
-            <Magnetic className="flex-1 sm:flex-none"><Link href="#studios" className="block rounded-full border border-white/30 bg-[#0c1024]/40 whitespace-nowrap px-2 py-3.5 text-center text-[13px] min-[390px]:text-sm font-bold backdrop-blur transition-colors hover:border-white hover:bg-white/10 sm:px-8 sm:text-base">Explore Studios</Link></Magnetic>
+            <Magnetic className="flex-1 sm:flex-none"><Link href="#studios" className="block rounded-full border border-white/30 bg-[#0c1024]/40 whitespace-nowrap px-2 py-3.5 text-center text-[13px] min-[390px]:text-sm font-bold transition-colors hover:border-white hover:bg-white/10 sm:px-8 sm:text-base">Explore Studios</Link></Magnetic>
           </div>
         </div>
 
         {/* SCENE */}
         <div ref={scene} className="relative z-10 mt-2 h-[200px] min-h-0 flex-1 sm:h-[330px] sm:flex-none lg:absolute lg:inset-y-0 lg:right-[-3%] lg:mt-0 lg:h-auto lg:w-[60%]">
-          {gl && <div className="absolute inset-0 transition-opacity duration-1000" style={{ opacity: ready ? 1 : 0 }}><Hero3D p={p} mode={mode} t={t} paused={paused} compact={compact} active={inView} onReady={() => setReady(true)} /></div>}
-          <button onClick={() => setPaused((x) => !x)} aria-pressed={paused} className="absolute bottom-1 right-0 z-50 flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-[#0c1024]/70 px-3.5 text-xs font-bold text-[#d5d9ea] backdrop-blur hover:bg-white/10 lg:bottom-4 lg:right-[6%]">
+          {gl && <div className="absolute inset-0 transition-opacity duration-1000" style={{ opacity: ready ? 1 : 0 }}><Hero3D p={p} mode={mode} paused={paused} compact={compact} active={inView} onReady={() => setReady(true)} /></div>}
+          <button onClick={() => setPaused((x) => !x)} aria-pressed={paused} className="absolute bottom-1 right-0 z-50 flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-[#0c1024]/85 px-3.5 text-xs font-bold text-[#d5d9ea] hover:bg-white/10 lg:bottom-4 lg:right-[6%]">
                 <span aria-hidden="true" className="text-[10px]">{paused ? "▶" : "❚❚"}</span>{paused ? "Play video" : "Pause video"}
               </button>
           {gl === false && (
@@ -183,7 +175,7 @@ export default function Hero() {
             <div className="absolute inset-0 flex items-center justify-center gap-[4%] lg:justify-end lg:pr-[5%]" style={{ perspective: 1400 }}>
               {(!compact || mode !== 1) && (
                 <div className="shrink-0 rounded-[38px] bg-gradient-to-br from-[#c9cde0] via-[#6d7290] to-[#2a2d44] p-[6px] shadow-[0_40px_80px_-20px_rgba(0,0,0,.8),0_0_60px_-10px_var(--accent)]" style={{ transform: compact ? "none" : "rotateY(16deg) rotateX(3deg)", zoom: compact ? 0.34 : 0.72, opacity: !compact && mode === 1 ? 0.75 : 1, transition: "opacity .6s" }}>
-                  <div style={{ width: 260, height: 540 }}><PhoneScreen p={p} t={t} paused={paused} ad={ad} /></div>
+                  <div style={{ width: 260, height: 540 }}><PhoneScreen p={p} paused={paused} ad={ad} /></div>
                 </div>
               )}
               {(!compact || mode === 1) && (
@@ -197,7 +189,7 @@ export default function Hero() {
       </div>
 
       {/* EDIT DOCK: mode switch + real timeline */}
-      <div className="relative z-30 border-t border-white/10 bg-[#0c1024]/85 px-5 pb-3 pt-2.5 backdrop-blur-xl md:px-8 md:pb-4 md:pt-3">
+      <div className="relative z-30 border-t border-white/10 bg-[#0c1024]/95 px-5 pb-3 pt-2.5 md:px-8 md:pb-4 md:pt-3">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div role="tablist" aria-label="Service mode" className="relative grid w-full grid-cols-3 rounded-full border border-white/12 bg-white/5 p-1 sm:w-auto" style={{ touchAction: "pan-y" }}

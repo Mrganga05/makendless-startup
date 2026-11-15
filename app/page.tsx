@@ -1,6 +1,5 @@
 import Hero from "../components/Hero";
 import Studios from "../components/Studios";
-import Transformation from "../components/Transformation";
 import Solutions from "../components/Solutions";
 import Packages from "../components/Packages";
 import ProcessFaq from "../components/ProcessFaq";
@@ -11,7 +10,6 @@ export default function Home() {
     <>
       <Hero />
       <Studios />
-      <Transformation />
       <Solutions />
       <Packages />
       <ProcessFaq />

@@ -1,1 +1,158 @@
 /* Styles owned by the cta section. Keep selectors prefixed with .cta- to avoid collisions. */
+
+/* ---------- layout: copy on top, the closing shot plays in the zone below it ---------- */
+.cta {
+  --cta-zone: clamp(15.5rem, 74vw, 19rem);              /* height reserved for the scene under the copy */
+  padding-top: clamp(6.5rem, 15svh, 8rem);
+  padding-bottom: var(--cta-zone);
+  min-height: min(100svh, 60rem);
+}
+@media (min-width: 640px) { .cta { --cta-zone: clamp(20rem, 44vw, 24rem); padding-top: clamp(7rem, 13svh, 9.5rem); } }
+@media (min-width: 1024px) { .cta { --cta-zone: clamp(22rem, 46svh, 30rem); min-height: max(100svh, 52rem); } }
+
+.cta-backdrop {
+  background:
+    radial-gradient(60% 46% at 50% 100%, rgba(111, 69, 246, .34), transparent 72%),
+    radial-gradient(34% 30% at 12% 78%, rgba(34, 211, 238, .12), transparent 70%),
+    radial-gradient(34% 30% at 88% 70%, rgba(199, 166, 255, .12), transparent 70%);
+}
+/* keeps the headline and the button clean where the film strips pass behind them, and settles the shot into the footer */
+.cta-scrim {
+  background:
+    linear-gradient(to bottom, var(--color-ink) 0%, rgba(12, 16, 36, .9) 26%, rgba(12, 16, 36, .55) 46%, rgba(12, 16, 36, 0) 64%),
+    linear-gradient(to top, var(--color-ink-deep) 0%, rgba(8, 11, 26, 0) 16%);
+  pointer-events: none;
+}
+
+/* ---------- eyebrow ---------- */
+.cta-eyebrow {
+  display: inline-flex; align-items: center; gap: .7rem;
+  font-size: .75rem; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: var(--color-aqua-bright);
+  opacity: 0; transition: opacity .8s ease;
+}
+.cta-eyebrow-mark {
+  width: 18px; height: 12px; flex: none;
+  background:
+    linear-gradient(currentColor, currentColor) left top / 6px 2px, linear-gradient(currentColor, currentColor) left top / 2px 5px,
+    linear-gradient(currentColor, currentColor) right top / 6px 2px, linear-gradient(currentColor, currentColor) right top / 2px 5px,
+    linear-gradient(currentColor, currentColor) left bottom / 6px 2px, linear-gradient(currentColor, currentColor) left bottom / 2px 5px,
+    linear-gradient(currentColor, currentColor) right bottom / 6px 2px, linear-gradient(currentColor, currentColor) right bottom / 2px 5px;
+  background-repeat: no-repeat;
+}
+.cta-in .cta-eyebrow { opacity: 1; }
+
+/* ---------- headline: words rise out of a mask, then a prismatic sheen crosses the accent ---------- */
+.cta-title {
+  font-size: clamp(1.5rem, 7.9vw, 2.6rem);
+  line-height: 1.04; letter-spacing: -.02em;
+  max-width: 100%;
+}
+@media (min-width: 640px) { .cta-title { font-size: clamp(2rem, 5.15vw, 4.25rem); line-height: 1.04; } }
+.cta-word { display: inline-block; overflow: hidden; vertical-align: bottom; padding: .06em .02em .2em; margin: -.06em -.02em -.2em; }
+.cta-word-in { display: inline-block; transform: translateY(118%) rotate(5deg); transform-origin: 0 100%; transition: transform 1.05s cubic-bezier(.16, .84, .24, 1); }
+.cta-in .cta-word-in { transform: none; }
+.cta-accent {
+  color: transparent;
+  background-image: linear-gradient(100deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, .95) 50%, rgba(255, 255, 255, 0) 58%), var(--prism);
+  background-size: 260% 100%, 100% 100%;
+  background-position: 170% 0, 0 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text; background-clip: text;
+}
+.cta-in .cta-accent { animation: cta-sheen 7s cubic-bezier(.5, 0, .3, 1) 1.1s infinite; animation-play-state: paused; }
+.cta-live.cta-in .cta-accent { animation-play-state: running; }
+@keyframes cta-sheen { 0% { background-position: 170% 0, 0 0; } 26%, 100% { background-position: -70% 0, 0 0; } }
+
+/* ---------- supporting line + action ---------- */
+.cta-line { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(10px); transition: opacity .8s ease .6s, clip-path .9s cubic-bezier(.65, 0, .2, 1) .6s, transform .9s cubic-bezier(.2, .8, .2, 1) .6s; text-shadow: 0 1px 18px rgba(8, 11, 26, .9); }
+.cta-in .cta-line { opacity: 1; clip-path: inset(0 0 -20% 0); transform: none; }
+.cta-action { opacity: 0; transform: scale(.86); transition: opacity .6s ease .85s, transform .9s cubic-bezier(.2, 1.3, .3, 1) .85s; }
+.cta-in .cta-action { opacity: 1; transform: none; }
+
+.cta-btn {
+  position: relative; display: inline-flex; border-radius: 9999px; white-space: nowrap;
+  transform: translate3d(var(--mx, 0px), var(--my, 0px), 0);
+  transition: transform .45s cubic-bezier(.2, .8, .2, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.cta-btn:focus-visible { border-radius: 9999px; outline-offset: 5px; }
+.cta-btn-glow {
+  position: absolute; inset: -2px; border-radius: inherit; background: var(--prism);
+  filter: blur(16px); opacity: .55; transition: opacity .3s ease, inset .3s ease;
+}
+.cta-btn-face {
+  position: relative; display: inline-flex; align-items: center; gap: 1rem;
+  min-height: 64px; padding: 8px 8px 8px 1.9rem; border-radius: inherit;
+  background: #fff; color: var(--color-dark);
+  font-size: 1.125rem; font-weight: 800; letter-spacing: .01em;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .5), 0 18px 40px -14px rgba(8, 11, 26, .9);
+  transition: transform .18s ease, background-color .25s ease;
+  overflow: hidden;
+}
+.cta-btn-face::after { /* light sweep across the pill */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(139, 92, 246, .28) 50%, transparent 62%);
+  transform: translateX(-120%);
+}
+.cta-live.cta-in .cta-btn-face::after { animation: cta-btn-sweep 7s cubic-bezier(.5, 0, .3, 1) 2.2s infinite; }
+@keyframes cta-btn-sweep { 0% { transform: translateX(-120%); } 22%, 100% { transform: translateX(120%); } }
+.cta-btn-arrow {
+  position: relative; display: grid; place-items: center; width: 48px; height: 48px; flex: none; border-radius: 50%;
+  background: var(--color-ink); color: #fff; transition: background-color .25s ease;
+}
+.cta-btn-arrow svg { width: 20px; height: 20px; transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+@media (min-width: 640px) { .cta-btn-face { min-height: 72px; padding-left: 2.4rem; font-size: 1.3rem; gap: 1.25rem; } .cta-btn-arrow { width: 56px; height: 56px; } }
+@media (hover: hover) {
+  .cta-btn:hover .cta-btn-glow { opacity: .95; inset: -6px; }
+  .cta-btn:hover .cta-btn-arrow { background: var(--color-violet); }
+  .cta-btn:hover .cta-btn-arrow svg { transform: translateX(4px); }
+}
+.cta-btn:focus-visible .cta-btn-glow { opacity: .95; }
+.cta-btn:active .cta-btn-face { transform: scale(.955); background: var(--color-paper-2); }
+.cta-btn:active .cta-btn-glow { opacity: 1; inset: 0; }
+
+/* ---------- still closing shot (no WebGL / reduced motion) ---------- */
+.cta-still { position: absolute; inset-inline: 0; bottom: 0; height: var(--cta-zone); --fw: min(60vw, 30rem); }
+@media (min-width: 768px) { .cta-still { --fw: min(40vw, 33rem); } }
+.cta-still img { display: block; width: 100%; height: 100%; }
+.cta-still-halo {
+  position: absolute; left: 50%; top: 42%; width: min(120vw, 70rem); height: 120%; transform: translate(-50%, -50%);
+  background: radial-gradient(40% 46% at 40% 52%, rgba(34, 211, 238, .5), transparent 70%), radial-gradient(42% 48% at 62% 46%, rgba(139, 92, 246, .7), transparent 70%);
+  filter: blur(30px);
+}
+.cta-still-frame {
+  position: absolute; left: 50%; top: 9%; width: var(--fw); aspect-ratio: 16 / 9; transform: translateX(-50%);
+  padding: clamp(3px, .5vw, 6px); border-radius: clamp(8px, 1.2vw, 16px);
+  background: linear-gradient(160deg, #eef0f8, #8d93ad 45%, #dfe2ee 70%, #7b8199);
+  box-shadow: 0 30px 60px -20px rgba(3, 4, 10, .9), 0 0 70px rgba(139, 92, 246, .45);
+}
+.cta-still-frame img { border-radius: clamp(5px, .8vw, 11px); }
+.cta-still-strip {
+  position: absolute; top: calc(9% + var(--fw) * .09); display: flex; gap: 0; height: calc(var(--fw) * .34);
+  -webkit-mask-image: linear-gradient(to var(--fade), #000 20%, transparent 96%); mask-image: linear-gradient(to var(--fade), #000 20%, transparent 96%);
+}
+.cta-still-strip img { width: auto; aspect-ratio: 4 / 3; flex: none; }
+.cta-still-strip-l { --fade: left; right: calc(50% + var(--fw) * .46); flex-direction: row-reverse; transform-origin: 100% 50%; transform: perspective(900px) rotateY(52deg) rotateZ(5deg); }
+.cta-still-strip-r { --fade: right; left: calc(50% + var(--fw) * .46); transform-origin: 0 50%; transform: perspective(900px) rotateY(-52deg) rotateZ(-5deg); }
+.cta-still-phone {
+  position: absolute; bottom: 9%; left: calc(50% - var(--fw) * .5 - var(--fw) * .34); width: calc(var(--fw) * .2); aspect-ratio: 87 / 181;
+  padding: 3px; border-radius: 14% / 7%; background: linear-gradient(160deg, #d5d8e6, #6f748c);
+  transform: perspective(900px) rotateY(26deg); box-shadow: 0 24px 40px -18px rgba(3, 4, 10, .95);
+}
+.cta-still-phone img { border-radius: 12% / 6%; }
+.cta-still-laptop { position: absolute; bottom: 9%; left: calc(50% + var(--fw) * .5 + var(--fw) * .02); width: calc(var(--fw) * .46); transform: perspective(900px) rotateY(-24deg); transform-origin: 0 100%; }
+.cta-still-lid { padding: 3px 3px 4px; border-radius: 7px 7px 2px 2px; background: linear-gradient(160deg, #d9dcea, #7f849b); aspect-ratio: 612 / 400; box-shadow: 0 24px 40px -18px rgba(3, 4, 10, .95); }
+.cta-still-lid img { border-radius: 4px 4px 1px 1px; }
+.cta-still-base { height: 7px; margin-inline: -7%; border-radius: 2px 2px 9px 9px; background: linear-gradient(#c4c8d8, #6f748c); }
+.cta-still-floor {
+  position: absolute; inset-inline: 0; bottom: 9%; height: 1px;
+  background: linear-gradient(to right, transparent, rgba(34, 211, 238, .5) 25%, rgba(139, 92, 246, .7) 50%, rgba(199, 166, 255, .5) 75%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta-word-in, .cta-line, .cta-action { transform: none !important; }
+  .cta-eyebrow, .cta-line, .cta-action { opacity: 1 !important; }
+  .cta-line { clip-path: none !important; }
+  .cta-accent, .cta-btn-face::after { animation: none !important; }
+  .cta-btn { transform: none; }
+}

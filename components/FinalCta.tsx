@@ -1,18 +1,78 @@
-import Link from "next/link";
-import { Wordmark } from "./Nav";
+"use client";
+/* Homepage section 7 - the final frame of the film.
+   Text and the call to action render first; the 3D closing shot (components/cta/CtaScene.tsx) is mounted only when the
+   section is near the viewport, runs only while it is on screen, and is replaced by a still (CtaStill) when WebGL is
+   missing or the visitor prefers reduced motion. */
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+import { hasWebGL, useInView } from "./ui";
+import MagneticLink from "./cta/MagneticLink";
+import CtaStill from "./cta/CtaStill";
+
+const CtaScene = dynamic(() => import("./cta/CtaScene"), { ssr: false, loading: () => null });
+
+/* Headline words. `m` = line break after the word on phones, `d` = line break after the word from 640px up. */
+const WORDS: { w: string; accent?: boolean; m?: boolean; d?: boolean }[] = [
+  { w: "Let’s" }, { w: "make", m: true }, { w: "something", m: true, d: true },
+  { w: "worth", accent: true, m: true }, { w: "remembering.", accent: true },
+];
 
 export default function FinalCta() {
+  const [nearRef, near] = useInView<HTMLElement>({ once: true, margin: "700px 0px", threshold: 0 });
+  const [stageRef, onScreen] = useInView<HTMLDivElement>({ threshold: 0.02 });
+  const [headRef, shown] = useInView<HTMLHeadingElement>({ once: true, margin: "0px 0px -12% 0px", threshold: 0.2 });
+  const [mode, setMode] = useState<"pending" | "3d" | "still">("pending");
+  const [compact, setCompact] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const rm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const mq = window.matchMedia("(max-width: 767px)");
+    const decide = () => { setMode(!rm.matches && hasWebGL() ? "3d" : "still"); setCompact(mq.matches); };
+    decide();
+    rm.addEventListener("change", decide); mq.addEventListener("change", decide);
+    return () => { rm.removeEventListener("change", decide); mq.removeEventListener("change", decide); };
+  }, []);
+
   return (
-    <>
-      <section className="relative isolate overflow-hidden bg-[#0c1024] px-5 py-32 text-center md:px-8 md:py-44" aria-labelledby="cta-title">
-        <div className="pointer-events-none absolute inset-0 -z-10 opacity-80" style={{ background: "radial-gradient(50% 60% at 50% 100%, rgba(111,69,246,.55), transparent 70%), radial-gradient(30% 40% at 20% 20%, rgba(8,187,212,.2), transparent 70%)" }} />
-        <svg className="pointer-events-none absolute left-1/2 top-0 -z-10 w-[900px] max-w-none -translate-x-1/2 opacity-30" viewBox="0 0 900 300" aria-hidden="true">
-          {[0, 1, 2].map((i) => (<line key={i} x1="450" y1="0" x2={150 + i * 300} y2="300" stroke={["#22d3ee", "#8b5cf6", "#c7a6ff"][i]} strokeWidth="2"><animate attributeName="opacity" values=".3;1;.3" dur="5s" begin={`${i * 0.8}s`} repeatCount="indefinite" /></line>))}
-        </svg>
-        <h2 id="cta-title" className="mx-auto max-w-4xl text-[2rem] font-extrabold leading-[1.05] sm:text-6xl md:text-7xl">Let&apos;s make something <span className="prism-text">worth remembering.</span></h2>
-        <p className="mx-auto mt-6 max-w-xl text-lg text-[#a4aac7]">Tell us what you&apos;re building. We&apos;ll help you take the next step.</p>
-        <Link href="/contact" className="mt-10 inline-block rounded-full bg-white px-10 py-4 text-lg font-extrabold text-[#13172b] transition hover:scale-105 hover:bg-[#c7a6ff]">Start a Project</Link>
-      </section>
-    </>
+    <section ref={nearRef} id="start" data-tone="dark" aria-labelledby="cta-title" className={`cta relative isolate overflow-hidden bg-ink text-center text-light ${shown ? "cta-in" : ""} ${onScreen ? "cta-live" : ""}`}>
+      <noscript><style>{`.cta-word-in,.cta-line,.cta-action{transform:none!important;opacity:1!important;clip-path:none!important}.cta-eyebrow{opacity:1!important}`}</style></noscript>
+      {/* the closing shot */}
+      <div ref={stageRef} className="cta-stage absolute inset-0 -z-10" aria-hidden="true">
+        <div className="cta-backdrop absolute inset-0" />
+        {mode === "3d" && near && (
+          <div className="absolute inset-0 transition-opacity duration-[1400ms]" style={{ opacity: ready ? 1 : 0 }}>
+            <CtaScene compact={compact} active={onScreen} onReady={() => setReady(true)} />
+          </div>
+        )}
+        {mode === "still" && <CtaStill />}
+        <div className="cta-scrim absolute inset-0" />
+      </div>
+
+      <div className="cta-copy relative mx-auto flex max-w-7xl flex-col items-center px-5 md:px-8">
+        <p className="cta-eyebrow">
+          <span className="cta-eyebrow-mark" aria-hidden="true" />
+          Final frame
+        </p>
+        <h2 ref={headRef} id="cta-title" aria-label="Let&rsquo;s make something worth remembering." className="cta-title mt-5 font-extrabold">
+          {WORDS.map((x, i) => (
+            <span key={x.w} aria-hidden="true" className="contents">
+              <span className="cta-word">
+                <span className={`cta-word-in ${x.accent ? "cta-accent" : ""}`} style={{ transitionDelay: `${0.08 + i * 0.09}s` }}>{x.w}</span>
+              </span>
+              {i < WORDS.length - 1 && " "}
+              {x.m && <br className="sm:hidden" />}
+              {x.d && <br className="hidden sm:block" />}
+            </span>
+          ))}
+        </h2>
+        <p className="cta-line mx-auto mt-5 max-w-[34rem] text-pretty text-[17px] leading-relaxed text-light/85 sm:mt-6 sm:text-xl">
+          Tell us what you&rsquo;re building. We&rsquo;ll help you take the next step.
+        </p>
+        <div className="cta-action mt-8 sm:mt-10">
+          <MagneticLink href="/contact">Start a Project</MagneticLink>
+        </div>
+      </div>
+    </section>
   );
 }

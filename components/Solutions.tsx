@@ -1,48 +1,148 @@
 "use client";
+/* Homepage section 4 — "Solutions For You". A light, editorial service-discovery section:
+   pick a customer type, the stage wipes to that customer's scene and the recommended services change. */
 import Link from "next/link";
-import { useState } from "react";
-import { solutions, studios } from "../data/site";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { solutions, type SolutionService } from "../data/solutions";
+import { studios } from "../data/studios";
+import { Arrow, BetaBadge, ButtonLink, DemoCaption, Eyebrow, Reveal, useInView, useReducedMotion, useTabs } from "./ui";
+import Scene from "./solutions/Scenes";
 
-const color = (id: string) => studios.find((s) => s.id === id)!.accent;
+const studioOf = (id: string) => studios.find((s) => s.id === id)!;
+const DOT: Record<string, string> = { create: "bg-create", build: "bg-build", grow: "bg-grow" };
+const SCENE_ALT: Record<string, string> = {
+  creator: "Illustration: a long recording on a timeline being cut into three captioned vertical shorts.",
+  local: "Illustration: a café website with a table booking widget and a promo video tile.",
+  startup: "Illustration: a product launch landing page with a waitlist form and a pitch-style promo video.",
+  store: "Illustration: an online shop product grid with a cart and a product video tile.",
+};
+const WIPE_MS = 820;
 
-function Scene({ id }: { id: string }) {
-  const common = "h-full w-full";
-  if (id === "creator")
-    return (<svg viewBox="0 0 300 200" className={common} aria-hidden="true"><rect x="20" y="40" width="160" height="90" rx="8" fill="#6f45f6" opacity=".35" /><rect x="190" y="20" width="60" height="110" rx="8" fill="#22d3ee" opacity=".6" /><rect x="258" y="20" width="30" height="110" rx="6" fill="#22d3ee" opacity=".3" /><polygon points="85,70 85,100 112,85" fill="#fff" /><path d="M20 160h260" stroke="#fff" strokeOpacity=".3" /><rect x="20" y="150" width="90" height="12" rx="6" fill="#8b5cf6" /></svg>);
-  if (id === "local")
-    return (<svg viewBox="0 0 300 200" className={common} aria-hidden="true"><rect x="30" y="50" width="240" height="120" rx="10" fill="#202342" stroke="#8b5cf6" /><path d="M30 80h240" stroke="#8b5cf6" /><circle cx="48" cy="65" r="4" fill="#22d3ee" /><rect x="50" y="100" width="90" height="12" rx="6" fill="#fff" opacity=".7" /><rect x="50" y="122" width="140" height="8" rx="4" fill="#fff" opacity=".3" /><rect x="190" y="130" width="62" height="26" rx="13" fill="#22d3ee" /><path d="M50 30l24 12h152l24-12" stroke="#c7a6ff" fill="none" strokeWidth="3" /></svg>);
-  if (id === "startup")
-    return (<svg viewBox="0 0 300 200" className={common} aria-hidden="true"><path d="M150 25c35 30 40 80 20 120h-40c-20-40-15-90 20-120z" fill="#c7a6ff" opacity=".8" /><circle cx="150" cy="80" r="14" fill="#0c1024" /><path d="M130 145l-22 28 30-8zM170 145l22 28-30-8z" fill="#22d3ee" /><path d="M150 150v35" stroke="#22d3ee" strokeWidth="6" strokeLinecap="round"><animate attributeName="y2" values="170;190;170" dur="1.6s" repeatCount="indefinite" /></path></svg>);
-  return (<svg viewBox="0 0 300 200" className={common} aria-hidden="true">{[0, 1, 2].map((k) => (<g key={k}><rect x={30 + k * 85} y="40" width="75" height="75" rx="10" fill="#8b5cf6" opacity={0.35 + k * 0.2} /><rect x={30 + k * 85} y="125" width="50" height="8" rx="4" fill="#fff" opacity=".7" /><rect x={30 + k * 85} y="141" width="30" height="8" rx="4" fill="#22d3ee" /></g>))}</svg>);
+function ServiceLink({ sv, later, i }: { sv: SolutionService; later?: boolean; i: number }) {
+  const st = studioOf(sv.studio);
+  return (
+    <li style={{ ["--i" as string]: i }} className="flex">
+      <Link
+        href={st.href}
+        className={`sol-svc group flex min-h-[7.25rem] w-full flex-col rounded-2xl p-4 xl:min-h-[11.5rem] ${later ? "border border-dashed border-violet/45 bg-white hover:border-violet" : "border border-line bg-paper hover:border-ink/40 hover:bg-white"}`}
+      >
+        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-dark">
+          <span className={`h-2 w-2 rounded-full ${DOT[sv.studio]}`} aria-hidden="true" />
+          {st.verb}
+          <span className="sr-only">: {st.name}.</span>
+          {later ? <BetaBadge tone="light" className="ml-auto" /> : <Arrow className="sol-svc-arrow ml-auto text-dark" />}
+        </span>
+        <span className="mt-3 block text-[17px] font-extrabold leading-tight text-dark">{sv.title}</span>
+        <span className="mt-1.5 block text-sm leading-snug text-muted-dark">{sv.note}</span>
+      </Link>
+    </li>
+  );
 }
 
 export default function Solutions() {
-  const [id, setId] = useState(solutions[0].id);
-  const s = solutions.find((x) => x.id === id)!;
+  const [idx, setIdx] = useState(0);
+  const [out, setOut] = useState<{ i: number; dir: 1 | -1; key: number } | null>(null);
+  const reduced = useReducedMotion();
+  const idxRef = useRef(0);
+  const [headRef, headIn] = useInView<HTMLHeadingElement>({ once: true, margin: "0px 0px -10% 0px" });
+  const [stageRef, stageIn] = useInView<HTMLDivElement>({ threshold: 0.05 });
+
+  const select = useCallback((i: number) => {
+    const from = idxRef.current;
+    if (i === from) return;
+    idxRef.current = i;
+    setOut(reduced ? null : { i: from, dir: i > from ? 1 : -1, key: Date.now() });
+    setIdx(i);
+  }, [reduced]);
+
+  useEffect(() => {
+    if (!out) return;
+    const t = setTimeout(() => setOut(null), WIPE_MS);
+    return () => clearTimeout(t);
+  }, [out]);
+
+  const tabs = useTabs(solutions.length, idx, select);
+  const s = solutions[idx];
+  const primary = studioOf(s.primary);
+
   return (
-    <section className="bg-[#0c1024] px-5 py-24 md:px-8 md:py-32" aria-labelledby="sol-title">
-      <div className="mx-auto max-w-6xl">
-        <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#08bbd4]">Solutions for you</p>
-        <h2 id="sol-title" className="mt-4 text-4xl font-extrabold md:text-6xl">Made for what <span className="prism-text">you&apos;re building.</span></h2>
-        <div className="mt-12 grid gap-8 lg:grid-cols-[320px_1fr]">
-          <div role="tablist" aria-label="Customer type" className="grid grid-cols-2 gap-2 lg:grid-cols-1">
-            {solutions.map((x) => (
-              <button key={x.id} role="tab" aria-selected={id === x.id} onClick={() => setId(x.id)} className="min-h-14 rounded-2xl border px-5 py-3 text-left text-base font-bold transition md:text-lg"
-                style={{ borderColor: id === x.id ? "#8b5cf6" : "rgba(255,255,255,.12)", background: id === x.id ? "rgba(139,92,246,.2)" : "transparent" }}>{x.label}</button>
-            ))}
+    <section id="solutions" data-tone="light" data-sol={s.id} aria-labelledby="sol-title" className="sol-root relative overflow-hidden bg-white px-4 py-20 text-dark sm:px-6 md:py-28 lg:px-8 lg:py-32">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+          <div>
+            <Eyebrow tone="light">Solutions for you</Eyebrow>
+            <h2 ref={headRef} id="sol-title" aria-label="Made for what you're building." className={`sol-h2 mt-4 font-extrabold ${headIn ? "sol-in" : ""}`}>
+              <span aria-hidden="true"><span>Made for what</span></span>
+              <span aria-hidden="true"><span className="sol-accent">you&apos;re building.</span></span>
+            </h2>
           </div>
-          <div role="tabpanel" className="grid gap-6 rounded-[2rem] border border-white/10 bg-[#202342] p-6 md:grid-cols-2 md:p-8">
-            <div className="aspect-[3/2] overflow-hidden rounded-2xl bg-[#0c1024]/70 p-4"><Scene key={s.id} id={s.id} /></div>
-            <div className="flex flex-col">
-              <h3 className="text-2xl font-extrabold md:text-3xl">{s.headline}</h3>
-              <p className="mt-3 text-[#a4aac7]">{s.blurb}</p>
-              <ul className="mt-5 flex flex-wrap gap-2">
-                {s.services.map((sv) => (<li key={sv.title} className="rounded-full border px-3 py-1.5 text-sm font-bold" style={{ borderColor: color(sv.studio) }}>{sv.title}</li>))}
-              </ul>
-              <div className="mt-auto flex flex-wrap gap-3 pt-7">
-                <Link href="/studios" className="rounded-full border border-white/25 px-6 py-3 text-sm font-bold hover:bg-white/10">Explore Services</Link>
-                <Link href={`/contact?for=${s.id}`} className="rounded-full bg-white px-6 py-3 text-sm font-bold text-[#13172b] hover:bg-[#c7a6ff]">Start a Project</Link>
+          <Reveal kind="fade" delay={0.2} className="max-w-sm lg:pb-2">
+            <p className="text-base leading-relaxed text-muted-dark md:text-lg">Pick the one closest to you. See what we would make for it, and which of our services fit.</p>
+          </Reveal>
+        </div>
+
+        <div className="mt-10 grid gap-5 md:mt-14 lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[19.5rem_minmax(0,1fr)] xl:gap-14">
+          {/* selector: segmented control on phones/tablets, editorial rail on desktop */}
+          <div className="lg:sticky lg:top-28 lg:self-start">
+            <div {...tabs.list("Customer type")} className="grid grid-cols-2 gap-1 rounded-2xl bg-paper-2 p-1 md:grid-cols-4 lg:block lg:rounded-none lg:bg-transparent lg:p-0">
+              {solutions.map((x, i) => (
+                <button key={x.id} type="button" {...tabs.tab(i)} className="sol-tab flex w-full items-center justify-center px-2 text-center lg:justify-start lg:gap-4 lg:px-5 lg:py-5 lg:text-left">
+                  <span className="sol-tab-bar" aria-hidden="true" />
+                  <span className="hidden text-xs font-bold tabular-nums tracking-[0.14em] opacity-70 lg:block" aria-hidden="true">0{i + 1}</span>
+                  <span className="min-w-0 lg:flex-1">
+                    <span className="block whitespace-nowrap text-sm font-bold lg:text-[21px] lg:font-extrabold lg:leading-tight">{x.label}</span>
+                    <span className="mt-1 hidden text-[13px] font-semibold leading-snug text-muted-dark lg:block">{x.hint}</span>
+                  </span>
+                  <Arrow className="sol-tab-arrow hidden lg:block" />
+                </button>
+              ))}
+            </div>
+            <p className="mt-6 hidden text-sm leading-relaxed text-muted-dark lg:block">
+              Building something else?{" "}
+              <Link href="/contact" className="inline-flex min-h-11 items-center gap-1.5 font-bold text-dark underline decoration-violet decoration-2 underline-offset-4 hover:text-violet">Tell us about it <Arrow /></Link>
+            </p>
+          </div>
+
+          <div {...tabs.panel(idx)} className="min-w-0">
+            {/* stage */}
+            {/* visibility is measured on this unclipped wrapper: the Reveal below starts fully clipped, which hid the stage from the observer */}
+            <div ref={stageRef} className={stageIn ? "" : "sol-paused"}>
+            <Reveal kind="clip-down">
+              <div className="sol-stage aspect-square rounded-[1.5rem] sm:aspect-[4/3] md:rounded-[2rem] xl:aspect-[16/10]">
+                <div role="img" aria-label={SCENE_ALT[s.id]} className="absolute inset-0">
+                  <div aria-hidden="true">
+                    {out ? <div key={`o${out.key}`} className="sol-layer sol-layer-out" data-dir={out.dir}><Scene id={solutions[out.i].id} /></div> : null}
+                    <div key={`i${s.id}`} className={`sol-layer ${out ? "sol-layer-in" : ""}`} data-dir={out?.dir}><Scene id={s.id} /></div>
+                    {out ? <div key={`e${out.key}`} className="sol-edge" data-dir={out.dir} /> : null}
+                  </div>
+                </div>
+                <DemoCaption tone="light" className="absolute bottom-3 left-3 z-10 bg-white/85 md:bottom-4 md:left-4" />
               </div>
+            </Reveal>
+            </div>
+
+            {/* copy */}
+            <div key={`c${s.id}`} className="sol-swap mt-7 grid gap-x-12 gap-y-4 md:mt-9 md:grid-cols-2 md:items-start">
+              <h3 style={{ ["--i" as string]: 0 }} className="min-h-[2.2em] text-balance text-[26px] font-extrabold leading-[1.1] tracking-[-0.01em] sm:text-3xl xl:text-[34px]">{s.headline}</h3>
+              <div style={{ ["--i" as string]: 1 }}>
+                <p className="min-h-[6.5em] text-base leading-relaxed text-muted-dark sm:min-h-[4.9em] md:min-h-[6.5em] xl:min-h-[4.9em]">{s.blurb}</p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <ButtonLink href={`/contact?for=${s.id}`} tone="light" className="max-[400px]:flex-1 max-[400px]:px-4">Start a Project</ButtonLink>
+                  <ButtonLink href={primary.href} variant="secondary" tone="light" className="max-[400px]:flex-1 max-[400px]:px-4">Explore Services<span className="sr-only">: {primary.verb}, {primary.name}</span> <Arrow /></ButtonLink>
+                </div>
+              </div>
+            </div>
+
+            {/* recommended services: every row is a real link to the studio page */}
+            <div className="mt-10 border-t border-line pt-6 md:mt-12">
+              <p id="sol-svc-label" className="text-xs font-bold uppercase tracking-[0.3em] text-muted-dark">Recommended for a {s.label.toLowerCase()}</p>
+              <ul key={`s${s.id}`} aria-labelledby="sol-svc-label" className="sol-swap mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {s.services.map((sv, i) => <ServiceLink key={sv.code} sv={sv} i={i} />)}
+                {s.later ? <ServiceLink sv={s.later} later i={s.services.length} /> : null}
+              </ul>
+              <p className="mt-4 text-sm leading-relaxed text-muted-dark">
+                <span className="font-bold text-dark">GROW is in beta.</span> Digital marketing is not offered yet; it is shown here as a possible next step, not a current service.
+              </p>
             </div>
           </div>
         </div>

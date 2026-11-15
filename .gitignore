@@ -9,3 +9,5 @@ next-env.d.ts
 .next-dev
 docs/audit/tmp
 scripts/tmp
+docs/check
+.next-dev

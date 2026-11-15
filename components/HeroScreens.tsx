@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 export const seg = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
@@ -54,7 +54,18 @@ function BetaLabel() {
 }
 
 /* ---------- PHONE ---------- */
-export function PhoneScreen({ p, t, paused, ad, back }: { p: number; t: number; paused: boolean; ad: boolean; back?: boolean }) {
+/* Reel clock local to the phone screen, so only the screen re-renders as the demo reel plays (not the whole hero). */
+function useReelClock(paused: boolean) {
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => setT((x) => Math.round(((x + 0.15) % 6) * 100) / 100), 150);
+    return () => clearInterval(id);
+  }, [paused]);
+  return t;
+}
+export function PhoneScreen({ p, paused, ad, back }: { p: number; paused: boolean; ad: boolean; back?: boolean }) {
+  const t = useReelClock(paused);
   const cuts = p > 0.18;
   const reframe = seg(p, 0.22, 0.48);
   const grade = seg(p, 0.4, 0.78) * 100;
@@ -121,7 +132,7 @@ export function BrowserScreen({ p, resize, ad, back }: { p: number; resize: bool
         <span className="rounded bg-[#0f1226] px-2 py-1 text-[9px] font-bold tracking-widest text-[#a4aac7]">{p < 0.5 ? "WIREFRAME" : "LIVE"}</span>
       </div>
       <div className="relative flex min-h-0 flex-1 justify-center" style={{ background: p < 0.12 ? "#2a2d3a" : "#d9dceb", transition: "background .5s" }}>
-        <div className="hero-scroll @container h-full overflow-y-auto overscroll-contain" style={{ width: "100%", background: p < 0.12 ? "#2a2d3a" : "#f6f7fc", transition: "background .5s", animation: resize ? "hero-resize 7s ease-in-out infinite" : undefined }}>
+        <div className="@container h-full overflow-hidden" style={{ width: "100%", background: p < 0.12 ? "#2a2d3a" : "#f6f7fc", transition: "background .5s", animation: resize ? "hero-resize 7s ease-in-out infinite" : undefined }}>
           <div className="space-y-2.5 p-3 text-[#13172b]">
             <Block on={p > 0.14} className="h-8">
               <div className="flex h-full items-center justify-between rounded-lg bg-white px-3 text-[11px] font-extrabold tracking-wider shadow-sm">NORTHLIGHT<span className="hidden gap-3 font-semibold text-[#5a6082] @[380px]:flex"><span className="cursor-pointer hover:text-[#6f45f6]">Menu</span><span className="cursor-pointer hover:text-[#6f45f6]">Visit</span><span className="cursor-pointer hover:text-[#6f45f6]">Book</span></span></div>

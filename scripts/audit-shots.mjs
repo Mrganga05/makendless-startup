@@ -5,7 +5,7 @@ const URL = process.argv[2] || "http://localhost:3456";
 const OUT = process.argv[3] || "docs/audit";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const pages = ["studios", "create", "build", "grow", "about", "faq", "contact", "privacy", "terms"];
-const names = ["01-hero", "02-studios", "03-transformation", "04-solutions", "05-packages", "06-process-faq", "07-final-cta"];
+const names = ["01-hero", "02-studios", "03-solutions", "04-packages", "05-process-faq", "06-final-cta"];
 const browser = await puppeteer.launch({
   executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   headless: true,

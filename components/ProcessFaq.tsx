@@ -1,40 +1,94 @@
 "use client";
-import { useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "motion/react";
-import { faqs, process } from "../data/site";
+/* Homepage section 6 — How we work + FAQ. Light paper, calm. Styles: app/styles/process.css (.pro-*). */
+import Link from "next/link";
+import { useId, useState, type CSSProperties } from "react";
+import { faqs, process, processCopy } from "../data/process";
+import { Arrow, ButtonLink, Eyebrow, KineticHeading, Reveal, useReducedMotion } from "./ui";
+import { StepVignette } from "./process/Vignettes";
+import { useJourneyProgress } from "./process/useJourneyProgress";
 
-export default function ProcessFaq() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 75%", "end 55%"] });
-  const w = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+function Journey() {
+  const reduced = useReducedMotion();
+  const { ref, reached, live } = useJourneyProgress(!reduced, process.length);
+  return (
+    <div ref={ref} className={`pro-journey ${live ? "pro-live" : ""}`}>
+      <ol className="pro-steps">
+        {process.map((p, i) => {
+          const on = !live || i < reached;
+          const now = live && i === reached - 1;
+          return (
+            <li key={p.n} className={`pro-step ${on ? "is-on" : ""} ${now ? "is-now" : ""}`} style={{ ["--i" as string]: i } as CSSProperties} aria-current={now ? "step" : undefined}>
+              <div className="pro-vig"><StepVignette index={i} /></div>
+              <div className="pro-rail" aria-hidden="true">
+                {i < process.length - 1 && (
+                  <span className="pro-seg">
+                    <span className="pro-fill" />
+                    <span className="pro-head"><i /></span>
+                  </span>
+                )}
+                <span className="pro-node tabular-nums" data-node>{p.n}</span>
+              </div>
+              <div className="pro-body">
+                <h3 className="pro-title">{p.title}</h3>
+                <p className="pro-text">{p.text}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+function Faq() {
+  const uid = useId();
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section data-tone="light" className="bg-[#f6f7fc] px-5 pb-24 text-[#13172b] md:px-8 md:pb-32" aria-labelledby="proc-title">
-      <div className="mx-auto max-w-6xl border-t border-[#13172b]/10 pt-24">
-        <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#6f45f6]">How we work</p>
-        <h2 id="proc-title" className="mt-4 text-4xl font-extrabold md:text-6xl">From idea to <span className="text-[#6f45f6]">delivery.</span></h2>
-        <div ref={ref} className="relative mt-14">
-          <div className="absolute left-0 right-0 top-[22px] hidden h-0.5 bg-[#13172b]/10 md:block"><motion.div className="h-full" style={{ width: w, background: "var(--prism)" }} /></div>
-          <ol className="grid gap-8 md:grid-cols-4">
-            {process.map((p) => (
-              <li key={p.n} className="relative">
-                <span className="relative grid h-11 w-11 place-items-center rounded-full bg-[#13172b] text-sm font-extrabold text-white">{p.n}</span>
-                <h3 className="mt-5 text-2xl font-extrabold">{p.title}</h3>
-                <p className="mt-2 text-[#5a6082]">{p.text}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-        <div className="mt-20 grid gap-10 lg:grid-cols-[1fr_1.6fr]">
-          <div><h3 className="text-3xl font-extrabold">Questions, answered plainly.</h3><p className="mt-3 text-[#5a6082]">Specifics are confirmed in your proposal before work starts.</p></div>
-          <div className="divide-y divide-[#13172b]/10 border-y border-[#13172b]/10">
-            {faqs.map((f, i) => (
-              <div key={f.q}>
-                <h4><button className="flex min-h-14 w-full items-center justify-between gap-4 py-4 text-left text-lg font-bold" aria-expanded={open === i} aria-controls={`faq-${i}`} onClick={() => setOpen(open === i ? null : i)}>{f.q}<span className="text-2xl text-[#6f45f6]" aria-hidden="true">{open === i ? "−" : "+"}</span></button></h4>
-                <div id={`faq-${i}`} hidden={open !== i} className="pb-5 text-[#5a6082]">{f.a}</div>
-              </div>
-            ))}
+    <div className="pro-faq">
+      {faqs.map((f, i) => {
+        const isOpen = open === i;
+        return (
+          <div key={f.q} className={`pro-item ${isOpen ? "is-open" : ""}`}>
+            <h4>
+              <button type="button" id={`${uid}-q${i}`} className="pro-q" aria-expanded={isOpen} aria-controls={`${uid}-a${i}`} onClick={() => setOpen(isOpen ? null : i)}>
+                <span>{f.q}</span>
+                <span className="pro-plus" aria-hidden="true" />
+              </button>
+            </h4>
+            <div id={`${uid}-a${i}`} role="region" aria-labelledby={`${uid}-q${i}`} className="pro-panel" inert={!isOpen}>
+              <div className="pro-panel-in"><p className="pro-a">{f.a}</p></div>
+            </div>
           </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function ProcessFaq() {
+  return (
+    <section id="process" data-tone="light" className="pro-section bg-paper px-5 py-20 text-dark md:px-8 md:py-28" aria-labelledby="proc-title">
+      <div className="mx-auto max-w-6xl">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+          <div>
+            <Eyebrow tone="light">{processCopy.eyebrow}</Eyebrow>
+            <KineticHeading id="proc-title" text={processCopy.title} accent={processCopy.titleAccent} accentClass="text-violet" className="pro-h2 mt-4 font-extrabold" />
+          </div>
+          <Reveal kind="fade" delay={0.25} as="p" className="max-w-sm text-base text-muted-dark lg:pb-2 lg:text-right">{processCopy.intro}</Reveal>
+        </div>
+
+        <Journey />
+
+        <div id="faq" className="pro-faq-block" role="group" aria-labelledby="faq-title">
+          <div className="pro-faq-aside">
+            <h3 id="faq-title" className="text-[1.7rem] leading-[1.1] font-extrabold sm:text-3xl lg:text-4xl">{processCopy.faqTitle}</h3>
+            <p className="mt-4 max-w-md text-muted-dark">{processCopy.faqIntro}</p>
+            <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2">
+              <ButtonLink href="/contact" tone="light">{processCopy.cta} <Arrow /></ButtonLink>
+              <Link href="/faq" className="pro-link inline-flex min-h-11 items-center gap-2 font-bold text-dark">{processCopy.allQuestions}</Link>
+            </div>
+          </div>
+          <Faq />
         </div>
       </div>
     </section>
