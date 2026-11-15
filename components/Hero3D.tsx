@@ -272,9 +272,10 @@ export default function Hero3D({ p, mode, paused, compact, active, onReady }: He
   }, [compact]);
   const ad = mode === 2;
   const showPhone = !compact || mode !== 1, showLaptop = !compact || mode === 1;
-  return (
-    <div ref={wrap} className="absolute inset-0">
-      <Canvas camera={{ position: compact ? [0, 5, 375] : [-90, 15, 650], fov: 35, near: 10, far: 4000 }} dpr={compact ? [1, 1.25] : [1, 1.5]} frameloop={active ? "always" : "never"} gl={{ antialias: !compact, alpha: true, powerPreference: "high-performance" }} onCreated={onReady}>
+  /* The 3D scene graph is memoised: it reads progress/mode from the "live" ref inside useFrame, so React
+     never has to re-reconcile it while the timeline moves (only the DOM screens re-render). */
+  const scene = useMemo(() => (
+    <>
         <Rig live={live} compact={compact} />
         <Environment resolution={compact ? 32 : 64} frames={1}>
           <Lightformer form="rect" intensity={2.2} color="#ffffff" position={[0, 5, 4]} scale={[9, 3, 1]} />
@@ -297,6 +298,12 @@ export default function Hero3D({ p, mode, paused, compact, active, onReady }: He
           )}
           {!compact && <SoftShadow />}
         </group>
+    </>
+  ), [compact, showPhone, showLaptop, links]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div ref={wrap} className="absolute inset-0">
+      <Canvas camera={{ position: compact ? [0, 5, 375] : [-90, 15, 650], fov: 35, near: 10, far: 4000 }} dpr={compact ? [1, 1.25] : [1, 1.5]} frameloop={active ? "always" : "never"} gl={{ antialias: !compact, alpha: true, powerPreference: "high-performance" }} onCreated={onReady}>
+        {scene}
       </Canvas>
       {/* DOM screens, positioned by <ScreenSync>. Decorative demo: hidden from assistive tech and the Tab order. */}
       <div ref={stage} className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">

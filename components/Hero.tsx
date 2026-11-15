@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BrowserScreen, PhoneScreen, seg } from "./HeroScreens";
 
 const Hero3D = dynamic(() => import("./Hero3D"), { ssr: false, loading: () => null });
@@ -36,7 +36,7 @@ function Magnetic({ children, className = "" }: { children: React.ReactNode; cla
 }
 
 /* One headline line: raw grey text with a "graded" copy wiped in over it by the playhead */
-function Line({ text, i, g, accent, intro }: { text: string; i: number; g: number; accent?: boolean; intro: boolean }) {
+const Line = memo(function Line({ text, i, g, accent, intro }: { text: string; i: number; g: number; accent?: boolean; intro: boolean }) {
   const chars = (cls: string) => (
     <span className={`block whitespace-nowrap ${cls}`}>
       {accent ? text : text.split("").map((ch, k) => (
@@ -53,7 +53,7 @@ function Line({ text, i, g, accent, intro }: { text: string; i: number; g: numbe
       <span className="absolute inset-x-0 bottom-0 border-b border-dashed border-[#59607f]" style={{ opacity: 1 - g }} />
     </span>
   );
-}
+});
 
 export default function Hero() {
   const [p, setP] = useState(0);
@@ -79,9 +79,22 @@ export default function Hero() {
     return () => mq.removeEventListener("change", on);
   }, []);
 
+  /* The intro waits until the 3D scene has been built and the browser is idle (or there is no 3D),
+     so the 2.5s "edit" never competes with loading / shader compilation and plays smoothly. */
+  const [go, setGo] = useState(false);
+  useEffect(() => {
+    if (go || gl === null) return;
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    const fire = () => setGo(true);
+    const fallback = setTimeout(fire, 4000);
+    let id: number | undefined;
+    if (!gl || ready) id = w.requestIdleCallback ? w.requestIdleCallback(fire, { timeout: 700 }) : window.setTimeout(fire, 200);
+    return () => { clearTimeout(fallback); if (id !== undefined) (w.cancelIdleCallback ?? clearTimeout)(id); };
+  }, [gl, ready, go]);
+
   /* Intro: the hero edits itself once, raw -> finished in 2.5s */
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!go || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let start = 0;
     const tick = (now: number) => {
       if (!start) start = now + 250;
@@ -91,7 +104,7 @@ export default function Hero() {
     };
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
-  }, []);
+  }, [go]);
 
   useEffect(() => {
     if (!section.current) return;
@@ -108,6 +121,7 @@ export default function Hero() {
   }, [cycling, inView]);
 
   const pick = useCallback((m: number) => { setCycling(false); setMode(((m % 3) + 3) % 3); }, []);
+  const onSceneReady = useCallback(() => setReady(true), []);
   const scrub = (v: number) => { cancelAnimationFrame(raf.current); setCycling(false); setHint(false); setP(v); };
 
   /* swipe the scene (touch) to change mode */
@@ -166,7 +180,7 @@ export default function Hero() {
 
         {/* SCENE */}
         <div ref={scene} className="relative z-10 mt-2 h-[200px] min-h-0 flex-1 sm:h-[330px] sm:flex-none lg:absolute lg:inset-y-0 lg:right-[-3%] lg:mt-0 lg:h-auto lg:w-[60%]">
-          {gl && <div className="absolute inset-0 transition-opacity duration-1000" style={{ opacity: ready ? 1 : 0 }}><Hero3D p={p} mode={mode} paused={paused} compact={compact} active={inView} onReady={() => setReady(true)} /></div>}
+          {gl && <div className="absolute inset-0 transition-opacity duration-1000" style={{ opacity: ready ? 1 : 0 }}><Hero3D p={p} mode={mode} paused={paused} compact={compact} active={inView} onReady={onSceneReady} /></div>}
           <button onClick={() => setPaused((x) => !x)} aria-pressed={paused} className="absolute bottom-1 right-0 z-50 flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-[#0c1024]/85 px-3.5 text-xs font-bold text-[#d5d9ea] hover:bg-white/10 lg:bottom-4 lg:right-[6%]">
                 <span aria-hidden="true" className="text-[10px]">{paused ? "▶" : "❚❚"}</span>{paused ? "Play video" : "Pause video"}
               </button>

@@ -21,7 +21,7 @@ export default function Page() {
                     <p className={`text-sm font-extrabold tracking-[0.3em] ${s.id === "create" ? "text-[#0891b2]" : "text-violet"}`}>{s.verb}</p>
                     {s.beta && <BetaBadge tone="light" />}
                   </div>
-                  <h2 className="mt-2 text-3xl font-extrabold">{s.name}</h2>
+                  <h2 className="mt-2 text-[1.55rem] font-extrabold leading-tight sm:text-3xl lg:text-[1.65rem] xl:text-3xl">{s.name}</h2>
                   <p className="mt-3 text-[16px] leading-relaxed text-muted-dark">{s.tagline}</p>
                   <ul className="mt-5 space-y-2 border-t border-line pt-5 text-[15px]">
                     {s.services.map((sv) => (<li key={sv.code} className="flex gap-3"><span className="w-7 shrink-0 text-xs font-extrabold leading-6 text-muted-dark">{sv.code}</span>{sv.title}</li>))}

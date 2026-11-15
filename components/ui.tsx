@@ -112,9 +112,37 @@ export function Reveal({ children, kind = "mask-up", delay = 0, className = "", 
   );
 }
 
+/** Shrinks an element's font just enough that its longest word fits its column (long words like
+    "Development" cannot wrap). Re-measures on resize; never grows above the CSS size. */
+export function useFitText<T extends HTMLElement>(ref: React.RefObject<T | null>) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const fit = () => {
+      raf = 0;
+      el.style.fontSize = "";
+      const avail = el.clientWidth;
+      let need = 0;
+      el.querySelectorAll<HTMLElement>(".kh-word").forEach((w) => { need = Math.max(need, w.scrollWidth); });
+      if (!need) need = el.scrollWidth;
+      if (need > avail + 1) {
+        const base = parseFloat(getComputedStyle(el).fontSize);
+        el.style.fontSize = `${Math.floor(base * (avail / need) * 0.98 * 10) / 10}px`;
+      }
+    };
+    const ro = new ResizeObserver(() => { if (!raf) raf = requestAnimationFrame(fit); });
+    ro.observe(el);
+    document.fonts?.ready.then(fit);
+    fit();
+    return () => { ro.disconnect(); cancelAnimationFrame(raf); };
+  }, [ref]);
+}
+
 /** Headline that rises word by word out of a mask when scrolled into view. The full text stays readable to screen readers. */
 export function KineticHeading({ text, accent, as: Tag = "h2", className = "", id, accentClass = "prism-text" }: { text: string; accent?: string; as?: "h1" | "h2" | "h3"; className?: string; id?: string; accentClass?: string }) {
   const [ref, inView] = useInView<HTMLHeadingElement>({ once: true, margin: "0px 0px -10% 0px" });
+  useFitText(ref);
   const words = text.split(" ");
   const accentWords = accent ? accent.split(" ") : [];
   const all = [...words.map((w) => ({ w, a: false })), ...accentWords.map((w) => ({ w, a: true }))];

@@ -1,6 +1,6 @@
 "use client";
 /* Still version of the closing shot, for browsers without WebGL and for visitors who prefer reduced motion.
-   It lays out the same artwork the 3D scene uses (components/cta/frames.ts) with plain CSS. No animation. */
+   It lays out the same artwork the 3D scene uses (components/cta/frames.ts) with CSS motion graphics (app/styles/cta.css: transform/opacity only, paused off-screen, still under reduced motion). */
 import { useEffect, useState } from "react";
 import { drawCell, drawEndCard, drawReel, drawSite } from "./frames";
 
@@ -29,7 +29,7 @@ export default function CtaStill() {
       <div className="cta-still-phone"><img src={art.reel} alt="" /></div>
       <div className="cta-still-laptop"><div className="cta-still-lid"><img src={art.site} alt="" /></div><div className="cta-still-base" /></div>
       <div className="cta-still-frame"><img src={art.end} alt="" /></div>
-      <div className="cta-still-floor" />
+      <div className="cta-still-floor"><span className="cta-still-playhead" /></div>
     </div>
   );
 }

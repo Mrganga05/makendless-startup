@@ -359,3 +359,9 @@
   .stu-panel { clip-path: none !important; transition: none !important; }
   .stu-item { transition: none !important; }
 }
+
+/* 1024-1279: three columns are narrow; keep "GROW" + Beta on one line inside the panel */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .stu-verb { font-size: 2.15rem; }
+  .stu-beta { height: 22px; padding: 0 8px; font-size: 11px; }
+}
