@@ -1,1 +1,9 @@
 /* Styles owned by the hero section. */
+
+/* placeholder shown until the hero 3D scene is ready (removed from the DOM afterwards). Shimmer = transform only. */
+.hero-ph span { position: absolute; overflow: hidden; border-radius: 22px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.025); }
+.hero-ph span::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(139,92,246,.16) 50%, transparent 70%); transform: translateX(-100%); animation: hero-ph 1.6s linear infinite; }
+.hero-ph-phone { left: 22%; top: 18%; width: 17%; height: 62%; }
+.hero-ph-laptop { left: 44%; top: 30%; width: 44%; height: 40%; border-radius: 12px !important; }
+@media (max-width: 767px) { .hero-ph-phone { left: 38%; width: 24%; top: 8%; height: 84%; } .hero-ph-laptop { display: none; } }
+@keyframes hero-ph { to { transform: translateX(100%); } }

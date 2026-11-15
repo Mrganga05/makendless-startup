@@ -5,7 +5,10 @@ import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 
 import { BrowserScreen, PhoneScreen, seg } from "./HeroScreens";
 import { Wordmark } from "./brand";
 
-const Hero3D = dynamic(() => import("./Hero3D"), { ssr: false, loading: () => null });
+const load3D = () => import("./Hero3D");
+/* Start downloading the 3D scene as soon as this module runs (during hydration), not after the first effects. */
+if (typeof window !== "undefined") load3D();
+const Hero3D = dynamic(load3D, { ssr: false, loading: () => null });
 const useIsoLayout = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 const MODES = [
@@ -66,6 +69,8 @@ export default function Hero() {
   const [reduced, setReduced] = useState(false);
   const [inView, setInView] = useState(true);
   const [hint, setHint] = useState(true);
+  /* The headline is shown finished on first paint; it only follows the timeline once the visitor scrubs it. */
+  const [touched, setTouched] = useState(false);
   const [intro, setIntro] = useState(true);
   const [cycling, setCycling] = useState(true);
   const section = useRef<HTMLElement>(null), scene = useRef<HTMLDivElement>(null), raf = useRef(0);
@@ -87,9 +92,9 @@ export default function Hero() {
     if (go || gl === null) return;
     const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
     const fire = () => setGo(true);
-    const fallback = setTimeout(fire, 4000);
+    const fallback = setTimeout(fire, 2500);
     let id: number | undefined;
-    if (!gl || ready) id = w.requestIdleCallback ? w.requestIdleCallback(fire, { timeout: 700 }) : window.setTimeout(fire, 200);
+    if (!gl || ready) id = w.requestIdleCallback ? w.requestIdleCallback(fire, { timeout: 250 }) : window.setTimeout(fire, 120);
     return () => { clearTimeout(fallback); if (id !== undefined) (w.cancelIdleCallback ?? clearTimeout)(id); };
   }, [gl, ready, go]);
 
@@ -99,7 +104,7 @@ export default function Hero() {
     let start = 0;
     const tick = (now: number) => {
       if (!start) start = now + 250;
-      const x = Math.min(1, Math.max(0, (now - start) / 2500));
+      const x = Math.min(1, Math.max(0, (now - start) / 1800));
       setP(x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
       if (x < 1) raf.current = requestAnimationFrame(tick);
     };
@@ -123,7 +128,7 @@ export default function Hero() {
 
   const pick = useCallback((m: number) => { setCycling(false); setMode(((m % 3) + 3) % 3); }, []);
   const onSceneReady = useCallback(() => setReady(true), []);
-  const scrub = (v: number) => { cancelAnimationFrame(raf.current); setCycling(false); setHint(false); setP(v); };
+  const scrub = (v: number) => { cancelAnimationFrame(raf.current); setCycling(false); setHint(false); setTouched(true); setP(v); };
 
   /* swipe the scene (touch) to change mode */
   useEffect(() => {
@@ -157,10 +162,10 @@ export default function Hero() {
           <p className="mb-5 hidden text-xs font-bold uppercase tracking-[0.35em] text-[#08bbd4] sm:block">Creative &amp; Technology Studio</p>
           <h1 id="hero-title" aria-label="We make ideas impossible to ignore." className="text-[2.25rem] font-extrabold leading-[0.98] tracking-tight min-[390px]:text-[2.45rem] sm:text-[3.4rem] lg:text-[3.6rem] xl:text-[4.7rem]">
             <span aria-hidden="true">
-              <Line text={LINES[0]} i={0} g={seg(p, 0.24, 0.46)} intro={intro} />
-              <Line text={LINES[1]} i={1} g={seg(p, 0.36, 0.6)} intro={intro} />
-              <Line text={LINES[2]} i={2} g={seg(p, 0.5, 0.82)} accent intro={intro} />
-              <Line text={LINES[3]} i={3} g={seg(p, 0.7, 0.96)} intro={intro} />
+              <Line text={LINES[0]} i={0} g={touched ? seg(p, 0.24, 0.46) : 1} intro={intro} />
+              <Line text={LINES[1]} i={1} g={touched ? seg(p, 0.36, 0.6) : 1} intro={intro} />
+              <Line text={LINES[2]} i={2} g={touched ? seg(p, 0.5, 0.82) : 1} accent intro={intro} />
+              <Line text={LINES[3]} i={3} g={touched ? seg(p, 0.7, 0.96) : 1} intro={intro} />
             </span>
           </h1>
           {/* kinetic mode word */}
@@ -181,6 +186,12 @@ export default function Hero() {
 
         {/* SCENE */}
         <div ref={scene} className="relative z-10 mt-2 h-[200px] min-h-0 flex-1 sm:h-[330px] sm:flex-none lg:absolute lg:inset-y-0 lg:right-[-3%] lg:mt-0 lg:h-auto lg:w-[60%]">
+          {/* lightweight placeholder while the 3D scene downloads: device outlines with a soft shimmer (CSS only) */}
+          {gl !== false && !ready && (
+            <div aria-hidden="true" className="hero-ph pointer-events-none absolute inset-0">
+              <span className="hero-ph-phone" /><span className="hero-ph-laptop" />
+            </div>
+          )}
           {gl && <div className="absolute inset-0 transition-opacity duration-1000" style={{ opacity: ready ? 1 : 0 }}><Hero3D p={p} mode={mode} paused={paused} compact={compact} active={inView} onReady={onSceneReady} /></div>}
           <button onClick={() => setPaused((x) => !x)} aria-pressed={paused} className="absolute bottom-1 right-0 z-50 flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-[#0c1024]/85 px-3.5 text-xs font-bold text-[#d5d9ea] hover:bg-white/10 lg:bottom-4 lg:right-[6%]">
                 <span aria-hidden="true" className="text-[10px]">{paused ? "▶" : "❚❚"}</span>{paused ? "Play video" : "Pause video"}
