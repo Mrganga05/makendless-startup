@@ -21,7 +21,7 @@ function Shot({ i, paused }: { i: number; paused: boolean }) {
     return (
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 38%,#22d3ee 0%,#0e7490 45%,#0b2540 100%)" }}>
         <div className="absolute left-1/2 top-[30%] h-[46%] w-[34%] -translate-x-1/2 overflow-hidden rounded-[18px_18px_26px_26px] bg-gradient-to-b from-[#fef3c7] to-[#f59e0b] shadow-[0_30px_40px_-10px_rgba(0,0,0,.5)]">
-          <div className="absolute inset-y-0 w-1/3 bg-white/50 blur-sm" style={{ animation: "hero-shine 2.4s ease-in-out infinite", ...play }} />
+          <div className="absolute inset-y-0 w-1/3 bg-white/35" style={{ animation: "hero-shine 2.4s ease-in-out infinite", ...play }} />
           <div className="absolute inset-x-[18%] top-[34%] h-[30%] rounded-md bg-[#0c1024]/85" />
         </div>
         <div className="absolute left-1/2 top-[22%] h-[9%] w-[16%] -translate-x-1/2 rounded-t-md bg-[#13172b]" />
@@ -74,7 +74,7 @@ export function PhoneScreen({ p, paused, ad, back }: { p: number; paused: boolea
   const words = CAPS[Math.floor(t / 2) % 3];
   const wi = Math.min(3, Math.floor((t % 2) / 0.45));
   return (
-    <div className="relative h-full w-full select-none overflow-hidden rounded-[30px] bg-black text-white" style={{ filter: back ? "blur(1.6px) brightness(.72)" : "none", transition: "filter .6s" }}>
+    <div className="relative h-full w-full select-none overflow-hidden rounded-[30px] bg-black text-white" style={{ opacity: back ? 0.55 : 1, transition: "opacity .6s" }}>
       <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 overflow-hidden" style={{ height: `${31 + 69 * reframe}%` }}>
         <Reel shot={shot} paused={paused} />
         <div className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${grade}%)`, filter: "grayscale(1) contrast(.62) brightness(.9)" }}>
@@ -125,7 +125,7 @@ export function BrowserScreen({ p, resize, ad, back }: { p: number; resize: bool
   const [slot, setSlot] = useState(1);
   const slots = ["9:30", "11:00", "14:30"];
   return (
-    <div className="relative flex h-full w-full select-none flex-col overflow-hidden rounded-[10px] bg-[#0f1226]" style={{ filter: back ? "blur(1.6px) brightness(.72)" : "none", transition: "filter .6s" }}>
+    <div className="relative flex h-full w-full select-none flex-col overflow-hidden rounded-[10px] bg-[#0f1226]" style={{ opacity: back ? 0.55 : 1, transition: "opacity .6s" }}>
       <div className="flex h-8 shrink-0 items-center gap-1.5 bg-[#1a1d36] px-3">
         {["#ff5f57", "#febc2e", "#28c840"].map((c) => (<span key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />))}
         <span className="ml-3 flex-1 truncate rounded-md bg-[#0f1226] px-3 py-1 text-[10px] text-[#a4aac7]">northlight-studio.example · Concept demo</span>

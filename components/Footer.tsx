@@ -3,7 +3,7 @@ import { Wordmark } from "./Nav";
 
 const cols: { title: string; links: { label: string; href: string; beta?: boolean }[] }[] = [
   { title: "Studios", links: [{ label: "CREATE", href: "/create" }, { label: "BUILD", href: "/build" }, { label: "GROW", href: "/grow", beta: true }, { label: "Studios", href: "/studios" }] },
-  { title: "Studio", links: [{ label: "About", href: "/about" }, { label: "FAQ", href: "/faq" }, { label: "Contact", href: "/contact" }] },
+  { title: "Company", links: [{ label: "About", href: "/about" }, { label: "FAQ", href: "/faq" }, { label: "Contact", href: "/contact" }] },
   { title: "Legal", links: [{ label: "Privacy", href: "/privacy" }, { label: "Terms", href: "/terms" }] },
 ];
 
@@ -35,9 +35,12 @@ export default function Footer() {
       </div>
       <div className="mx-auto mt-12 flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-sm text-muted">
         <p>© {new Date().getFullYear()} MAKENDLESS</p>
-        <p>Demo visuals on this site are original concept pieces.</p>
+        <p>All demo visuals on this site are original concept pieces.</p>
       </div>
-      <p aria-hidden="true" className="pointer-events-none mx-auto mt-8 max-w-7xl select-none whitespace-nowrap text-center text-[13.5vw] font-extrabold leading-[0.8] tracking-tight text-white/[0.035] xl:text-[11.5rem]">MAKENDLESS</p>
+      {/* Ghost wordmark: SVG textLength makes it span the container exactly at every width (CSS font sizing clipped it). */}
+      <svg aria-hidden="true" viewBox="0 0 1000 118" className="pointer-events-none mx-auto mt-10 block w-full max-w-7xl select-none">
+        <text x="0" y="104" textLength="1000" lengthAdjust="spacingAndGlyphs" fontSize="124" fontWeight="800" fill="rgba(255,255,255,.045)" style={{ fontFamily: "var(--font-syne), sans-serif" }}>MAKENDLESS</text>
+      </svg>
     </footer>
   );
 }

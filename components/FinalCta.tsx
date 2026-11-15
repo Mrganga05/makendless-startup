@@ -17,6 +17,8 @@ const WORDS: { w: string; accent?: boolean; m?: boolean; d?: boolean }[] = [
   { w: "worth", accent: true, m: true }, { w: "remembering.", accent: true },
 ];
 
+const ENABLE_CTA_3D = false;
+
 export default function FinalCta() {
   const [nearRef, near] = useInView<HTMLElement>({ once: true, margin: "700px 0px", threshold: 0 });
   const [stageRef, onScreen] = useInView<HTMLDivElement>({ threshold: 0.02 });
@@ -24,11 +26,22 @@ export default function FinalCta() {
   const [mode, setMode] = useState<"pending" | "3d" | "still">("pending");
   const [compact, setCompact] = useState(false);
   const [ready, setReady] = useState(false);
+  /* Build the 3D scene only when the browser is idle, so creating it never stalls an active scroll. */
+  const [idle, setIdle] = useState(false);
+  useEffect(() => {
+    if (!near || idle) return;
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback) { const id = w.requestIdleCallback(() => setIdle(true), { timeout: 2500 }); return () => w.cancelIdleCallback?.(id); }
+    const t = setTimeout(() => setIdle(true), 600); return () => clearTimeout(t);
+  }, [near, idle]);
 
   useEffect(() => {
     const rm = window.matchMedia("(prefers-reduced-motion: reduce)");
     const mq = window.matchMedia("(max-width: 767px)");
-    const decide = () => { setMode(!rm.matches && hasWebGL() ? "3d" : "still"); setCompact(mq.matches); };
+    /* Performance decision: the hero already runs the page's 3D scene. A second live WebGL scene here cost
+       ~1.3s of main-thread work and dropped to ~27fps on slower machines, so the closing shot uses its
+       designed still. Set ENABLE_CTA_3D to true to bring the live scene back. */
+    const decide = () => { setMode(ENABLE_CTA_3D && !rm.matches && hasWebGL() ? "3d" : "still"); setCompact(mq.matches); };
     decide();
     rm.addEventListener("change", decide); mq.addEventListener("change", decide);
     return () => { rm.removeEventListener("change", decide); mq.removeEventListener("change", decide); };
@@ -40,7 +53,7 @@ export default function FinalCta() {
       {/* the closing shot */}
       <div ref={stageRef} className="cta-stage absolute inset-0 -z-10" aria-hidden="true">
         <div className="cta-backdrop absolute inset-0" />
-        {mode === "3d" && near && (
+        {mode === "3d" && near && idle && (
           <div className="absolute inset-0 transition-opacity duration-[1400ms]" style={{ opacity: ready ? 1 : 0 }}>
             <CtaScene compact={compact} active={onScreen} onReady={() => setReady(true)} />
           </div>
