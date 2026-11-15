@@ -16,7 +16,7 @@ const MODES = [
   { label: "Website Development", short: "Websites", word: "BUILD", color: "#8b5cf6", stages: ["Wireframe", "Layout", "Style", "Responsive", "Launch"] },
   { label: "Digital Marketing — Beta", short: "Marketing", word: "GROW", color: "#c7a6ff", beta: true, stages: ["Brief", "Creative", "Format", "Preview", "Review"] },
 ];
-const LINES = ["We make", "ideas into", "reality."];
+const LINES = ["We make", "ideas", "impossible", "to ignore."];
 const EASE = "cubic-bezier(.2,.8,.2,1)";
 
 function hasWebGL() {
@@ -160,11 +160,12 @@ export default function Hero() {
         {/* TEXT */}
         <div className="pointer-events-none relative z-20 pt-4 sm:pt-8 lg:w-[52%] lg:py-10 [&_a]:pointer-events-auto">
           <p className="mb-5 hidden text-xs font-bold uppercase tracking-[0.35em] text-[#08bbd4] sm:block">Creative &amp; Technology Studio</p>
-          <h1 id="hero-title" aria-label="We make ideas into reality." className="text-[2.25rem] font-extrabold leading-[0.98] tracking-tight min-[390px]:text-[2.45rem] sm:text-[3.4rem] lg:text-[3.6rem] xl:text-[4.7rem]">
+          <h1 id="hero-title" aria-label="We make ideas impossible to ignore." className="text-[2.25rem] font-extrabold leading-[0.98] tracking-tight min-[390px]:text-[2.45rem] sm:text-[3.4rem] lg:text-[3.6rem] xl:text-[4.7rem]">
             <span aria-hidden="true">
-              <Line text={LINES[0]} i={0} g={touched ? seg(p, 0.24, 0.5) : 1} intro={intro} />
-              <Line text={LINES[1]} i={1} g={touched ? seg(p, 0.42, 0.72) : 1} intro={intro} />
-              <Line text={LINES[2]} i={2} g={touched ? seg(p, 0.64, 0.96) : 1} accent intro={intro} />
+              <Line text={LINES[0]} i={0} g={touched ? seg(p, 0.24, 0.46) : 1} intro={intro} />
+              <Line text={LINES[1]} i={1} g={touched ? seg(p, 0.36, 0.6) : 1} intro={intro} />
+              <Line text={LINES[2]} i={2} g={touched ? seg(p, 0.5, 0.82) : 1} accent intro={intro} />
+              <Line text={LINES[3]} i={3} g={touched ? seg(p, 0.7, 0.96) : 1} intro={intro} />
             </span>
           </h1>
           {/* kinetic mode word */}

@@ -102,7 +102,7 @@ export function PhoneScreen({ p, paused, ad, back }: { p: number; paused: boolea
       <div className="absolute inset-0 flex flex-col bg-[#f6f7fc] text-[#13172b]" style={{ clipPath: `inset(0 0 ${ad ? 0 : 100}% 0)`, transition: `clip-path .75s ${EASE}` }} aria-hidden={!ad}>
         <div className="flex items-center gap-2 px-4 pb-2 pt-11 text-[11px] font-bold"><span className="h-7 w-7 rounded-full" style={{ background: "var(--prism)" }} />yourbrand<span className="ml-auto font-normal text-[#5a6082]">Sponsored</span></div>
         <div className="relative mx-3 flex-1 overflow-hidden rounded-2xl" style={{ background: "linear-gradient(150deg,#6f45f6,#c7a6ff 55%,#22d3ee)" }}>
-          <p className="absolute inset-x-4 top-7 text-[23px] font-extrabold leading-[1.05] text-white">Your idea, made real.</p>
+          <p className="absolute inset-x-4 top-7 text-[23px] font-extrabold leading-[1.05] text-white">Your offer, made impossible to ignore.</p>
           <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-white/25" />
         </div>
         <div className="flex flex-col items-center gap-2 px-4 py-4"><span className="w-full rounded-full bg-[#13172b] py-2.5 text-center text-xs font-bold text-white">Learn more</span><BetaLabel /></div>
@@ -168,7 +168,7 @@ export function BrowserScreen({ p, resize, ad, back }: { p: number; resize: bool
           <div className="w-20 shrink-0 space-y-2">{[0, 1, 2, 3].map((k) => (<div key={k} className="h-5 rounded bg-[#d5d9ea]" />))}</div>
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-white shadow">
             <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-[#13172b]"><span className="h-6 w-6 rounded-full" style={{ background: "var(--prism)" }} />yourbrand <span className="font-normal text-[#5a6082]">· Sponsored</span><span className="ml-auto"><BetaLabel /></span></div>
-            <div className="relative flex-1" style={{ background: "linear-gradient(120deg,#6f45f6,#c7a6ff 55%,#22d3ee)" }}><p className="absolute left-4 top-1/2 max-w-[70%] -translate-y-1/2 text-[24px] font-extrabold leading-[1.05] text-white">Your idea, made real.</p></div>
+            <div className="relative flex-1" style={{ background: "linear-gradient(120deg,#6f45f6,#c7a6ff 55%,#22d3ee)" }}><p className="absolute left-4 top-1/2 max-w-[70%] -translate-y-1/2 text-[24px] font-extrabold leading-[1.05] text-white">Your offer, made impossible to ignore.</p></div>
             <div className="flex items-center justify-between px-3 py-2 text-[11px] text-[#13172b]"><span>Sample ad creative</span><span className="rounded-full bg-[#13172b] px-3 py-1 font-bold text-white">Learn more</span></div>
           </div>
         </div>
