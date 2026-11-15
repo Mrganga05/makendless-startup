@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-white focus:px-5 focus:py-3 focus:font-bold focus:text-black">Skip to content</a>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org", "@type": "Organization", name: SITE_NAME, url: SITE_URL, logo: `${SITE_URL}/icon.svg`,
-          description: SITE_DESCRIPTION, slogan: "We make ideas impossible to ignore.",
+          description: SITE_DESCRIPTION, slogan: "We make ideas into reality.",
           knowsAbout: ["Video editing", "Motion graphics", "Website development", "E-commerce websites", "Booking systems"],
         }) }} />
         <Nav />

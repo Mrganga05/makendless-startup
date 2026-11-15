@@ -92,12 +92,12 @@ export function drawReel() {
   d.addColorStop(0, "rgba(8,11,26,0)"); d.addColorStop(1, "rgba(8,11,26,.85)");
   g.fillStyle = d; g.fillRect(0, 0, W, H);
   g.textBaseline = "middle"; g.textAlign = "center";
-  fit(g, "IMPOSSIBLE", 168, 25);
+  fit(g, "IDEAS INTO", 168, 25);
   g.fillStyle = "#ffffff"; rr(g, 34, 372, 192, 40, 10); g.fill();
-  g.fillStyle = color.dark; g.fillText("IMPOSSIBLE", 130, 393);
+  g.fillStyle = color.dark; g.fillText("IDEAS INTO", 130, 393);
   g.fillStyle = color.aquaBright; rr(g, 46, 418, 168, 40, 10); g.fill();
-  fit(g, "TO IGNORE", 144, 25);
-  g.fillStyle = color.dark; g.fillText("TO IGNORE", 130, 439);
+  fit(g, "REALITY", 144, 25);
+  g.fillStyle = color.dark; g.fillText("REALITY", 130, 439);
   g.fillStyle = "rgba(255,255,255,.3)"; rr(g, 24, 498, W - 48, 5, 2.5); g.fill();
   g.fillStyle = prism(g, 24, 0, W - 24, 0); rr(g, 24, 498, W - 48, 5, 2.5); g.fill();
   g.fillStyle = "#ffffff"; g.beginPath(); g.arc(W - 24, 500.5, 7, 0, Math.PI * 2); g.fill();

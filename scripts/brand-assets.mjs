@@ -19,7 +19,7 @@ const shot = async (html, w, h, path, transparent = false) => {
 // Open Graph / Twitter card
 await shot(`<div style="width:1200px;height:630px;background:radial-gradient(60% 70% at 85% 20%,rgba(111,69,246,.45),transparent 70%),radial-gradient(40% 50% at 0% 100%,rgba(8,187,212,.25),transparent 70%),#0c1024;color:#f6f8ff;padding:72px 80px;display:flex;flex-direction:column;justify-content:space-between">
   <div style="font-size:38px">${word("#f6f8ff", "#f6f8ff")}</div>
-  <div><div style="font-size:72px;font-weight:800;line-height:1.02;letter-spacing:-.02em">We make ideas<br><span class="p">impossible</span><br>to ignore.</div>
+  <div><div style="font-size:72px;font-weight:800;line-height:1.02;letter-spacing:-.02em">We make ideas<br>into <span class="p">reality.</span></div>
   <div style="margin-top:30px;font-size:26px;color:#c3c8de">Video editing · Website development · Digital marketing (beta)</div></div>
   <div style="font-size:20px;letter-spacing:.3em;color:#a4aac7">CREATE • BUILD • GROW</div></div>`, 1200, 630, "app/opengraph-image.png");
 // Logo files
