@@ -1,29 +1,45 @@
 import type { Metadata } from "next";
 import PageShell from "../../components/PageShell";
 import { Arrow, ButtonLink } from "../../components/ui";
-import { faqs } from "../../data/process";
+import { Bullets } from "../../components/Prose";
+import { faqGroups } from "../../data/process";
+import { LIVE_URL, OWNER as O, WHATSAPP_HREF } from "../../data/owner";
 
-export const metadata: Metadata = { alternates: { canonical: "/faq" }, title: "FAQ", description: "How to start a project with MAKENDLESS, what we need, how quotes and revisions work, timelines and support." };
+export const metadata: Metadata = { alternates: { canonical: `${LIVE_URL}/faq` }, title: "FAQ", description: "How to start a project with MAKENDLESS: fixed prices, payment, delivery times, free changes, refunds, combo packs, referrals and support." };
 
 export default function Page() {
   return (
-    <PageShell eyebrow="FAQ" title="Questions," accent="answered plainly." intro="Anything specific to your project is agreed with you in a written proposal before work starts." light>
+    <PageShell eyebrow="FAQ" title="Questions," accent="answered plainly." intro="Your final price and delivery time are confirmed with you on WhatsApp before any work starts." light>
       <div className="grid gap-12 lg:grid-cols-[1.6fr_1fr]">
-        <div className="divide-y divide-line border-y border-line">
-          {faqs.map((f) => (
-            <details key={f.q} className="group">
-              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 py-5 text-lg font-bold md:text-xl [&::-webkit-details-marker]:hidden">
-                <h2>{f.q}</h2>
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full ring-1 ring-line transition group-open:rotate-45 group-open:bg-violet group-open:text-white group-open:ring-violet" aria-hidden="true">+</span>
-              </summary>
-              <p className="max-w-2xl pb-6 text-[17px] leading-relaxed text-muted-dark">{f.a}</p>
-            </details>
+        <div className="space-y-14">
+          {faqGroups.map((g) => (
+            <div key={g.title}>
+              <h2 className="mb-2 text-2xl font-extrabold text-dark">{g.title}</h2>
+              <div className="divide-y divide-line border-y border-line">
+                {g.items.map((f) => (
+                  <details key={f.q} className="group">
+                    <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 py-5 text-lg font-bold md:text-xl [&::-webkit-details-marker]:hidden">
+                      <h3>{f.q}</h3>
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full ring-1 ring-line transition group-open:rotate-45 group-open:bg-violet group-open:text-white group-open:ring-violet" aria-hidden="true">+</span>
+                    </summary>
+                    <div className="max-w-2xl space-y-3 pb-6 text-[17px] leading-relaxed text-muted-dark">
+                      <p>{f.a}</p>
+                      {f.list && <Bullets items={f.list} />}
+                      {f.after && <p>{f.after}</p>}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
         <aside className="h-fit rounded-[1.75rem] bg-ink p-7 text-light lg:sticky lg:top-24">
           <h2 className="text-2xl font-extrabold">Still have a question?</h2>
-          <p className="mt-3 text-[15px] leading-relaxed text-muted">Put it in your project brief. It's the quickest way for us to understand what you need.</p>
-          <ButtonLink href="/contact" className="mt-6">Start a Project <Arrow /></ButtonLink>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted">Message us on WhatsApp at {O.whatsapp} or press &ldquo;Start Project&rdquo; and ask in the requirements box.</p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <ButtonLink href="/contact">Start a Project <Arrow /></ButtonLink>
+            <ButtonLink href={WHATSAPP_HREF} variant="secondary">Chat on WhatsApp</ButtonLink>
+          </div>
         </aside>
       </div>
     </PageShell>
