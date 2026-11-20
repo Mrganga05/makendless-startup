@@ -2,6 +2,8 @@ import Link from "next/link";
 import { studios, type StudioId } from "../data/studios";
 import { process } from "../data/process";
 import { BuildWorld, CreateWorld, GrowWorld } from "./studios/Worlds";
+import Packages from "./Packages";
+import { PricingRegion } from "./pricing/state";
 import { Arrow, BetaBadge, ButtonLink, DemoCaption, Eyebrow, KineticHeading, Reveal } from "./ui";
 
 /* Division page (/create, /build, /grow). One template, three identities: accent colour, hero world and
@@ -140,6 +142,9 @@ export default function StudioPage({ id }: { id: StudioId }) {
           )}
         </div>
       </section>
+
+      {/* SERVICES AND PRICES — the shared selector, opened on this studio */}
+      {id !== "grow" && <PricingRegion><Packages initial={id} /></PricingRegion>}
 
       {/* HOW IT RUNS — dark */}
       <section data-tone="dark" className="bg-surface-2 px-5 py-20 text-light md:px-8 md:py-28">

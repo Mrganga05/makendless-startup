@@ -3,6 +3,7 @@ import { Syne } from "next/font/google";
 import "./globals.css";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { SelectionProvider } from "../components/pricing/state";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "../lib/site";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap" });
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           knowsAbout: ["Video editing", "Motion graphics", "Website development", "E-commerce websites", "Booking systems"],
         }) }} />
         <Nav />
-        <main id="main">{children}</main>
+        <SelectionProvider><main id="main">{children}</main></SelectionProvider>
         <Footer />
       </body>
     </html>

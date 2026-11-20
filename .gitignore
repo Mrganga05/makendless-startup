@@ -11,3 +11,7 @@ docs/audit/tmp
 scripts/tmp
 docs/check
 .next-dev
+
+# local test data store (lib/db.ts)
+.data
+docs/preview
