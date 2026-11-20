@@ -2,7 +2,7 @@
 /* "Services and prices": BUILD / CREATE tabs → service cards → options (chips) with prices, delivery, extras,
    what we need, free items and a requirements box. Used on the homepage (opens on BUILD), /build and /create.
    All prices and words come from data/pricing.ts; sample links from data/samples.ts. */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { COPY, orderedOptions, mostPicked, REQUIREMENTS_MAX, services, startingFrom, type Service, type StudioKey } from "../data/pricing";
 import { SAMPLES } from "../data/samples";
 import { studios } from "../data/studios";
@@ -119,16 +119,23 @@ export default function Packages({ initial = "create" }: { initial?: StudioKey }
 
   /* /#packages-build and /#packages-create open that tab. */
   useEffect(() => {
-    const fromHash = () => {
-      const h = window.location.hash;
+    const fromHash = (hash?: string) => {
+      const h = hash ?? window.location.hash;
       const m = /^#packages-(build|create)$/.exec(h);
       if (m) { setIndex(TABS.indexOf(m[1] as StudioKey)); setOpen(null); return; }
       const sv = services.find((s) => h === `#svc-${s.id}`);
       if (sv) { setIndex(TABS.indexOf(sv.studio)); setOpen(sv.id); requestAnimationFrame(() => sheet.current?.scrollIntoView({ block: "start" })); }
     };
     fromHash();
-    window.addEventListener("hashchange", fromHash);
-    return () => window.removeEventListener("hashchange", fromHash);
+    const onHash = () => fromHash();
+    /* In-page links made with next/link change the address without a "hashchange" event, so also read the clicked link itself. */
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.("a[href*='#packages-'], a[href*='#svc-']") as HTMLAnchorElement | null;
+      if (a && a.pathname === window.location.pathname) fromHash(a.hash);
+    };
+    window.addEventListener("hashchange", onHash);
+    document.addEventListener("click", onClick);
+    return () => { window.removeEventListener("hashchange", onHash); document.removeEventListener("click", onClick); };
   }, []);
 
   const go = (id: string | null) => {
@@ -148,8 +155,8 @@ export default function Packages({ initial = "create" }: { initial?: StudioKey }
               {HEADLINE.map((line, l) => (
                 <span key={l} aria-hidden="true" className="pac-title-line">
                   {line.map((w, i) => (
-                    <span key={w} className="pac-title-word"><span className={l === 1 ? "pac-accent" : undefined} style={{ ["--w" as string]: l * 2 + i }}>{w}</span></span>
-                  ))}
+                    <Fragment key={w}>{i > 0 ? " " : ""}<span className="pac-title-word"><span className={l === 1 ? "pac-accent" : undefined} style={{ ["--w" as string]: l * 2 + i }}>{w}</span></span></Fragment>
+                  ))}{" "}
                 </span>
               ))}
             </h2>

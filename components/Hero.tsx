@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BrowserScreen, PhoneScreen, seg } from "./HeroScreens";
 import { Wordmark } from "./brand";
+import { STUDIOS } from "../data/pricing";
 
 const load3D = () => import("./Hero3D");
 /* Start downloading the 3D scene as soon as this module runs (during hydration), not after the first effects. */
@@ -12,9 +13,9 @@ const Hero3D = dynamic(load3D, { ssr: false, loading: () => null });
 const useIsoLayout = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 const MODES = [
-  { label: "Video Editing", short: "Video", word: "EDIT", color: "#22d3ee", stages: ["Raw", "Cut", "Grade", "Captions", "Export"] },
-  { label: "Website Development", short: "Websites", word: "BUILD", color: "#8b5cf6", stages: ["Wireframe", "Layout", "Style", "Responsive", "Launch"] },
-  { label: "Digital Marketing — Beta", short: "Marketing", word: "GROW", color: "#c7a6ff", beta: true, stages: ["Brief", "Creative", "Format", "Preview", "Review"] },
+  { label: STUDIOS.create.name, short: "Video", word: "EDIT", color: "#22d3ee", stages: ["Raw", "Cut", "Grade", "Captions", "Export"] },
+  { label: STUDIOS.build.name, short: "Websites", word: "BUILD", color: "#8b5cf6", stages: ["Wireframe", "Layout", "Style", "Responsive", "Launch"] },
+  { label: `${STUDIOS.grow.name} — Beta`, short: "Marketing", word: "GROW", color: "#c7a6ff", beta: true, stages: ["Brief", "Creative", "Format", "Preview", "Review"] },
 ];
 const LINES = ["We make", "ideas", "impossible", "to ignore."];
 const EASE = "cubic-bezier(.2,.8,.2,1)";

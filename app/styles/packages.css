@@ -20,7 +20,6 @@
 .pac-title { margin-bottom: 0; font-size: clamp(1.85rem, 6.6vw, 4.5rem); line-height: 1.04; letter-spacing: -.01em; }
 .pac-title-line { display: block; white-space: nowrap; }
 .pac-title-word { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: .12em; margin-bottom: -.12em; }
-.pac-title-word + .pac-title-word { margin-left: .26em; }
 .pac-title-word > span { display: inline-block; transform: translateY(115%); transition: transform .95s var(--pac-ease) calc(var(--w, 0) * 80ms); }
 .pac-title-in .pac-title-word > span { transform: none; }
 @media (min-width: 1024px) { .pac-title { font-size: clamp(3rem, 5.4vw, 4.5rem); } }

@@ -8,7 +8,7 @@ import { Arrow, BetaBadge } from "../ui";
 import BriefResult, { ICON, useCopy } from "./BriefResult";
 import { Essentials, LiveBrief, StudioMotif } from "./BriefSheet";
 import {
-  LIMITS, STUDIO_OPTIONS, WHO_OPTIONS, formatBrief, packageLabel, packagesFor, payloadFields, servicesFor, validate, validateField,
+  LIMITS, STUDIO_OPTIONS, WHO_OPTIONS, formatBrief, payloadFields, servicesFor, validate, validateField,
   type BriefValues, type FieldKey, type StudioChoice,
 } from "./brief";
 
@@ -62,7 +62,6 @@ export default function BriefForm({ initial, simulate }: { initial: BriefValues;
   const summaryRef = useRef<HTMLDivElement>(null);
   const failRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLHeadingElement>(null);
-  const pkgRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const focusTop = useRef(false);
   const mounted = useRef(true);
 
@@ -110,7 +109,6 @@ export default function BriefForm({ initial, simulate }: { initial: BriefValues;
   const loading = status === "loading";
   const errorKeys = Object.keys(errors) as FieldKey[];
   const services = servicesFor(v.studio);
-  const pkgs = packagesFor(v.studio);
   const grow = v.studio === "grow";
   const describe = (...ids: (string | false | undefined)[]) => ids.filter(Boolean).join(" ") || undefined;
   const accent = v.studio === "unsure" ? color.violet : accentOf[v.studio];
@@ -211,31 +209,6 @@ export default function BriefForm({ initial, simulate }: { initial: BriefValues;
               </fieldset>
             )}
 
-            {pkgs.length > 0 && (
-              <div role="group" aria-labelledby="bf-pkg-label">
-                <p id="bf-pkg-label" className="flex flex-wrap items-baseline gap-x-2 text-[15px] font-bold text-dark">Package of interest <span className="text-xs font-semibold text-muted-dark">Optional</span></p>
-                {v.pkg ? (
-                  <div className="mt-3">
-                    <span className="for-chip">
-                      <span className="for-chip-dot" style={{ background: accent }} aria-hidden="true" />
-                      <span className="py-2 text-sm font-bold">{STUDIO_OPTIONS.find((o) => o.id === v.studio)?.verb} · {packageLabel(v.studio, v.pkg)}</span>
-                      <button type="button" className="for-chip-x" aria-label={`Remove package: ${packageLabel(v.studio, v.pkg)}`}
-                        onClick={() => { const was = v.pkg; set("pkg", ""); requestAnimationFrame(() => pkgRefs.current[was]?.focus()); }}>
-                        <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" /></svg>
-                      </button>
-                    </span>
-                    <p className="mt-2 text-sm text-muted-dark">Suits: {pkgs.find((p) => p.slug === v.pkg)?.suits}. We will confirm scope and a quote with you; no prices are fixed here.</p>
-                  </div>
-                ) : (
-                  <p className="mt-1 text-sm text-muted-dark">Pick one if you already have a starting point in mind.</p>
-                )}
-                <div className="mt-3 flex flex-wrap gap-2.5">
-                  {pkgs.map((p) => (
-                    <button key={p.slug} type="button" ref={(el) => { pkgRefs.current[p.slug] = el; }} aria-pressed={v.pkg === p.slug} className="for-pill-btn" onClick={() => set("pkg", v.pkg === p.slug ? "" : p.slug)}>{p.name}</button>
-                  ))}
-                </div>
-              </div>
-            )}
           </Step>
 
           <Step n="03" title="The details">

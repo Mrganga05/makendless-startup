@@ -48,7 +48,8 @@
 .stu-build .stu-cap > span { background: rgba(40,18,130,.6); }
 .stu-grow .stu-cap > span { background: rgba(255,255,255,.7); }
 
-.stu-body { position: relative; z-index: 2; padding: 12px 16px 12px; }
+/* static on purpose: the demo tag (.stu-cap) anchors to the card itself, in the space kept free above the artwork, never over the title */
+.stu-body { position: static; z-index: 2; padding: 12px 16px 12px; }
 .stu-h { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .stu-verbrow { display: inline-flex; align-items: center; gap: 10px; }
 .stu-verb { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }

@@ -1,4 +1,13 @@
 import type { Metadata } from "next";
 import StudioPage from "../../components/StudioPage";
-export const metadata: Metadata = { title: "BUILD — Website Development", description: "Website design and development: business websites, e-commerce stores, booking systems and custom web apps, redesigns and ongoing maintenance. Responsive and accessible.", alternates: { canonical: "/build" }, openGraph: { title: "BUILD — Website Development — MAKENDLESS", description: "Website design and development: business websites, e-commerce stores, booking systems and custom web apps, redesigns and ongoing maintenance. Responsive and accessible.", url: "/build", images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "MAKENDLESS — We make ideas impossible to ignore." }] } };
+import { STUDIOS, servicesOf, studioFrom } from "../../data/pricing";
+import { inr } from "../../lib/pricing";
+
+/* Title and description are written from data/pricing.ts, so they always match the service list. */
+const s = STUDIOS.build;
+export const metadata: Metadata = {
+  title: `${s.verb} — ${s.name}`,
+  description: `Websites and technology for businesses: ${servicesOf("build").map((x) => x.name).join(", ")}. Fixed prices from ${inr(studioFrom("build")!)}.`,
+  alternates: { canonical: "/build" },
+};
 export default function Page() { return <StudioPage id="build" />; }

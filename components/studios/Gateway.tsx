@@ -6,9 +6,9 @@ import type { StudioId } from "../../data/site";
 import { Arrow, DemoCaption } from "../ui";
 import { BuildWorld, CreateWorld, GrowWorld } from "./Worlds";
 
-type Props = { id: StudioId; verb: string; name: string; href: string; beta: boolean; index: number; services: { name: string; from?: string }[]; after?: React.ReactNode };
+type Props = { id: StudioId; verb: string; name: string; href: string; beta: boolean; index: number; from?: string; services: { name: string; from?: string }[]; after?: React.ReactNode };
 
-export default function Gateway({ id, verb, name, href, beta, index, services, after }: Props) {
+export default function Gateway({ id, verb, name, href, beta, index, from, services, after }: Props) {
   const ref = useRef<HTMLLIElement>(null);
   const [live, setLive] = useState(false); // on screen right now -> animations run
   const [seen, setSeen] = useState(false); // has been on screen -> wipe reveal done
@@ -53,6 +53,7 @@ export default function Gateway({ id, verb, name, href, beta, index, services, a
                 {beta && <span className="stu-beta">Beta</span>}
               </span>{" "}
               <span className="stu-name">{name}</span>
+              {from && <>{" "}<span className="stu-fromall">{from}</span></>}
             </h3>
             <span className="stu-cap"><DemoCaption kind={beta ? "illustrative" : "concept"} tone={id === "grow" ? "light" : "dark"} /></span>
             <ul className="stu-svc">

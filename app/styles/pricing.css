@@ -151,6 +151,7 @@
 .stu-more { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-top: .6rem; padding-inline: .25rem; }
 .stu-prices { display: inline-flex; align-items: center; min-height: 2.75rem; font-size: .9375rem; font-weight: 800; color: var(--color-dark); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(19,23,43,.3); }
 .stu-prices:hover { text-decoration-color: currentColor; }
+.stu-fromall { display: block; flex-basis: 100%; margin-top: 4px; font-size: 14px; font-weight: 800; line-height: 1.2; }
 .stu-svc .stu-from { color: inherit; opacity: .8; font-weight: 700; }
 
 /* floating WhatsApp button: sits above the services selection bar when it is open */

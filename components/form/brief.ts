@@ -1,5 +1,6 @@
 /* Project brief: field model, query-string preselection, validation and plain-text formatting. No React here. */
-import { packages, solutions, studios, type StudioId } from "../../data/site";
+import { solutions, studios, type StudioId } from "../../data/site";
+import { servicesOf } from "../../data/pricing";
 import { normalizePhone } from "../../lib/referral";
 
 export type StudioChoice = StudioId | "unsure";
@@ -11,7 +12,7 @@ export interface BriefValues {
   business: string;
   who: string; // solutions id | "other" | ""
   studio: StudioChoice;
-  services: string[]; // service codes of the chosen studio (V1, T2, ...)
+  services: string[]; // service ids of the chosen studio, from data/pricing.ts (e.g. "short-videos")
   pkg: string; // package slug of the chosen studio, or ""
   links: string;
   timing: string;
@@ -34,13 +35,13 @@ export const STUDIO_OPTIONS: { id: StudioChoice; verb: string; name: string; not
 export const slugOf = (name: string) => name.toLowerCase().trim().replace(/\s+/g, "-");
 const isStudio = (v: string): v is StudioId => studios.some((s) => s.id === v);
 
-/** GROW has no real packages yet (beta), so only CREATE and BUILD offer a package choice. */
-export function packagesFor(studio: StudioChoice) {
-  if (studio !== "create" && studio !== "build") return [];
-  return packages[studio].map((p) => ({ slug: p.slug || slugOf(p.name), name: p.name, suits: p.for }));
-}
-export function servicesFor(studio: StudioChoice) {
-  return studio === "unsure" ? [] : studios.find((s) => s.id === studio)?.services ?? [];
+/** The old Starter / Creator / Professional packages are gone: prices live in the "Services and prices" selector. */
+export function packagesFor(_studio: StudioChoice): { slug: string; name: string; suits: string }[] { return []; }
+/** The services a visitor can tick: the same list as the selector (data/pricing.ts). */
+export function servicesFor(studio: StudioChoice): { code: string; title: string }[] {
+  if (studio === "unsure") return [];
+  if (studio === "grow") return (studios.find((s) => s.id === "grow")?.planned ?? []).map((p) => ({ code: p.id, title: p.title }));
+  return servicesOf(studio).map((s) => ({ code: s.id, title: s.name }));
 }
 
 export function studioLabel(studio: StudioChoice) {
@@ -56,7 +57,7 @@ type Params = Record<string, string | string[] | undefined>;
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 
 /**
- * Link contract: /contact?service=create|build|grow&need=<service code(s), e.g. V1 or V1,V4>&package=<slug>&for=creator|local|startup|store
+ * Link contract: /contact?service=create|build|grow&need=<service id(s), e.g. short-videos or short-videos,websites>&package=<slug>&for=creator|local|startup|store
  * Also accepts the older combined form ?service=create-starter. Unknown values are ignored.
  */
 export function initialFromParams(params: Params): BriefValues {
@@ -67,9 +68,9 @@ export function initialFromParams(params: Params): BriefValues {
   const pkg = packagesFor(studio).some((p) => p.slug === rawPkg) ? rawPkg : "";
   const rawWho = first(params.for).toLowerCase();
   const who = WHO_OPTIONS.some((w) => w.id === rawWho) ? rawWho : "";
-  const valid = new Set(servicesFor(studio).map((x) => x.code.toUpperCase()));
+  const valid = new Set(servicesFor(studio).map((x) => x.code));
   const rawNeed = ([] as string[]).concat(params.need ?? []).flatMap((x) => String(x).split(","));
-  const services = [...new Set(rawNeed.map((x) => x.trim().toUpperCase()).filter((x) => valid.has(x)))];
+  const services = [...new Set(rawNeed.map((x) => x.trim().toLowerCase()).filter((x) => valid.has(x)))];
   return { name: "", whatsapp: "", email: "", business: "", who, studio, services, pkg, links: "", timing: "", budget: "", message: "" };
 }
 

@@ -1,12 +1,10 @@
-import type { StudioId } from "./studios";
+import type { StudioId } from "./pricing";
 
-/** A recommended service. `code` points at the service catalogue in data/studios.ts (the title is read from there). */
+/** A recommended service. `id` points at a service in data/pricing.ts; its name is always read from there. */
 export interface SolutionService {
   studio: StudioId;
-  /** Catalogue code, e.g. "V4" (see data/studios.ts). */
-  code: string;
-  /** Catalogue title (kept in sync with data/studios.ts). */
-  title: string;
+  /** Service id in data/pricing.ts, e.g. "short-videos" (or a planned GROW item id). */
+  id: string;
   /** One short line: what this service means for this customer type. No outcome promises. */
   note: string;
 }
@@ -38,9 +36,9 @@ export const solutions: Solution[] = [
     blurb: "Send us the long video. We edit it, cut it into vertical shorts, add captions and export each one for the platform it is going to.",
     primary: "create",
     services: [
-      { studio: "create", code: "V4", title: "Repurposing & creator packages", note: "Long video cut into short clips, in the aspect ratios you post in." },
-      { studio: "create", code: "V1", title: "Short-form video editing", note: "Captioned, vertical-first Reels and Shorts." },
-      { studio: "create", code: "V5", title: "Motion graphics & creative editing", note: "Animated titles, captions, intros and outros." },
+      { studio: "create", id: "short-videos", note: "Reels and Shorts with captions, cut for the feed." },
+      { studio: "create", id: "long-videos", note: "YouTube videos and podcasts, edited and ready to post." },
+      { studio: "create", id: "motion-graphics", note: "Intros, logo animation and thumbnails." },
     ],
   },
   {
@@ -51,11 +49,11 @@ export const solutions: Solution[] = [
     blurb: "A clear website that says what you do, a simple way to request a booking, and a short promo video that shows the place.",
     primary: "build",
     services: [
-      { studio: "build", code: "T1", title: "Business websites", note: "A responsive site for your services, hours and location." },
-      { studio: "build", code: "T3", title: "Booking systems & web apps", note: "Service selection and appointment requests." },
-      { studio: "create", code: "V3", title: "Promotional & ad video", note: "A short intro video for your site and socials." },
+      { studio: "build", id: "websites", note: "A website for your services, timings and location." },
+      { studio: "build", id: "automation", note: "Enquiries, bookings and follow-ups handled automatically." },
+      { studio: "create", id: "short-videos", note: "Short promo videos for your page and socials." },
     ],
-    later: { studio: "grow", code: "M3", title: "Local presence & analytics", note: "In beta and not offered yet. A possible next step later on." },
+    later: { studio: "grow", id: "local-presence", note: "In beta and not offered yet. A possible next step later on." },
   },
   {
     id: "startup",
@@ -65,11 +63,11 @@ export const solutions: Solution[] = [
     blurb: "A sharp landing page and a pitch-style promo video, so people understand what you are making and where to sign up.",
     primary: "build",
     services: [
-      { studio: "build", code: "T1", title: "Business websites", note: "A responsive launch or landing page." },
-      { studio: "create", code: "V3", title: "Promotional & ad video", note: "A product intro video for the page and the pitch." },
-      { studio: "build", code: "T3", title: "Booking systems & web apps", note: "Custom features, such as a waitlist or demo requests." },
+      { studio: "build", id: "websites", note: "A landing page for your launch." },
+      { studio: "build", id: "saas", note: "Your idea built as AI software you can launch." },
+      { studio: "create", id: "long-videos", note: "A brand or product video for the page and the pitch." },
     ],
-    later: { studio: "grow", code: "M1", title: "Meta & Google Ads", note: "In beta and not offered yet. A possible next step later on." },
+    later: { studio: "grow", id: "meta-google-ads", note: "In beta and not offered yet. A possible next step later on." },
   },
   {
     id: "store",
@@ -79,10 +77,10 @@ export const solutions: Solution[] = [
     blurb: "A storefront that is easy to browse on a phone, with product videos that show the details a photo cannot.",
     primary: "build",
     services: [
-      { studio: "build", code: "T2", title: "E-commerce websites", note: "Catalogue, product pages and a mobile-first cart." },
-      { studio: "create", code: "V3", title: "Promotional & ad video", note: "Product videos and social ad creatives." },
-      { studio: "create", code: "V1", title: "Short-form video editing", note: "Vertical product clips for Reels and Shorts." },
+      { studio: "build", id: "websites", note: "An online store with products, cart and payments." },
+      { studio: "create", id: "short-videos", note: "Ad videos and product Reels." },
+      { studio: "build", id: "website-care", note: "Keeps the store fast, safe and up to date." },
     ],
-    later: { studio: "grow", code: "M2", title: "Social media management", note: "In beta and not offered yet. A possible next step later on." },
+    later: { studio: "grow", id: "social-media", note: "In beta and not offered yet. A possible next step later on." },
   },
 ];

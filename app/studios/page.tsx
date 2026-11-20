@@ -4,7 +4,7 @@ import PageShell from "../../components/PageShell";
 import { StudioWorld } from "../../components/StudioPage";
 import { Arrow, BetaBadge, Reveal } from "../../components/ui";
 import { studios } from "../../data/studios";
-import { studioServices } from "../../components/Studios";
+import { studioFromText, studioServices } from "../../components/Studios";
 import Waitlist from "../../components/Waitlist";
 
 export const metadata: Metadata = { alternates: { canonical: "/studios" }, title: "Studios", description: "CREATE, BUILD and GROW: video editing, websites and digital marketing (beta)." };
@@ -22,11 +22,12 @@ export default function Page() {
                   <div className="flex items-center gap-3">
                     <p className={`text-sm font-extrabold tracking-[0.3em] ${s.id === "create" ? "text-[#0891b2]" : "text-violet"}`}>{s.verb}</p>
                     {s.beta && <BetaBadge tone="light" />}
+                    {studioFromText(s.id) && <p className="ml-auto text-sm font-extrabold text-dark">{studioFromText(s.id)}</p>}
                   </div>
                   <h2 className="mt-2 text-[1.55rem] font-extrabold leading-tight sm:text-3xl lg:text-[1.65rem] xl:text-3xl">{s.name}</h2>
                   <p className="mt-3 text-[16px] leading-relaxed text-muted-dark">{s.tagline}</p>
                   <ul className="mt-5 space-y-2 border-t border-line pt-5 text-[15px]">
-                    {studioServices(s.id, s.services.map((sv) => sv.title)).map((sv) => (<li key={sv.name} className="flex justify-between gap-3"><span>{sv.name}</span>{sv.from && <span className="shrink-0 font-bold text-muted-dark">from {sv.from}</span>}</li>))}
+                    {studioServices(s.id, (s.planned ?? []).map((sv) => sv.title)).map((sv) => (<li key={sv.name} className="flex justify-between gap-3"><span>{sv.name}</span>{sv.from && <span className="shrink-0 font-bold text-muted-dark">from {sv.from}</span>}</li>))}
                   </ul>
                   <span className="mt-auto flex items-center justify-between pt-7 text-[15px] font-extrabold">
                     {s.beta ? "Preview the GROW studio" : `Enter the ${s.verb} studio`}

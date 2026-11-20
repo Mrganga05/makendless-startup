@@ -12,6 +12,7 @@ const links = [
 
 export { Wordmark } from "./brand";
 import { Wordmark } from "./brand";
+import { studios } from "../data/pricing";
 
 /**
  * Fixed navigation. It reads `data-tone="light" | "dark"` from whatever section is under it and switches
@@ -80,7 +81,7 @@ export default function Nav() {
     {/* The sheet is a sibling of the header: a blurred (backdrop-filter) header would otherwise trap position:fixed children. */}
       <div id="mobile-menu" data-tone="dark" hidden={!open} className="nav-sheet fixed inset-x-0 bottom-0 top-16 z-50 overflow-y-auto overscroll-contain bg-ink px-5 pb-8 pt-2 text-light md:hidden">
         <nav aria-label="Mobile">
-          {[...links, { href: "/create", label: "CREATE — Video Editing" }, { href: "/build", label: "BUILD — Website Development" }, { href: "/grow", label: "GROW — Digital Marketing (Beta)" }].map((l, i) => (
+          {[...links, ...studios.map((s) => ({ href: s.href, label: `${s.verb} — ${s.name}${s.beta ? " (Beta)" : ""}` }))].map((l, i) => (
             <Link key={l.href} href={l.href} onClick={() => setOpen(false)} aria-current={current(l.href) ? "page" : undefined}
               className={`nav-sheet-item flex min-h-14 items-center border-b border-white/10 ${i < links.length ? "text-2xl font-extrabold" : "text-base font-semibold text-[#c3c8de]"} ${current(l.href) ? "text-aqua-bright" : ""}`} style={{ animationDelay: `${i * 0.04}s` }}>{l.label}</Link>
           ))}

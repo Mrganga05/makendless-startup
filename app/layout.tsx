@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import { SelectionProvider } from "../components/pricing/state";
 import { HOME_DESCRIPTION, HOME_TITLE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../lib/site";
 import WhatsAppFloat from "../components/WhatsAppFloat";
+import { services } from "../data/pricing";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", adjustFontFallback: false });
 
@@ -31,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org", "@type": "Organization", name: SITE_NAME, url: SITE_URL, logo: `${SITE_URL}/icon.svg`,
           description: SITE_DESCRIPTION, slogan: "We make ideas impossible to ignore.",
-          knowsAbout: ["Video editing", "Motion graphics", "Website development", "E-commerce websites", "Booking systems"],
+          knowsAbout: services.map((s) => s.name),
         }) }} />
         <Nav />
         <SelectionProvider><main id="main">{children}</main><WhatsAppFloat /></SelectionProvider>

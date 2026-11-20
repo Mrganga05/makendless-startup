@@ -1,7 +1,9 @@
 /*
- * Services, prices, delivery times, extras, combo packs and the words around them.
- * Approved by the owner (Services, pricing, combos and referrals prompt). Edit prices here only:
- * the selector, combo cards, bottom bar, final page and the server all read this file.
+ * THE ONE SOURCE OF TRUTH for the whole site: studios, services, options, prices, delivery times, extras,
+ * free items, "what we need" lists, popular tags, combo packs and the words around them.
+ * Edit a price or a service here only. The selector, the /create, /build and /studios pages, the homepage
+ * studio cards, the "who it's for" cards, the contact form, the bottom bar, the final page and the server
+ * all read this file, so one edit updates everywhere.
  */
 
 export type StudioKey = "build" | "create";
@@ -196,6 +198,54 @@ export const EXTRAS: Record<string, Extra & { service: Service }> = Object.fromE
   services.flatMap((s) => s.extras.map((x) => [x.id, { ...x, service: s }])),
 );
 export const SERVICES: Record<string, Service> = Object.fromEntries(services.map((s) => [s.id, s]));
+
+/* ---------------- STUDIOS ---------------- */
+export type StudioId = StudioKey | "grow";
+/** GROW is Beta / coming soon: three planned items, no prices. */
+export interface PlannedService { id: string; title: string; items: string[]; summary: string; forWho: string }
+export interface Studio {
+  id: StudioId; verb: string; name: string; href: string; tagline: string; lead: string; accent: string;
+  beta?: boolean;
+  /** What it helps to have ready before a project starts. */
+  inputs?: string[];
+  /** GROW only. */
+  planned?: PlannedService[];
+}
+
+export const studios: Studio[] = [
+  {
+    id: "create", verb: "CREATE", name: "Video Editing", href: "/create", accent: "#22d3ee",
+    tagline: "Short videos, long videos and motion graphics that hold attention.",
+    lead: "Editing for people who publish: short videos, long videos and motion graphics, finished and exported for the platforms you post on.",
+    inputs: ["Raw footage", "Brand assets", "References"],
+  },
+  {
+    id: "build", verb: "BUILD", name: "Websites & Technology", href: "/build", accent: "#8b5cf6",
+    tagline: "Websites, automation, AI and apps built to do a job.",
+    lead: "Technology built to do a job: business websites, workflow automation, AI assistants, AI SaaS platforms, mobile apps and website care.",
+    inputs: ["Content", "Branding", "Examples you like"],
+  },
+  {
+    id: "grow", verb: "GROW", name: "Digital Marketing", href: "/grow", accent: "#c7a6ff", beta: true,
+    tagline: "In development. Digital marketing is in beta and not on sale yet.",
+    lead: "We are building a digital marketing studio and testing how we would deliver it. Paid marketing services are not offered yet. This page shows what is in development.",
+    planned: [
+      { id: "meta-google-ads", title: "Meta & Google Ads", items: ["Campaign setup & monitoring", "Creative coordination", "Campaign reporting"], summary: "Setting up and monitoring ad campaigns on Meta and Google, with the creative coordinated alongside.", forWho: "Planned for businesses that want to advertise online." },
+      { id: "social-media", title: "Social media management", items: ["Content planning & calendars", "Posting schedules", "Page management"], summary: "Planning what to post and when: content calendars, posting schedules and page management.", forWho: "Planned for businesses that want a steady social presence." },
+      { id: "local-presence", title: "Local presence & analytics", items: ["Google Business Profile support", "Marketing reporting", "Basic visibility strategy"], summary: "Support with a Google Business Profile, plain marketing reporting and a basic visibility strategy.", forWho: "Planned for local businesses that want to be easier to find." },
+    ],
+  },
+];
+
+export const STUDIOS = Object.fromEntries(studios.map((s) => [s.id, s])) as Record<StudioId, Studio>;
+/** The priced services of a studio, in display order (GROW has none). */
+export const servicesOf = (studio: StudioId) => services.filter((s) => s.studio === studio);
+/** Lowest "from" price in a studio, or null for GROW. */
+export const studioFrom = (studio: StudioId) => { const l = servicesOf(studio); return l.length ? Math.min(...l.map(startingFrom)) : null; };
+/** The options inside a service, popular first: "Reels & Shorts", "Ad Videos", "Monthly 12 Reels". */
+export const optionNames = (s: Service) => orderedOptions(s).map((o) => o.name);
+/** Name of any service or planned GROW item, by id. */
+export const serviceTitle = (id: string) => SERVICES[id]?.name ?? studios.flatMap((s) => s.planned ?? []).find((p) => p.id === id)?.title ?? "";
 
 /* ---------------- combo packs ---------------- */
 /** Combo packs are switched off for now (owner will add them later). true = section, auto-apply and hints come back. */

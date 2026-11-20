@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { solutions, type SolutionService } from "../data/solutions";
 import { studios } from "../data/studios";
 import { Arrow, BetaBadge, ButtonLink, DemoCaption, Eyebrow, Reveal, useInView, useReducedMotion, useTabs } from "./ui";
-import { combos, COMBOS_ENABLED } from "../data/pricing";
+import { combos, COMBOS_ENABLED, serviceTitle } from "../data/pricing";
 import { inr } from "../lib/pricing";
 /* Audience -> combo pack line (Part 5): shown only while combo packs are switched on. */
 const PACK: Record<string, (typeof combos)[number] | undefined> = { creator: combos.find((c) => c.id === "creator"), local: combos.find((c) => c.id === "local-business"), startup: combos.find((c) => c.id === "launch"), store: combos.find((c) => c.id === "growth") };
@@ -27,7 +27,7 @@ function ServiceLink({ sv, later, i }: { sv: SolutionService; later?: boolean; i
   return (
     <li style={{ ["--i" as string]: i }} className="flex">
       <Link
-        href={st.href}
+        href={sv.studio === "grow" ? st.href : `#svc-${sv.id}`}
         className={`sol-svc group flex min-h-[7.25rem] w-full flex-col rounded-2xl p-4 xl:min-h-[11.5rem] ${later ? "border border-dashed border-violet/45 bg-white hover:border-violet" : "border border-line bg-paper hover:border-ink/40 hover:bg-white"}`}
       >
         <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-dark">
@@ -36,7 +36,7 @@ function ServiceLink({ sv, later, i }: { sv: SolutionService; later?: boolean; i
           <span className="sr-only">: {st.name}.</span>
           {later ? <BetaBadge tone="light" className="ml-auto" /> : <Arrow className="sol-svc-arrow ml-auto text-dark" />}
         </span>
-        <span className="mt-3 block text-[17px] font-extrabold leading-tight text-dark">{sv.title}</span>
+        <span className="mt-3 block text-[17px] font-extrabold leading-tight text-dark">{serviceTitle(sv.id)}</span>
         <span className="mt-1.5 block text-sm leading-snug text-muted-dark">{sv.note}</span>
       </Link>
     </li>
@@ -144,7 +144,7 @@ export default function Solutions() {
             {s.id !== "store" && <div className="mt-10 border-t border-line pt-6 md:mt-12">
               <p id="sol-svc-label" className="text-xs font-bold uppercase tracking-[0.3em] text-muted-dark">Recommended for a {s.label.toLowerCase()}</p>
               <ul key={`s${s.id}`} aria-labelledby="sol-svc-label" className="sol-swap mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {s.services.map((sv, i) => <ServiceLink key={sv.code} sv={sv} i={i} />)}
+                {s.services.map((sv, i) => <ServiceLink key={sv.id} sv={sv} i={i} />)}
                 {s.later ? <ServiceLink sv={s.later} later i={s.services.length} /> : null}
               </ul>
             </div>}

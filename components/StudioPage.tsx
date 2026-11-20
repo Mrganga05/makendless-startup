@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { studios, type StudioId } from "../data/studios";
+import { optionNames, servicesOf, startingFrom, studios, type StudioId } from "../data/pricing";
+import { inr } from "../lib/pricing";
 import { process } from "../data/process";
 import { BuildWorld, CreateWorld, GrowWorld } from "./studios/Worlds";
 import Packages from "./Packages";
@@ -31,6 +32,11 @@ export default function StudioPage({ id }: { id: StudioId }) {
   const L = LOOK[id];
   const others = studios.filter((x) => x.id !== id);
   const beta = !!s.beta;
+  /* The catalogue is read from data/pricing.ts: the same services, names and prices as the selector below.
+     GROW (beta) lists its three planned items instead, with no prices. */
+  const cards = beta
+    ? (s.planned ?? []).map((p) => ({ id: p.id, title: p.title, line: p.summary, tag: "In development", from: "", note: p.forWho, listLabel: "Planned scope", list: p.items, chips: [] as string[], href: `/contact?service=${id}&need=${p.id}` }))
+    : servicesOf(id).map((sv) => ({ id: sv.id, title: sv.name, line: sv.line, tag: sv.tag ?? "", from: inr(startingFrom(sv)), note: "", listLabel: "Options", list: optionNames(sv), chips: sv.free, href: `#svc-${sv.id}` }));
   return (
     <>
       {/* HERO — dark, division world on the right */}
@@ -56,7 +62,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
             )}
             <div className="mt-8 flex flex-wrap gap-3">
               <ButtonLink href={`/contact?service=${id}`}>{beta ? "Tell us you're interested" : "Start a Project"} <Arrow /></ButtonLink>
-              <ButtonLink href="#services" variant="secondary">See the {s.services.length} services</ButtonLink>
+              <ButtonLink href="#services" variant="secondary">See services</ButtonLink>
             </div>
             {beta && <div className="mt-6"><p className="mb-2 text-sm font-bold text-light">Join the waitlist</p><Waitlist tone="dark" /></div>}
           </div>
@@ -80,66 +86,60 @@ export default function StudioPage({ id }: { id: StudioId }) {
             <p className="max-w-xl text-[17px] leading-relaxed text-muted-dark lg:justify-self-end">
               {beta
                 ? "These are the services GROW is being built around. They are not offered yet; tell us if you'd like to hear when they are."
-                : `${s.services.length} services. Ask for one, or describe the whole project in your brief and the scope is worked out from there.`}
+                : `${cards.length} services, each with a fixed starting price. Open one to see its options, extras and delivery time.`}
             </p>
           </div>
 
           <ol className="mt-12 grid gap-5">
-            {s.services.map((sv, i) => {
-              const href = `/contact?service=${id}&need=${sv.code}`;
-              return (
-                <li key={sv.code} id={sv.code.toLowerCase()} className="scroll-mt-24">
-                  <Reveal kind={i % 2 ? "fade" : "wipe-right"}>
-                    <article className="group grid overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-line transition duration-300 hover:shadow-[0_30px_70px_-45px_rgba(19,23,43,.55)] lg:grid-cols-[1.15fr_1fr]">
-                      {/* what it is */}
-                      <div className="flex flex-col p-6 sm:p-8">
-                        <div className="flex items-center gap-3">
-                          {beta && <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet">In development</span>}
-                        </div>
-                        <h3 className="mt-5 text-2xl font-extrabold leading-tight sm:text-[1.9rem]">{sv.title}</h3>
-                        {sv.summary && <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted-dark">{sv.summary}</p>}
-                        {sv.forWho && (
-                          <p className="mt-5 rounded-2xl bg-paper px-4 py-3 text-[15px] leading-relaxed">
-                            <span className="font-bold">Made for: </span><span className="text-muted-dark">{sv.forWho}</span>
-                          </p>
-                        )}
-                        <div className="mt-auto flex flex-wrap items-center gap-3 pt-7">
-                          <ButtonLink href={href} tone="light">{beta ? "I'm interested" : "Start a Project"} <Arrow /></ButtonLink>
-                          {!beta && <span className="text-sm text-muted-dark">Opens the brief with this service selected.</span>}
-                        </div>
+            {cards.map((c, i) => (
+              <li key={c.id} id={c.id} className="scroll-mt-24">
+                <Reveal kind={i % 2 ? "fade" : "wipe-right"}>
+                  <article className="group grid overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-line transition duration-300 hover:shadow-[0_30px_70px_-45px_rgba(19,23,43,.55)] lg:grid-cols-[1.15fr_1fr]">
+                    {/* what it is */}
+                    <div className="flex flex-col p-6 sm:p-8">
+                      <div className="flex min-h-4 items-center gap-3">
+                        {c.tag && <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet">{c.tag}</span>}
                       </div>
-                      {/* what you get */}
-                      <div className="grid content-start gap-7 border-t border-line bg-paper/60 p-6 sm:grid-cols-2 sm:p-8 lg:border-l lg:border-t-0 lg:grid-cols-1">
+                      <h3 className="mt-5 text-2xl font-extrabold leading-tight sm:text-[1.9rem]">{c.title}</h3>
+                      <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted-dark">{c.line}</p>
+                      {c.from ? (
+                        <p className="mt-5 rounded-2xl bg-paper px-4 py-3 text-[15px] leading-relaxed">
+                          <span className="text-muted-dark">Starting from </span><span className="text-lg font-extrabold">{c.from}</span>
+                        </p>
+                      ) : (
+                        <p className="mt-5 rounded-2xl bg-paper px-4 py-3 text-[15px] leading-relaxed">
+                          <span className="font-bold">Made for: </span><span className="text-muted-dark">{c.note}</span>
+                        </p>
+                      )}
+                      <div className="mt-auto flex flex-wrap items-center gap-3 pt-7">
+                        {beta
+                          ? <ButtonLink href={c.href} tone="light">I&apos;m interested <Arrow /></ButtonLink>
+                          : <a href={c.href} className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-ink px-6 py-3 text-[15px] font-bold text-white transition duration-200 hover:bg-violet active:scale-[.96]">See prices<span className="sr-only">: {c.title}</span> <Arrow /></a>}
+                        {!beta && <span className="text-sm text-muted-dark">Opens this service in the price list below.</span>}
+                      </div>
+                    </div>
+                    {/* what is inside */}
+                    <div className="grid content-start gap-7 border-t border-line bg-paper/60 p-6 sm:grid-cols-2 sm:p-8 lg:border-l lg:border-t-0 lg:grid-cols-1">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">{c.listLabel}</p>
+                        <ul className="mt-3 space-y-2.5 text-[15px]">
+                          {c.list.map((it) => (<li key={it} className="flex gap-3"><span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${L.dot}`} />{it}</li>))}
+                        </ul>
+                      </div>
+                      {c.chips.length > 0 && (
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">{beta ? "Planned scope" : "Includes"}</p>
-                          <ul className="mt-3 space-y-2.5 text-[15px]">
-                            {sv.items.map((it) => (<li key={it} className="flex gap-3"><span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${L.dot}`} />{it}</li>))}
+                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Free with every order</p>
+                          <ul className="mt-3 flex flex-wrap gap-2">
+                            {c.chips.map((x) => (<li key={x} className={`rounded-full px-3 py-1.5 text-[13px] font-semibold ${L.chip}`}>{x}</li>))}
                           </ul>
                         </div>
-                        {sv.extras && sv.extras.length > 0 && (
-                          <div>
-                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Can be added</p>
-                            <ul className="mt-3 flex flex-wrap gap-2">
-                              {sv.extras.map((x) => (<li key={x} className={`rounded-full px-3 py-1.5 text-[13px] font-semibold ${L.chip}`}>{x}</li>))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    </article>
-                  </Reveal>
-                </li>
-              );
-            })}
+                      )}
+                    </div>
+                  </article>
+                </Reveal>
+              </li>
+            ))}
           </ol>
-
-          {s.supporting && s.supporting.length > 0 && (
-            <div className="mt-12 rounded-[1.75rem] bg-white p-6 shadow-[0_20px_60px_-40px_rgba(19,23,43,.45)] ring-1 ring-line md:p-8">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Alongside any service</p>
-              <ul className="mt-4 flex flex-wrap gap-2.5">
-                {s.supporting.map((x) => (<li key={x} className="rounded-full bg-paper px-4 py-2 text-sm font-semibold ring-1 ring-line">{x}</li>))}
-              </ul>
-            </div>
-          )}
         </div>
       </section>
 
@@ -174,11 +174,11 @@ export default function StudioPage({ id }: { id: StudioId }) {
           <div>
             <KineticHeading text={beta ? "Interested in GROW?" : "Have something in mind?"} className="text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
             <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-muted-dark">
-              {beta ? "Tell us what you'd want from it. We'll use it to shape the beta." : "Tell us what you're building. Packages show how work is organised; every project is quoted to its scope."}
+              {beta ? "Tell us what you'd want from it. We'll use it to shape the beta." : "Tell us what you're building, or pick your services and see the price and delivery time straight away."}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <ButtonLink href={`/contact?service=${id}`} tone="light">{beta ? "Tell us you're interested" : "Start a Project"} <Arrow /></ButtonLink>
-              {!beta && <ButtonLink href="/#packages" variant="secondary" tone="light">See packages</ButtonLink>}
+              {!beta && <a href="#packages" className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-ink/25 px-6 py-3 text-[15px] font-bold text-dark transition duration-200 hover:border-ink hover:bg-ink/5 active:scale-[.96]">See prices</a>}
             </div>
           </div>
           <div>

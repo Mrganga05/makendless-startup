@@ -2,15 +2,17 @@ import Link from "next/link";
 import { studios } from "../data/site";
 import { Arrow, Eyebrow, KineticHeading } from "./ui";
 import Gateway from "./studios/Gateway";
-import { services as priced, startingFrom } from "../data/pricing";
+import { servicesOf, startingFrom, studioFrom, type StudioId } from "../data/pricing";
 import { inr } from "../lib/pricing";
 import Waitlist from "./Waitlist";
 
 /* CREATE and BUILD cards list the current priced services; GROW (beta) keeps its plan. */
-export const studioServices = (id: string, fallback: string[]): { name: string; from?: string }[] => {
-  const list = priced.filter((s) => s.studio === id);
+export const studioServices = (id: StudioId, fallback: string[]): { name: string; from?: string }[] => {
+  const list = servicesOf(id);
   return list.length ? list.map((s) => ({ name: s.name, from: inr(startingFrom(s)) })) : fallback.map((name) => ({ name }));
 };
+/** "From ₹399" for a studio (lowest price in data/pricing.ts), or undefined for GROW. */
+export const studioFromText = (id: StudioId) => { const n = studioFrom(id); return n === null ? undefined : `From ${inr(n)}`; };
 
 /* Homepage section 2 — Our Three Studios. Light editorial surface; the three gateways carry the colour. */
 export default function Studios() {
@@ -35,7 +37,7 @@ export default function Studios() {
 
         <ul className="stu-list">
           {studios.map((s, i) => (
-            <Gateway key={s.id} id={s.id} verb={s.verb} name={s.name} href={s.href} beta={!!s.beta} index={i} services={studioServices(s.id, s.services.slice(0, 3).map((x) => x.title))}
+            <Gateway key={s.id} id={s.id} verb={s.verb} name={s.name} href={s.href} beta={!!s.beta} index={i} from={studioFromText(s.id)} services={studioServices(s.id, (s.planned ?? []).map((x) => x.title))}
               after={<div className="stu-more">{s.id === "grow" ? <Waitlist compact /> : <Link href={`#packages-${s.id}`} className="stu-prices">See {s.verb} prices <Arrow /></Link>}</div>} />
           ))}
         </ul>
