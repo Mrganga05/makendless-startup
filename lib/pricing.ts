@@ -1,5 +1,5 @@
 /* Pure price maths, shared by the browser (live estimate) and the server (re-checks every lead). No React here. */
-import { combos, EXTRAS, OPTIONS, REFERRAL, SERVICES, VIDEO_TIERS, type Combo } from "../data/pricing";
+import { combos, COMBOS_ENABLED, EXTRAS, OPTIONS, REFERRAL, SERVICES, VIDEO_TIERS, type Combo } from "../data/pricing";
 
 export interface Selection {
   /** option id -> quantity (1 for single items) */
@@ -69,7 +69,7 @@ export function estimate(input: Selection, referral = false): Estimate {
   for (const x of extras) x.monthly ? (monthly += x.price) : (oneTime += x.price);
 
   /* Combo: the matching pack with the biggest saving. */
-  const combo = combos.filter((c) => comboMissing(c, sel.items).length === 0).sort((a, b) => b.save - a.save)[0] ?? null;
+  const combo = !COMBOS_ENABLED ? null : combos.filter((c) => comboMissing(c, sel.items).length === 0).sort((a, b) => b.save - a.save)[0] ?? null;
   const covered: Record<string, number> = {};
   if (combo) {
     for (const i of combo.items) {
@@ -101,7 +101,7 @@ export function estimate(input: Selection, referral = false): Estimate {
 
   /* Combo hint: one item away from a pack that saves more than the current one. */
   let hint = "";
-  const close = combos
+  const close = (COMBOS_ENABLED ? combos : [])
     .filter((c) => c.save > (combo?.save ?? 0))
     .map((c) => ({ c, miss: comboMissing(c, sel.items) }))
     .filter((x) => x.miss.length === 1 && x.miss.length < x.c.items.length)

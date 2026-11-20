@@ -1,23 +1,23 @@
 /* SERVER ONLY — never import this from a client component.
- * Tiny data layer for the three tables in supabase/schema.sql: leads, referral_codes, referral_uses.
- * Production: Supabase REST with the service role key (server only, never sent to the browser).
- *   Vercel env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * Data layer for the tables in supabase/schema.sql.
+ * Production: Supabase REST with the service role key (Vercel env SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY, never sent to the browser).
  * Local testing without Supabase: a JSON file in .data/ (only outside production, or with MK_DEV_STORE=1).
  */
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-export type Table = "leads" | "referral_codes" | "referral_uses";
+export type Table = "leads" | "referral_codes" | "referral_uses" | "waitlist" | "team_members" | "app_settings";
 export type Row = Record<string, unknown>;
 export class NotConfigured extends Error {}
 export class Conflict extends Error {}
 
 const URL_ = process.env.SUPABASE_URL?.replace(/\/$/, "");
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const useSupabase = !!(URL_ && KEY);
+export const useSupabase = !!(URL_ && KEY);
 const useFile = !useSupabase && (process.env.NODE_ENV !== "production" || process.env.MK_DEV_STORE === "1");
 export const dbReady = useSupabase || useFile;
+export const devStore = useFile;
 
 /* ---------- Supabase REST ---------- */
 async function sb(pathq: string, init: RequestInit = {}) {
@@ -31,47 +31,83 @@ async function sb(pathq: string, init: RequestInit = {}) {
   if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
   return res.status === 204 ? [] : ((await res.json()) as Row[]);
 }
+const q = (v: unknown) => encodeURIComponent(String(v));
 
 /* ---------- local JSON file (dev only) ---------- */
 const FILE = path.join(process.cwd(), ".data", "dev-db.json");
-const UNIQUE: Record<Table, string[]> = { leads: [], referral_codes: ["code", "whatsapp"], referral_uses: ["referred_whatsapp"] };
+const UNIQUE: Record<Table, string[][]> = {
+  leads: [], referral_codes: [["code"], ["referrer_whatsapp"]], referral_uses: [["new_client_whatsapp"]],
+  waitlist: [["email", "interest"]], team_members: [["email"]], app_settings: [["key"]],
+};
 type Db = Record<Table, Row[]>;
 async function load(): Promise<Db> {
-  try { return JSON.parse(await fs.readFile(FILE, "utf8")) as Db; } catch { return { leads: [], referral_codes: [], referral_uses: [] }; }
+  try { return JSON.parse(await fs.readFile(FILE, "utf8")) as Db; } catch {
+    return { leads: [], referral_codes: [], referral_uses: [], waitlist: [], team_members: [{ email: "makendlessofficial@gmail.com", name: "MAKENDLESS", role: "Admin", active: true }], app_settings: [{ key: "alert_email", value: "makendlessofficial@gmail.com" }] };
+  }
 }
 async function save(db: Db) { await fs.mkdir(path.dirname(FILE), { recursive: true }); await fs.writeFile(FILE, JSON.stringify(db, null, 2)); }
+const DEFAULTS: Partial<Record<Table, Row>> = {
+  leads: { status: "New", team_notes: [], activity: [], advance_paid: false, balance_paid: false },
+  referral_codes: { credits_earned: 0, credits_used: 0 }, referral_uses: { status: "Pending" }, waitlist: { interest: "GROW" },
+};
 
 /* ---------- API ---------- */
 function need() { if (!dbReady) throw new NotConfigured("Database is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)."); }
 
 export async function findOne(table: Table, col: string, value: string): Promise<Row | null> {
   need();
-  if (useSupabase) return (await sb(`${table}?${col}=eq.${encodeURIComponent(value)}&select=*&limit=1`))[0] ?? null;
-  return (await load())[table].find((r) => r[col] === value) ?? null;
+  if (useSupabase) return (await sb(`${table}?${col}=eq.${q(value)}&select=*&limit=1`))[0] ?? null;
+  return (await load())[table].find((r) => String(r[col]) === value) ?? null;
 }
 
 export async function insert(table: Table, row: Row): Promise<Row> {
   need();
   if (useSupabase) return (await sb(table, { method: "POST", body: JSON.stringify(row) }))[0];
   const db = await load();
-  for (const col of UNIQUE[table]) if (db[table].some((r) => r[col] === row[col])) throw new Conflict(`${table}.${col}`);
-  const full = { id: randomUUID(), created_at: new Date().toISOString(), ...row };
+  for (const cols of UNIQUE[table]) if (db[table].some((r) => cols.every((c) => r[c] === row[c]))) throw new Conflict(`${table}.${cols.join("+")}`);
+  const now = new Date().toISOString();
+  const full = { ...(table === "referral_codes" || table === "team_members" || table === "app_settings" ? {} : { id: randomUUID() }), created_at: now, ...(table === "leads" ? { updated_at: now } : {}), ...DEFAULTS[table], ...row };
   db[table].unshift(full);
   await save(db);
   return full;
 }
 
-export async function update(table: Table, id: string, patch: Row): Promise<void> {
+export async function update(table: Table, col: string, value: string, patch: Row): Promise<void> {
   need();
-  if (useSupabase) { await sb(`${table}?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(patch) }); return; }
+  if (useSupabase) { await sb(`${table}?${col}=eq.${q(value)}`, { method: "PATCH", body: JSON.stringify(patch) }); return; }
   const db = await load();
-  const r = db[table].find((x) => x.id === id);
-  if (r) Object.assign(r, patch);
+  for (const r of db[table]) if (String(r[col]) === value) Object.assign(r, patch);
   await save(db);
 }
 
-export async function list(table: Table, limit = 300): Promise<Row[]> {
+export async function upsert(table: Table, row: Row, onConflict: string): Promise<void> {
   need();
-  if (useSupabase) return sb(`${table}?select=*&order=created_at.desc&limit=${limit}`);
+  if (useSupabase) { await sb(`${table}?on_conflict=${onConflict}`, { method: "POST", body: JSON.stringify(row), headers: { Prefer: "resolution=merge-duplicates,return=minimal" } }); return; }
+  const db = await load();
+  const r = db[table].find((x) => x[onConflict] === row[onConflict]);
+  if (r) Object.assign(r, row); else db[table].unshift({ created_at: new Date().toISOString(), ...row });
+  await save(db);
+}
+
+export async function remove(table: Table, col: string, values: string[]): Promise<void> {
+  need();
+  if (!values.length) return;
+  if (useSupabase) { await sb(`${table}?${col}=in.(${values.map(q).join(",")})`, { method: "DELETE" }); return; }
+  const db = await load();
+  db[table] = db[table].filter((r) => !values.includes(String(r[col])));
+  await save(db);
+}
+
+export async function list(table: Table, limit = 1000): Promise<Row[]> {
+  need();
+  const order = table === "team_members" || table === "app_settings" ? "" : "&order=created_at.desc";
+  if (useSupabase) return sb(`${table}?select=*${order}&limit=${limit}`);
   return (await load())[table].slice(0, limit);
+}
+
+/** Rows in `table` with col = value created after `sinceISO` (rate limiting). */
+export async function countSince(table: Table, col: string, value: string, sinceISO: string): Promise<number> {
+  need();
+  if (useSupabase) return (await sb(`${table}?${col}=eq.${q(value)}&created_at=gt.${q(sinceISO)}&select=created_at`)).length;
+  return (await load())[table].filter((r) => r[col] === value && String(r.created_at) > sinceISO).length;
 }

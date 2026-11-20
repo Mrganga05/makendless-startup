@@ -18,7 +18,7 @@ export default function ComboPacks() {
           {combos.map((c) => {
             const has = c.items.every((i) => (sel.items[i.id] ?? 0) >= i.qty);
             return (
-              <li key={c.id} className="svc-combo" data-applied={applied === c.id}>
+              <li key={c.id} id={`combo-${c.id}`} className="svc-combo" data-applied={applied === c.id}>
                 <div className="svc-combo-top">
                   {c.tag ? <span className="svc-tag">{c.tag}</span> : <span />}
                   {applied === c.id && <span className="svc-badge">Applied</span>}

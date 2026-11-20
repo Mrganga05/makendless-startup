@@ -5,7 +5,7 @@ import { Bullets } from "../../components/Prose";
 import { faqGroups } from "../../data/process";
 import { LIVE_URL, OWNER as O, WHATSAPP_HREF } from "../../data/owner";
 
-export const metadata: Metadata = { alternates: { canonical: `${LIVE_URL}/faq` }, title: "FAQ", description: "How to start a project with MAKENDLESS: fixed prices, payment, delivery times, free changes, refunds, combo packs, referrals and support." };
+export const metadata: Metadata = { alternates: { canonical: `${LIVE_URL}/faq` }, title: "FAQ", description: "Prices, payment, delivery times, free changes and referrals, answered plainly." };
 
 export default function Page() {
   return (
@@ -35,7 +35,7 @@ export default function Page() {
         </div>
         <aside className="h-fit rounded-[1.75rem] bg-ink p-7 text-light lg:sticky lg:top-24">
           <h2 className="text-2xl font-extrabold">Still have a question?</h2>
-          <p className="mt-3 text-[15px] leading-relaxed text-muted">Message us on WhatsApp at {O.whatsapp} or press &ldquo;Start Project&rdquo; and ask in the requirements box.</p>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted">Message us on WhatsApp at {O.whatsapp} or press &ldquo;Start a Project&rdquo; and ask in the requirements box.</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <ButtonLink href="/contact">Start a Project <Arrow /></ButtonLink>
             <ButtonLink href={WHATSAPP_HREF} variant="secondary">Chat on WhatsApp</ButtonLink>

@@ -14,7 +14,7 @@ import {
 
 type Status = "idle" | "loading" | "ready" | "delivered" | "error";
 type Errors = Partial<Record<FieldKey, string>>;
-const FIELD_LABEL: Record<FieldKey, string> = { name: "Name", email: "Email", message: "What you need" };
+const FIELD_LABEL: Record<FieldKey, string> = { name: "Name", whatsapp: "WhatsApp", email: "Email", message: "What you need" };
 const MIN_PENDING_MS = 700; // keeps the progress state readable; the adapter itself is instant today
 
 function ErrorText({ id, children }: { id: string; children: string }) {
@@ -97,20 +97,14 @@ export default function BriefForm({ initial, simulate }: { initial: BriefValues;
     const text = formatBrief(v, date);
     setBrief({ text, date });
     setStatus("loading");
-    try {
-      const [result] = await Promise.all([submitBrief({ fields: payloadFields(v), text }, simulate), new Promise((r) => setTimeout(r, MIN_PENDING_MS))]);
-      if (!mounted.current) return;
-      // "delivered" is only ever shown when the adapter reports a confirmed delivery.
-      setStatus(result.delivered ? "delivered" : "ready");
-    } catch {
-      if (mounted.current) setStatus("error");
-    }
+    await new Promise((r) => setTimeout(r, MIN_PENDING_MS));
+    if (mounted.current) setStatus("ready"); // review step; the brief is sent from there with "Start a Project"
   }
 
   const goToField = (k: FieldKey) => (e: React.MouseEvent) => { e.preventDefault(); document.getElementById(`bf-${k}`)?.focus(); };
 
   if (status === "ready" || status === "delivered") {
-    return <BriefResult kind={status} values={v} text={brief.text} dateLabel={brief.date} onEdit={() => { focusTop.current = true; setStatus("idle"); }} />;
+    return <BriefResult values={v} text={brief.text} dateLabel={brief.date} onSend={() => submitBrief(payloadFields(v), simulate)} onEdit={() => { focusTop.current = true; setStatus("idle"); }} />;
   }
 
   const loading = status === "loading";
@@ -125,7 +119,7 @@ export default function BriefForm({ initial, simulate }: { initial: BriefValues;
     <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-16">
       <form onSubmit={onSubmit} noValidate aria-busy={loading} aria-labelledby={`${uid}-title`} className="min-w-0">
         <h2 id={`${uid}-title`} ref={topRef} tabIndex={-1} className="for-anchor text-[clamp(1.6rem,5.5vw,2.25rem)] font-extrabold leading-tight text-dark outline-none">Write your brief</h2>
-        <p className="mt-2 max-w-xl text-base leading-relaxed text-muted-dark">Three fields are required. Everything else helps us understand the job, and can be left blank.</p>
+        <p className="mt-2 max-w-xl text-base leading-relaxed text-muted-dark">Only your name and WhatsApp number are required. Everything else helps us understand the job.</p>
 
         {errorKeys.length > 0 && (
           <div ref={summaryRef} tabIndex={-1} role="alert" className="for-summary for-anchor mt-8">
@@ -151,8 +145,15 @@ export default function BriefForm({ initial, simulate }: { initial: BriefValues;
                 {errors.name && <ErrorText id="bf-name-error">{errors.name}</ErrorText>}
               </div>
               <div>
-                <Label htmlFor="bf-email" required>Email</Label>
-                <input id="bf-email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required aria-required="true" maxLength={LIMITS.email} value={v.email}
+                <Label htmlFor="bf-whatsapp" required>WhatsApp number</Label>
+                <input id="bf-whatsapp" name="whatsapp" type="tel" inputMode="tel" autoComplete="tel" required aria-required="true" maxLength={LIMITS.whatsapp} value={v.whatsapp} placeholder="10-digit number"
+                  onChange={(e) => set("whatsapp", e.target.value)} onBlur={() => blurCheck("whatsapp")}
+                  aria-invalid={errors.whatsapp ? true : undefined} aria-describedby={describe(errors.whatsapp && "bf-whatsapp-error")} className="for-field mt-2" />
+                {errors.whatsapp && <ErrorText id="bf-whatsapp-error">{errors.whatsapp}</ErrorText>}
+              </div>
+              <div>
+                <Label htmlFor="bf-email" optional>Email</Label>
+                <input id="bf-email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} maxLength={LIMITS.email} value={v.email}
                   onChange={(e) => set("email", e.target.value)} onBlur={() => blurCheck("email")}
                   aria-invalid={errors.email ? true : undefined} aria-describedby={describe(errors.email && "bf-email-error")} className="for-field mt-2" />
                 {errors.email && <ErrorText id="bf-email-error">{errors.email}</ErrorText>}
@@ -239,9 +240,9 @@ export default function BriefForm({ initial, simulate }: { initial: BriefValues;
 
           <Step n="03" title="The details">
             <div>
-              <Label htmlFor="bf-message" required>{grow ? "What would you want from marketing support?" : "Tell us what you're building"}</Label>
+              <Label htmlFor="bf-message" optional>{grow ? "What would you want from marketing support?" : "Tell us what you're building"}</Label>
               <p id="bf-message-hint" className="mt-1 text-sm text-muted-dark">What it is, who it is for and what a good result looks like. A few sentences is plenty.</p>
-              <textarea id="bf-message" name="message" rows={6} required aria-required="true" maxLength={LIMITS.message} value={v.message}
+              <textarea id="bf-message" name="message" rows={6} maxLength={LIMITS.message} value={v.message}
                 onChange={(e) => set("message", e.target.value)} onBlur={() => blurCheck("message")}
                 aria-invalid={errors.message ? true : undefined} aria-describedby={describe("bf-message-hint", errors.message && "bf-message-error", "bf-message-count")} className="for-field for-area mt-2" />
               <div className="flex items-start justify-between gap-4">
@@ -293,8 +294,7 @@ export default function BriefForm({ initial, simulate }: { initial: BriefValues;
           <noscript><p className="for-note mt-4">This form needs JavaScript to prepare your brief. Nothing can be submitted without it.</p></noscript>
 
           <p className="mt-6 max-w-xl text-sm leading-relaxed text-muted-dark">
-            What you type is used only to put this brief together, and it stays in your browser. This page does not send it to MAKENDLESS: online sending is still being set up.
-            Our <Link href="/privacy" className="for-link">privacy page</Link> is a draft placeholder for now.
+            We use these details only to reply to your request. See our <Link href="/privacy" className="for-link">privacy page</Link>.
           </p>
         </div>
       </form>

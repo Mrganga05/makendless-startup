@@ -2,8 +2,11 @@
 export const SITE_NAME = "MAKENDLESS";
 export const SITE_TAGLINE = "Creative & Technology Studio";
 export const SITE_DESCRIPTION = "We make ideas impossible to ignore. Video editing and website development for creators and businesses. Digital marketing in beta.";
-/** Public URL of the live site. Set NEXT_PUBLIC_SITE_URL once a domain is chosen (TODO-FOR-OWNER). */
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+import { SETTINGS } from "../data/settings";
+/** Public URL of the live site: set once in data/owner.ts (LIVE_URL) or NEXT_PUBLIC_SITE_URL. Never localhost. */
+export const SITE_URL = SETTINGS.siteUrl;
 /** Verified inquiry email. Empty until the owner confirms one (TODO-FOR-OWNER). Never invent it. */
-export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "";
+export const CONTACT_EMAIL = SETTINGS.email;
 export const ROUTES = ["", "/studios", "/create", "/build", "/grow", "/about", "/faq", "/contact", "/privacy", "/terms"] as const;
+export const HOME_TITLE = "MAKENDLESS | Video Editing, Websites & Automation Studio";
+export const HOME_DESCRIPTION = "Startup creative and technology studio in India. Video editing, websites, WhatsApp automation and AI, with clear fixed prices.";

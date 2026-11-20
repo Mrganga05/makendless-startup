@@ -3,7 +3,8 @@
    runs into one glowing final frame - the brand end card - while the phone and the laptop from the hero stand by,
    showing the finished reel and the finished site. The camera dollies in as the section scrolls into view. */
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer } from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
+import { useDpr } from "../perf";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { color } from "../../data/tokens";
@@ -205,8 +206,10 @@ export default function CtaScene({ compact, active, onReady }: CtaSceneProps) {
     window.addEventListener("pointermove", move, { passive: true });
     return () => window.removeEventListener("pointermove", move);
   }, [compact]);
+  const [dpr, lowerDpr] = useDpr(compact, 1.75);
   return (
-    <Canvas camera={{ position: [0, 1.6, 9], fov: 30, near: 0.1, far: 60 }} dpr={compact ? [1, 1.5] : [1, 1.75]} frameloop={active ? "always" : "never"} gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }} onCreated={onReady}>
+    <Canvas camera={{ position: [0, 1.6, 9], fov: 30, near: 0.1, far: 60 }} dpr={dpr} frameloop={active ? "always" : "never"} gl={{ antialias: !compact, alpha: true, powerPreference: "high-performance" }} onCreated={onReady}>
+      <PerformanceMonitor onDecline={lowerDpr} onFallback={lowerDpr} />
       <Rig live={live} compact={compact} />
       <Environment resolution={compact ? 64 : 128} frames={1}>
         <Lightformer form="rect" intensity={2.2} color="#ffffff" position={[0, 5, 4]} scale={[9, 3, 1]} />

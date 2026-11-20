@@ -47,6 +47,7 @@ const sections: LegalSection[] = [
     "We share only what is needed, with:",
     [
       "**Hosting providers** that run our website (e.g. Vercel)",
+      "**Database and email providers** (e.g. Supabase, Resend)",
       "**Payment providers** that process your payment",
       "**WhatsApp (Meta)**, when we message you or set up WhatsApp services for you",
       "**Cloud storage** (e.g. Google Drive) used to share project files",

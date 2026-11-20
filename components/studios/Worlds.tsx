@@ -16,7 +16,7 @@ export function CreateWorld() {
         <span className="stu-c-shot stu-c-shot2" />
         <span className="stu-c-shot stu-c-shot3" />
         <span className="stu-c-subject"><i /><i /></span>
-        <span className="stu-c-words"><b>MAKE</b><b>THEM</b><b>STOP</b></span>
+        
         <span className="stu-c-prog"><i /></span>
       </span>
       <span className="stu-c-tl">

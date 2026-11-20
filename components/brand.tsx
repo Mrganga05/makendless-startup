@@ -21,10 +21,10 @@ export function Wordmark({ className = "", mono = false }: EProps) {
   return (
     <span className={`inline-flex items-baseline whitespace-nowrap font-extrabold tracking-[0.18em] ${className}`} aria-label="MAKENDLESS" role="img">
       <span aria-hidden="true">MAK</span>
-      <EGlyph mono={mono} className="mr-[0.18em]" />
+      <span className="sr-only">E</span><EGlyph mono={mono} className="mr-[0.18em]" />
       <span aria-hidden="true">ND</span>
       <span aria-hidden="true" className={mono ? "" : "prism-text"}>L</span>
-      <EGlyph mono={mono} className="mr-[0.18em]" />
+      <span className="sr-only">E</span><EGlyph mono={mono} className="mr-[0.18em]" />
       <span aria-hidden="true" className={mono ? "" : "prism-text"}>SS</span>
     </span>
   );

@@ -7,6 +7,7 @@ const links = [
   { href: "/studios", label: "Studios" },
   { href: "/about", label: "About" },
   { href: "/faq", label: "FAQ" },
+  { href: "/#refer", label: "Refer & Earn" },
 ];
 
 export { Wordmark } from "./brand";

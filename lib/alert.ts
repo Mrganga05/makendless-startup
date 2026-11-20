@@ -1,13 +1,16 @@
-/* SERVER ONLY. New-lead email alert via Resend (https://resend.com, free tier).
-   Vercel env: RESEND_API_KEY, optional LEAD_ALERT_TO (defaults to the email in data/owner.ts) and LEAD_ALERT_FROM.
-   Never throws: a failed alert must not lose the lead (it is already saved). */
+/* SERVER ONLY. New-lead email alert via Resend (https://resend.com, free plan).
+   Vercel env: RESEND_API_KEY (and optional LEAD_ALERT_FROM). Recipient: /admin Settings -> alert email,
+   else LEAD_ALERT_TO, else the email in data/owner.ts. Never throws: the lead is already saved. */
 import { SETTINGS } from "../data/settings";
+import { findOne } from "./db";
 
 export async function sendLeadAlert(subject: string, text: string) {
   const key = process.env.RESEND_API_KEY;
-  const to = process.env.LEAD_ALERT_TO || SETTINGS.email;
-  if (!key || !to) return false;
+  if (!key) return false;
   try {
+    const set = await findOne("app_settings", "key", "alert_email").catch(() => null);
+    const to = String(set?.value || process.env.LEAD_ALERT_TO || SETTINGS.email);
+    if (!to) return false;
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },

@@ -5,10 +5,10 @@ import { OWNER as O } from "./owner";
  * FAQ copy follows the owner's approved policies (2026-11-19). The "How we work" steps below are the homepage version.
  */
 export const process = [
-  { n: "01", title: "Discover", text: "It starts with your brief: what you're building, who it's for and what you want it to do." },
-  { n: "02", title: "Design", text: "We shape the approach and set out scope, timing, revisions and price in a written proposal, agreed with you before work starts." },
-  { n: "03", title: "Create", text: "We produce the work to the agreed scope: the edit, the build, or both." },
-  { n: "04", title: "Deliver", text: "You review the work, we make the revisions agreed in your proposal, then hand over the final files." },
+  { n: "01", title: "Discover", text: "Pick your services on our website and tell us your requirements." },
+  { n: "02", title: "Confirm", text: "We confirm the final price and delivery time on WhatsApp. You pay a 50% advance to start." },
+  { n: "03", title: "Create", text: "Our team edits, builds, or both, and keeps you updated." },
+  { n: "04", title: "Deliver", text: "You review the work, we make your revisions, and you pay the balance to get the final files or go live." },
 ];
 
 /** FAQ answer: a paragraph, then optional bullets ("**bold**" allowed) and a closing line. */
@@ -17,7 +17,7 @@ export type Faq = { q: string; a: string; list?: string[]; after?: string };
 /** /faq page: grouped by category, in this order. */
 export const faqGroups: { title: string; items: Faq[] }[] = [
   { title: "Getting started", items: [
-    { q: "How do I start a project?", a: "Pick the services you need on our website. You'll see the price and delivery time straight away. Then press \"Start Project\", add your name and WhatsApp number, and we'll message you within 24 hours with your final price and timeline." },
+    { q: "How do I start a project?", a: "Pick the services you need on our website. You'll see the price and delivery time straight away. Then press \"Start a Project\", add your name and WhatsApp number, and we'll message you within 24 hours with your final price and timeline." },
     { q: "I'm not sure what I need. Can you help?", a: "Yes. Tell us about your business or channel in the \"Your requirements\" box, or message us on WhatsApp. We'll suggest the best service or combo pack for you." },
     { q: "What do you need from me?", a: "It depends on the service. After you select one, our website shows a \"What we need from you\" list. Usually:", list: [
       "**Videos:** raw footage (Google Drive link), reference videos, logo and brand colors",
@@ -52,7 +52,7 @@ export const faqGroups: { title: string; items: Faq[] }[] = [
   { title: "Support", items: [
     { q: "Do you offer ongoing support?", a: "Yes. Website Care starts at ₹1,499/month, and monthly care plans are available for automation and AI assistants. For videos, the Monthly 12 Reels plan and the Creator Pack cover regular editing." },
     { q: "Is digital marketing available?", a: "Digital marketing (GROW) is still in beta and not open for orders yet." },
-    { q: "Still have a question?", a: `Message us on WhatsApp at ${O.whatsapp} or press "Start Project" and ask in the requirements box.` },
+    { q: "Still have a question?", a: `Message us on WhatsApp at ${O.whatsapp} or press "Start a Project" and ask in the requirements box.` },
   ] },
 ];
 

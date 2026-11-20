@@ -8,9 +8,10 @@ import { SAMPLES } from "../data/samples";
 import { studios } from "../data/studios";
 import { estimate, inr, unitLabel } from "../lib/pricing";
 import { useSelection } from "./pricing/state";
+import ReferEarn from "./pricing/ReferEarn";
 import { Reveal, useInView, useTabs } from "./ui";
 
-const TABS: StudioKey[] = ["build", "create"];
+const TABS: StudioKey[] = ["create", "build"];
 const HEADLINE = [["Services", "and"], ["prices"]];
 
 function Samples({ id }: { id: string }) {
@@ -105,7 +106,7 @@ function Panel({ s, onBack }: { s: Service; onBack: () => void }) {
   );
 }
 
-export default function Packages({ initial = "build" }: { initial?: StudioKey }) {
+export default function Packages({ initial = "create" }: { initial?: StudioKey }) {
   const { sel } = useSelection();
   const [index, setIndex] = useState(TABS.indexOf(initial));
   const [open, setOpen] = useState<string | null>(null);
@@ -118,7 +119,13 @@ export default function Packages({ initial = "build" }: { initial?: StudioKey })
 
   /* /#packages-build and /#packages-create open that tab. */
   useEffect(() => {
-    const fromHash = () => { const m = /^#packages-(build|create)$/.exec(window.location.hash); if (m) { setIndex(TABS.indexOf(m[1] as StudioKey)); setOpen(null); } };
+    const fromHash = () => {
+      const h = window.location.hash;
+      const m = /^#packages-(build|create)$/.exec(h);
+      if (m) { setIndex(TABS.indexOf(m[1] as StudioKey)); setOpen(null); return; }
+      const sv = services.find((s) => h === `#svc-${s.id}`);
+      if (sv) { setIndex(TABS.indexOf(sv.studio)); setOpen(sv.id); requestAnimationFrame(() => sheet.current?.scrollIntoView({ block: "start" })); }
+    };
     fromHash();
     window.addEventListener("hashchange", fromHash);
     return () => window.removeEventListener("hashchange", fromHash);
@@ -192,6 +199,7 @@ export default function Packages({ initial = "build" }: { initial?: StudioKey })
             )}
           </div>
         </div>
+        <ReferEarn />
       </div>
     </section>
   );

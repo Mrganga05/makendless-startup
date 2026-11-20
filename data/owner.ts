@@ -6,8 +6,8 @@
 export const LIVE_URL = "https://makendless.vercel.app";
 
 export const OWNER = {
-  email: "[EMAIL ADDRESS]",
-  whatsapp: "[WHATSAPP NUMBER]", // e.g. "+91 98765 43210"
+  email: "makendlessofficial@gmail.com",
+  whatsapp: "+91 91603 82004", // temporary number: change it here only
   city: "[CITY]",
   state: "[STATE]",
   grievanceName: "[GRIEVANCE CONTACT NAME]",
@@ -33,4 +33,16 @@ export const NUMBERS = {
 
 const waDigits = OWNER.whatsapp.replace(/\D/g, "");
 /** Opens WhatsApp once a real number is set; until then falls back to the project form. */
-export const WHATSAPP_HREF = waDigits.length >= 10 ? `https://wa.me/${waDigits}` : "/contact";
+/** Default message when someone taps a WhatsApp button. */
+export const WHATSAPP_MESSAGE = "Hi MAKENDLESS, I want to start a project.";
+/** Social links. Leave "" to hide an icon. */
+export const SOCIALS = {
+  instagram: "https://www.instagram.com/makendless_official/",
+  youtube: "",
+  facebook: "",
+  linkedin: "",
+  x: "",
+};
+const waFull = waDigits.length === 10 ? `91${waDigits}` : waDigits;
+/** Opens WhatsApp with the default message; until a real number is set, falls back to the project form. */
+export const WHATSAPP_HREF = waDigits.length >= 10 ? `https://wa.me/${waFull}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}` : "/contact";

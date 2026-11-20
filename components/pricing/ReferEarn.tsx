@@ -1,10 +1,9 @@
 "use client";
-/* Homepage "Refer and earn": a unique code per referrer (same WhatsApp number = same code), share on WhatsApp or copy. */
+/* "Refer and earn" block inside the Services and prices section: a unique code per referrer (same WhatsApp number = same code), share on WhatsApp or copy. */
 import { useState } from "react";
 import { COPY } from "../../data/pricing";
 import { SETTINGS, whatsappShare } from "../../data/settings";
 import { normalizePhone } from "../../lib/referral";
-import { Eyebrow, KineticHeading } from "../ui";
 
 export default function ReferEarn() {
   const [step, setStep] = useState<"start" | "form" | "done">("start");
@@ -36,14 +35,13 @@ export default function ReferEarn() {
   };
 
   return (
-    <section id="refer" data-tone="dark" aria-labelledby="refer-title" className="relative isolate overflow-hidden bg-ink px-4 py-20 text-light sm:px-6 md:px-8 md:py-28">
-      <div className="pointer-events-none absolute inset-0 -z-10" style={{ background: "radial-gradient(45% 70% at 90% 0%, rgba(111,69,246,.35), transparent 70%), radial-gradient(35% 55% at 0% 100%, rgba(8,187,212,.18), transparent 70%)" }} />
-      <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-16">
+    <div id="refer" role="region" aria-labelledby="refer-title" className="svc-refer mt-10 scroll-mt-24 md:mt-14">
+      <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-14">
         <div>
-          <Eyebrow>Referrals</Eyebrow>
-          <KineticHeading id="refer-title" text="Refer and earn" className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
-          <p className="mt-5 text-[clamp(1.35rem,3.6vw,2rem)] font-extrabold leading-snug"><span className="prism-text">You get ₹500. Your friend gets ₹500.</span></p>
-          <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-[#c3c8de]">Share your link with a business or creator. When they start a project, they get ₹500 off their first order and you get ₹500 off your next one. No limit on referrals.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-white">Referrals</p>
+          <h3 id="refer-title" className="mt-3 text-[clamp(1.9rem,5.5vw,3rem)] font-extrabold leading-tight text-white">Refer and earn</h3>
+          <p className="mt-3 text-[clamp(1.25rem,3.4vw,1.75rem)] font-extrabold leading-snug"><span className="pac-accent">You get ₹500. Your friend gets ₹500.</span></p>
+          <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-white/90">Share your link with a business or creator. When they start a project, they get ₹500 off their first order and you get ₹500 off your next one. No limit on referrals.</p>
         </div>
         <div className="svc-refer-card" data-tone="light">
           {step === "start" && (
@@ -77,6 +75,6 @@ export default function ReferEarn() {
           )}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

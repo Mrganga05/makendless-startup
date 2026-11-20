@@ -4,6 +4,7 @@ import { process } from "../data/process";
 import { BuildWorld, CreateWorld, GrowWorld } from "./studios/Worlds";
 import Packages from "./Packages";
 import { PricingRegion } from "./pricing/state";
+import Waitlist from "./Waitlist";
 import { Arrow, BetaBadge, ButtonLink, DemoCaption, Eyebrow, KineticHeading, Reveal } from "./ui";
 
 /* Division page (/create, /build, /grow). One template, three identities: accent colour, hero world and
@@ -57,6 +58,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
               <ButtonLink href={`/contact?service=${id}`}>{beta ? "Tell us you're interested" : "Start a Project"} <Arrow /></ButtonLink>
               <ButtonLink href="#services" variant="secondary">See the {s.services.length} services</ButtonLink>
             </div>
+            {beta && <div className="mt-6"><p className="mb-2 text-sm font-bold text-light">Join the waitlist</p><Waitlist tone="dark" /></div>}
           </div>
           <Reveal kind="clip-down" className="min-w-0">
             <div className="relative">
@@ -78,13 +80,12 @@ export default function StudioPage({ id }: { id: StudioId }) {
             <p className="max-w-xl text-[17px] leading-relaxed text-muted-dark lg:justify-self-end">
               {beta
                 ? "These are the services GROW is being built around. They are not offered yet; tell us if you'd like to hear when they are."
-                : `${s.services.length} services, ${s.services[0].code} to ${s.services[s.services.length - 1].code}. Ask for one, or describe the whole project in your brief and the scope is worked out from there.`}
+                : `${s.services.length} services. Ask for one, or describe the whole project in your brief and the scope is worked out from there.`}
             </p>
           </div>
 
           <ol className="mt-12 grid gap-5">
             {s.services.map((sv, i) => {
-              const codeColor = id === "create" ? "text-[#0891b2]" : "text-violet";
               const href = `/contact?service=${id}&need=${sv.code}`;
               return (
                 <li key={sv.code} id={sv.code.toLowerCase()} className="scroll-mt-24">
@@ -93,7 +94,6 @@ export default function StudioPage({ id }: { id: StudioId }) {
                       {/* what it is */}
                       <div className="flex flex-col p-6 sm:p-8">
                         <div className="flex items-center gap-3">
-                          <span className={`grid h-11 min-w-11 place-items-center rounded-full px-2 text-sm font-extrabold ring-1 ring-line ${codeColor}`}>{sv.code}</span>
                           {beta && <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet">In development</span>}
                         </div>
                         <h3 className="mt-5 text-2xl font-extrabold leading-tight sm:text-[1.9rem]">{sv.title}</h3>
@@ -104,7 +104,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
                           </p>
                         )}
                         <div className="mt-auto flex flex-wrap items-center gap-3 pt-7">
-                          <ButtonLink href={href} tone="light">{beta ? `I'm interested in ${sv.code}` : `Start a ${sv.code} project`} <Arrow /></ButtonLink>
+                          <ButtonLink href={href} tone="light">{beta ? "I'm interested" : "Start a Project"} <Arrow /></ButtonLink>
                           {!beta && <span className="text-sm text-muted-dark">Opens the brief with this service selected.</span>}
                         </div>
                       </div>

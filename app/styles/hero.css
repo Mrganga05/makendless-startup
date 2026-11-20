@@ -7,3 +7,6 @@
 .hero-ph-laptop { left: 44%; top: 30%; width: 44%; height: 40%; border-radius: 12px !important; }
 @media (max-width: 767px) { .hero-ph-phone { left: 38%; width: 24%; top: 8%; height: 84%; } .hero-ph-laptop { display: none; } }
 @keyframes hero-ph { to { transform: translateX(100%); } }
+
+/* H1 grey "raw" layer: drawn from data-text so the heading text exists once in the page */
+.hero-ghost::before { content: attr(data-text); }

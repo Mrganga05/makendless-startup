@@ -41,6 +41,7 @@ function Magnetic({ children, className = "" }: { children: React.ReactNode; cla
 
 /* One headline line: raw grey text with a "graded" copy wiped in over it by the playhead */
 const Line = memo(function Line({ text, i, g, accent, intro }: { text: string; i: number; g: number; accent?: boolean; intro: boolean }) {
+  const ghost = <span className="hero-ghost block whitespace-pre text-[#59607f]" data-text={text} style={intro && !accent ? { animation: `hero-rise .8s ${EASE} ${0.1 * i}s both` } : undefined} />;
   const chars = (cls: string) => (
     <span className={`block whitespace-nowrap ${cls}`}>
       {accent ? text : text.split("").map((ch, k) => (
@@ -51,7 +52,7 @@ const Line = memo(function Line({ text, i, g, accent, intro }: { text: string; i
   return (
     <span className="relative block w-fit overflow-hidden pb-[0.08em] pr-[0.06em]">
       <span className="relative block" style={intro && accent ? { animation: `hero-rise .9s ${EASE} ${0.1 * i}s both` } : undefined}>
-        {chars("text-[#59607f]")}
+        {ghost}
         <span className="absolute inset-0 block" style={{ clipPath: `inset(0 ${100 - g * 100}% 0 0)` }}>{chars(accent ? "prism-text" : "text-[#f6f8ff]")}</span>
       </span>
       <span className="absolute inset-x-0 bottom-0 border-b border-dashed border-[#59607f]" style={{ opacity: 1 - g }} />
@@ -162,10 +163,10 @@ export default function Hero() {
           <p className="mb-5 hidden text-xs font-bold uppercase tracking-[0.35em] text-[#08bbd4] sm:block">Creative &amp; Technology Studio</p>
           <h1 id="hero-title" aria-label="We make ideas impossible to ignore." className="text-[2.25rem] font-extrabold leading-[0.98] tracking-tight min-[390px]:text-[2.45rem] sm:text-[3.4rem] lg:text-[3.6rem] xl:text-[4.7rem]">
             <span aria-hidden="true">
-              <Line text={LINES[0]} i={0} g={touched ? seg(p, 0.24, 0.46) : 1} intro={intro} />
-              <Line text={LINES[1]} i={1} g={touched ? seg(p, 0.36, 0.6) : 1} intro={intro} />
-              <Line text={LINES[2]} i={2} g={touched ? seg(p, 0.5, 0.82) : 1} accent intro={intro} />
-              <Line text={LINES[3]} i={3} g={touched ? seg(p, 0.7, 0.96) : 1} intro={intro} />
+              <Line text={LINES[0]} i={0} g={touched ? seg(p, 0.24, 0.46) : 1} intro={intro} />{" "}
+              <Line text={LINES[1]} i={1} g={touched ? seg(p, 0.36, 0.6) : 1} intro={intro} />{" "}
+              <Line text={LINES[2]} i={2} g={touched ? seg(p, 0.5, 0.82) : 1} accent intro={intro} />{" "}
+              <Line text={LINES[3]} i={3} g={touched ? seg(p, 0.7, 0.96) : 1} intro={intro} />{" "}
             </span>
           </h1>
           {/* kinetic mode word */}

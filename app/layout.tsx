@@ -4,21 +4,21 @@ import "./globals.css";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import { SelectionProvider } from "../components/pricing/state";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "../lib/site";
+import { HOME_DESCRIPTION, HOME_TITLE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../lib/site";
+import WhatsAppFloat from "../components/WhatsAppFloat";
 
-const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap" });
+const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", adjustFontFallback: false });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: `${SITE_NAME} — ${SITE_TAGLINE}`, template: `%s — ${SITE_NAME}` },
-  description: SITE_DESCRIPTION,
+  title: { default: HOME_TITLE, template: `%s | ${SITE_NAME}` },
+  description: HOME_DESCRIPTION,
   applicationName: SITE_NAME,
   keywords: ["video editing", "website development", "web design", "Reels editing", "YouTube editing", "e-commerce websites", "booking websites", "motion graphics", "creative studio", "MAKENDLESS"],
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
-  category: "design",
-  openGraph: { type: "website", siteName: SITE_NAME, title: `${SITE_NAME} — ${SITE_TAGLINE}`, description: SITE_DESCRIPTION, url: "/" },
-  twitter: { card: "summary_large_image", title: `${SITE_NAME} — ${SITE_TAGLINE}`, description: SITE_DESCRIPTION },
+  openGraph: { type: "website", siteName: SITE_NAME, title: HOME_TITLE, description: HOME_DESCRIPTION, url: "/" },
+  twitter: { card: "summary_large_image", title: HOME_TITLE, description: HOME_DESCRIPTION },
 };
 export const viewport: Viewport = { themeColor: "#0c1024", width: "device-width", initialScale: 1 };
 
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           knowsAbout: ["Video editing", "Motion graphics", "Website development", "E-commerce websites", "Booking systems"],
         }) }} />
         <Nav />
-        <SelectionProvider><main id="main">{children}</main></SelectionProvider>
+        <SelectionProvider><main id="main">{children}</main><WhatsAppFloat /></SelectionProvider>
         <Footer />
       </body>
     </html>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { COPY, OPTIONS, SERVICES } from "../../data/pricing";
-import { whatsappTo } from "../../data/settings";
+import { SETTINGS, whatsappTo } from "../../data/settings";
 import { estimate, inr, unitLabel } from "../../lib/pricing";
 import { normalizeCode, normalizePhone } from "../../lib/referral";
 import { useSelection } from "./state";
@@ -66,7 +66,7 @@ export default function StartProject() {
     try {
       const r = await fetch("/api/leads", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selection: sel, name, whatsapp: phone, referralCode: codeState === "valid" ? normalizeCode(code) : "", footageLink: hasCreate ? footage : "", notes, page: document.referrer || "", hp }),
+        body: JSON.stringify({ source: "services", selection: sel, name, whatsapp: phone, referralCode: codeState === "valid" ? normalizeCode(code) : "", footageLink: hasCreate ? footage : "", notes, page: document.referrer || "", hp }),
       });
       const d = (await r.json()) as { ok: boolean; referralApplied?: boolean; code?: string | null };
       if (!r.ok || !d.ok) throw new Error("save failed");
@@ -82,7 +82,7 @@ export default function StartProject() {
   if (status === "done" && done) {
     return (
       <div className="svc-thanks" role="status">
-        <p className="text-[clamp(1.6rem,5vw,2.6rem)] font-extrabold leading-tight">Thanks, {done.name}! Our team will message you on WhatsApp within 24 hours with your final price and timeline.</p>
+        <p className="text-[clamp(1.6rem,5vw,2.6rem)] font-extrabold leading-tight">Thanks, {done.name}! Our team will message you on WhatsApp within 24 hours.</p>
         {done.code && <p className="mt-4 text-lg font-bold text-[#0f6b4b]">Referral code {done.code} applied: ₹500 off.</p>}
         <Link href="/" className="for-btn for-btn-secondary mt-8">Back to home</Link>
       </div>
@@ -188,8 +188,8 @@ export default function StartProject() {
 
         {status === "failed" && (
           <div className="for-fail" role="alert">
-            <p className="font-bold">We couldn&apos;t send your request just now.</p>
-            <p className="mt-1 text-sm">Send it to us on WhatsApp instead. Your selection is already written in the message.</p>
+            <p className="font-bold">Something went wrong. Please WhatsApp us{SETTINGS.whatsapp ? ` at ${SETTINGS.whatsapp}` : ""}.</p>
+            <p className="mt-1 text-sm">Your selection is already written in the message.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {wa ? <a className="for-btn for-btn-primary" href={wa} target="_blank" rel="noopener noreferrer">Send on WhatsApp</a>
                 : <button type="button" className="for-btn for-btn-primary" onClick={async () => { try { await navigator.clipboard.writeText(summary()); setCopied(true); } catch { /* ignore */ } }}>{copied ? "✓ Copied" : "Copy my request"}</button>}

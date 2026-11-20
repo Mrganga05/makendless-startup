@@ -42,7 +42,6 @@ export const solutions: Solution[] = [
       { studio: "create", code: "V1", title: "Short-form video editing", note: "Captioned, vertical-first Reels and Shorts." },
       { studio: "create", code: "V5", title: "Motion graphics & creative editing", note: "Animated titles, captions, intros and outros." },
     ],
-    later: { studio: "grow", code: "M2", title: "Social media management", note: "In beta and not offered yet. A possible next step later on." },
   },
   {
     id: "local",

@@ -5,7 +5,7 @@ import { ButtonLink, Arrow, BetaBadge, Eyebrow, KineticHeading, Reveal } from ".
 import { Bullets } from "../../components/Prose";
 import { LIVE_URL, NUMBERS as N, OWNER as O, WHATSAPP_HREF } from "../../data/owner";
 
-export const metadata: Metadata = { alternates: { canonical: `${LIVE_URL}/about` }, title: "About", description: "MAKENDLESS is a creative and technology studio: video editing, websites, automation and AI for creators and businesses, with clear fixed prices." };
+export const metadata: Metadata = { alternates: { canonical: `${LIVE_URL}/about` }, title: "About", description: "A startup studio of creators, editors and developers making studio-quality work affordable." };
 
 const pillars = [
   { verb: "CREATE", label: "Video Editing", href: "/create", text: "Reels and Shorts, YouTube videos, ads, podcasts, and motion graphics like logo animations, intros and thumbnails." },

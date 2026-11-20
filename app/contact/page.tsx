@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import BriefForm from "../../components/form/BriefForm";
 import { initialFromParams } from "../../components/form/brief";
 import { Eyebrow } from "../../components/ui";
-import { CONTACT_EMAIL } from "../../lib/site";
+import { SETTINGS, whatsappTo } from "../../data/settings";
 import { readSimulate } from "../../lib/submit-brief";
 
 export const metadata: Metadata = { alternates: { canonical: "/contact" },
   title: "Start a Project",
-  description: "Tell MAKENDLESS what you're building. Write a short project brief for video editing or website development, or register interest in the marketing beta.",
+  description: "Tell us what you need and get your final price on WhatsApp within 24 hours.",
 };
 
 type Params = Record<string, string | string[] | undefined>;
@@ -16,7 +16,7 @@ const H1_ACCENT = ["worth", "remembering."];
 const STEPS = [
   { n: "01", title: "Write it", text: "Who you are, which studio, what you need." },
   { n: "02", title: "Review it", text: "See the finished brief before anything else happens." },
-  { n: "03", title: "Take it with you", text: CONTACT_EMAIL ? "Copy it, download it, or open it as an email draft." : "Copy it or download it as a text file." },
+  { n: "03", title: "Send it", text: "We message you on WhatsApp within 24 hours." },
 ];
 
 export default async function Page({ searchParams }: { searchParams: Promise<Params> }) {
@@ -42,7 +42,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
               <p className="max-w-md text-lg leading-relaxed text-muted">Tell us what you&apos;re building. We&apos;ll help you take the next step.</p>
               <p className="for-hero-notice mt-6">
                 <span className="for-hero-notice-dot" aria-hidden="true" />
-                <span>Online sending is still being set up. Nothing on this page is sent to us yet, so you write your brief here and take it with you.</span>
+                <span>Prefer to chat? WhatsApp us at <a className="font-bold underline underline-offset-2" href={whatsappTo(SETTINGS.whatsappMessage)} target="_blank" rel="noopener noreferrer">{SETTINGS.whatsapp}</a> · Email <a className="font-bold underline underline-offset-2" href={`mailto:${SETTINGS.email}`}>{SETTINGS.email}</a></span>
               </p>
             </div>
             <ol className="for-hero-steps grid grid-cols-3 gap-3 sm:gap-6">

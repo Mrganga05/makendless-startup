@@ -198,6 +198,9 @@ export const EXTRAS: Record<string, Extra & { service: Service }> = Object.fromE
 export const SERVICES: Record<string, Service> = Object.fromEntries(services.map((s) => [s.id, s]));
 
 /* ---------------- combo packs ---------------- */
+/** Combo packs are switched off for now (owner will add them later). true = section, auto-apply and hints come back. */
+export const COMBOS_ENABLED = false;
+
 export interface Combo {
   id: string;
   name: string;

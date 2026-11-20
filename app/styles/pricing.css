@@ -142,3 +142,20 @@
 .svc-thanks { max-width: 48rem; padding: 2rem 1.5rem; border-radius: 1.5rem; background: #fff; box-shadow: inset 0 0 0 1px var(--color-line); }
 
 @media (prefers-reduced-motion: reduce) { .svc-panel, .svc-invite { animation: none; } .svc-bar { transition: none; } }
+
+/* refer block inside the violet band */
+.svc-refer { padding: 1.5rem 1.25rem; border-radius: 1.5rem; background: rgba(12,16,36,.28); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }
+@media (min-width: 768px) { .svc-refer { padding: 2.25rem; } }
+.svc-combo:target { box-shadow: inset 0 0 0 3px var(--color-violet); }
+/* studio cards: link to prices / waitlist under each card */
+.stu-more { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-top: .6rem; padding-inline: .25rem; }
+.stu-prices { display: inline-flex; align-items: center; min-height: 2.75rem; font-size: .9375rem; font-weight: 800; color: var(--color-dark); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(19,23,43,.3); }
+.stu-prices:hover { text-decoration-color: currentColor; }
+.stu-svc .stu-from { color: inherit; opacity: .8; font-weight: 700; }
+
+/* floating WhatsApp button: sits above the services selection bar when it is open */
+.wa-float { position: fixed; right: 1rem; bottom: calc(1rem + var(--svc-bar-h, 0px) + env(safe-area-inset-bottom)); z-index: 46; display: inline-flex; align-items: center; gap: .5rem; height: 3.5rem; min-width: 3.5rem; padding: 0 1rem; border-radius: 999px; background: #25d366; color: #fff; box-shadow: 0 12px 30px -10px rgba(0,0,0,.45); transition: bottom .35s cubic-bezier(.2,.8,.2,1), transform .2s ease; --focus: #ffffff; }
+.wa-float svg { width: 1.6rem; height: 1.6rem; flex: none; }
+.wa-float:hover { transform: translateY(-2px); }
+.wa-float-label { font-size: .9375rem; font-weight: 800; white-space: nowrap; }
+@media (max-width: 767px) { .wa-float { padding: 0; justify-content: center; } .wa-float-label { display: none; } }

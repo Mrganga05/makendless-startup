@@ -11,8 +11,8 @@ export async function checkReferral(rawCode: string, rawPhone?: string): Promise
   if (!row) return { valid: false, reason: "invalid" };
   const phone = normalizePhone(rawPhone || "");
   if (phone) {
-    if (row.whatsapp === phone) return { valid: false, reason: "own" };
-    if (await findOne("referral_uses", "referred_whatsapp", phone)) return { valid: false, reason: "used" };
+    if (row.referrer_whatsapp === phone) return { valid: false, reason: "own" };
+    if (await findOne("referral_uses", "new_client_whatsapp", phone)) return { valid: false, reason: "used" };
   }
-  return { valid: true, code, name: displayFirst(String(row.name || "")) };
+  return { valid: true, code, name: displayFirst(String(row.referrer_name || "")) };
 }

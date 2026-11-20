@@ -19,12 +19,14 @@ const shot = async (html, w, h, path, transparent = false) => {
 // Open Graph / Twitter card
 await shot(`<div style="width:1200px;height:630px;background:radial-gradient(60% 70% at 85% 20%,rgba(111,69,246,.45),transparent 70%),radial-gradient(40% 50% at 0% 100%,rgba(8,187,212,.25),transparent 70%),#0c1024;color:#f6f8ff;padding:72px 80px;display:flex;flex-direction:column;justify-content:space-between">
   <div style="font-size:38px">${word("#f6f8ff", "#f6f8ff")}</div>
-  <div><div style="font-size:72px;font-weight:800;line-height:1.02;letter-spacing:-.02em">We make ideas<br><span class="p">impossible</span><br>to ignore.</div>
-  <div style="margin-top:30px;font-size:26px;color:#c3c8de">Video editing · Website development · Digital marketing (beta)</div></div>
-  <div style="font-size:20px;letter-spacing:.3em;color:#a4aac7">CREATE • BUILD • GROW</div></div>`, 1200, 630, "app/opengraph-image.png");
+  <div><div style="font-size:112px;font-weight:800;line-height:1.02;letter-spacing:-.02em">Create. Build. <span class="p">Grow.</span></div>
+  <div style="margin-top:28px;font-size:28px;color:#c3c8de">Video editing · Websites · WhatsApp automation & AI</div></div>
+  <div style="display:flex;gap:14px"><span style="width:90px;height:10px;border-radius:5px;background:#22d3ee"></span><span style="width:90px;height:10px;border-radius:5px;background:#8b5cf6"></span><span style="width:90px;height:10px;border-radius:5px;background:#c7a6ff"></span></div></div>`, 1200, 630, "app/opengraph-image.png");
 // Logo files
 await shot(`<div style="padding:40px 48px;font-size:72px;display:inline-block">${word("#f6f8ff", "#f6f8ff")}</div>`, 1180, 170, "docs/brand/makendless-wordmark-on-dark.png", true);
 await shot(`<div style="padding:40px 48px;font-size:72px;display:inline-block">${word("#13172b", "#13172b")}</div>`, 1180, 170, "docs/brand/makendless-wordmark-on-light.png", true);
 await shot(`<div style="width:512px;height:512px;display:grid;place-items:center;background:#0c1024;border-radius:120px"><div style="font-size:300px;line-height:1">${E("#f6f8ff").replace("margin-right:.18em", "")}</div></div>`, 512, 512, "docs/brand/makendless-mark-512.png", true);
 await shot(`<div style="width:180px;height:180px;display:grid;place-items:center;background:#0c1024"><div style="font-size:104px;line-height:1">${E("#f6f8ff").replace("margin-right:.18em", "")}</div></div>`, 180, 180, "app/apple-icon.png");
+// Favicon sizes (packed into app/favicon.ico by scripts/make-ico.py)
+for (const n of [16, 32, 48]) await shot(`<div style="width:${n}px;height:${n}px;display:grid;place-items:center;background:#0c1024;border-radius:${Math.round(n * 0.22)}px"><div style="font-size:${Math.round(n * 0.62)}px;line-height:1">${E("#f6f8ff").replace("margin-right:.18em", "")}</div></div>`, n, n, `scripts/tmp/fav-${n}.png`, true);
 await b.close(); console.log("ok");

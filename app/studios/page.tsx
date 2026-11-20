@@ -4,8 +4,10 @@ import PageShell from "../../components/PageShell";
 import { StudioWorld } from "../../components/StudioPage";
 import { Arrow, BetaBadge, Reveal } from "../../components/ui";
 import { studios } from "../../data/studios";
+import { studioServices } from "../../components/Studios";
+import Waitlist from "../../components/Waitlist";
 
-export const metadata: Metadata = { alternates: { canonical: "/studios" }, title: "Studios", description: "Three studios: CREATE (video editing), BUILD (website development) and GROW (digital marketing, in beta)." };
+export const metadata: Metadata = { alternates: { canonical: "/studios" }, title: "Studios", description: "CREATE, BUILD and GROW: video editing, websites and digital marketing (beta)." };
 
 export default function Page() {
   return (
@@ -24,7 +26,7 @@ export default function Page() {
                   <h2 className="mt-2 text-[1.55rem] font-extrabold leading-tight sm:text-3xl lg:text-[1.65rem] xl:text-3xl">{s.name}</h2>
                   <p className="mt-3 text-[16px] leading-relaxed text-muted-dark">{s.tagline}</p>
                   <ul className="mt-5 space-y-2 border-t border-line pt-5 text-[15px]">
-                    {s.services.map((sv) => (<li key={sv.code} className="flex gap-3"><span className="w-7 shrink-0 text-xs font-extrabold leading-6 text-muted-dark">{sv.code}</span>{sv.title}</li>))}
+                    {studioServices(s.id, s.services.map((sv) => sv.title)).map((sv) => (<li key={sv.name} className="flex justify-between gap-3"><span>{sv.name}</span>{sv.from && <span className="shrink-0 font-bold text-muted-dark">from {sv.from}</span>}</li>))}
                   </ul>
                   <span className="mt-auto flex items-center justify-between pt-7 text-[15px] font-extrabold">
                     {s.beta ? "Preview the GROW studio" : `Enter the ${s.verb} studio`}
@@ -33,6 +35,7 @@ export default function Page() {
                 </div>
               </Link>
             </Reveal>
+            <div className="stu-more">{s.id === "grow" ? <Waitlist compact /> : <Link href={`/#packages-${s.id}`} className="stu-prices">See {s.verb} prices <Arrow /></Link>}</div>
           </li>
         ))}
       </ul>

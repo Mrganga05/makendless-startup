@@ -1,10 +1,12 @@
 /* Project brief: field model, query-string preselection, validation and plain-text formatting. No React here. */
 import { packages, solutions, studios, type StudioId } from "../../data/site";
+import { normalizePhone } from "../../lib/referral";
 
 export type StudioChoice = StudioId | "unsure";
 
 export interface BriefValues {
   name: string;
+  whatsapp: string;
   email: string;
   business: string;
   who: string; // solutions id | "other" | ""
@@ -17,9 +19,9 @@ export interface BriefValues {
   message: string;
 }
 
-export type FieldKey = "name" | "email" | "message";
+export type FieldKey = "name" | "whatsapp" | "email" | "message";
 
-export const LIMITS = { name: 80, email: 254, business: 100, links: 500, timing: 120, budget: 120, message: 2000 } as const;
+export const LIMITS = { name: 80, whatsapp: 16, email: 254, business: 100, links: 500, timing: 120, budget: 120, message: 2000 } as const;
 export const MESSAGE_MIN = 10;
 
 export const WHO_OPTIONS: { id: string; label: string }[] = [...solutions.map((s) => ({ id: s.id, label: s.label })), { id: "other", label: "Other" }];
@@ -68,7 +70,7 @@ export function initialFromParams(params: Params): BriefValues {
   const valid = new Set(servicesFor(studio).map((x) => x.code.toUpperCase()));
   const rawNeed = ([] as string[]).concat(params.need ?? []).flatMap((x) => String(x).split(","));
   const services = [...new Set(rawNeed.map((x) => x.trim().toUpperCase()).filter((x) => valid.has(x)))];
-  return { name: "", email: "", business: "", who, studio, services, pkg, links: "", timing: "", budget: "", message: "" };
+  return { name: "", whatsapp: "", email: "", business: "", who, studio, services, pkg, links: "", timing: "", budget: "", message: "" };
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)*\.[A-Za-z]{2,}$/;
@@ -79,22 +81,25 @@ export function validateField(key: FieldKey, v: BriefValues): string {
     if (!n) return "Please tell us your name.";
     if (n.length < 2) return "Please enter at least two characters.";
   }
+  if (key === "whatsapp") {
+    if (!v.whatsapp.trim()) return "Please enter your WhatsApp number.";
+    if (!normalizePhone(v.whatsapp)) return "Enter a 10-digit WhatsApp number.";
+  }
   if (key === "email") {
     const e = v.email.trim();
-    if (!e) return "Please enter your email address.";
+    if (!e) return "";
     if (!EMAIL_RE.test(e)) return "Enter a valid email address, like name@example.com.";
   }
   if (key === "message") {
     const m = v.message.trim();
-    if (!m) return "Please describe what you need.";
-    if (m.length < MESSAGE_MIN) return `Tell us a little more (at least ${MESSAGE_MIN} characters).`;
+    if (m && m.length < MESSAGE_MIN) return `Tell us a little more (at least ${MESSAGE_MIN} characters).`;
   }
   return "";
 }
 
 export function validate(v: BriefValues): Partial<Record<FieldKey, string>> {
   const out: Partial<Record<FieldKey, string>> = {};
-  (["name", "email", "message"] as FieldKey[]).forEach((k) => {
+  (["name", "whatsapp", "email", "message"] as FieldKey[]).forEach((k) => {
     const e = validateField(k, v);
     if (e) out[k] = e;
   });
@@ -109,6 +114,7 @@ export function briefGroups(v: BriefValues): BriefGroup[] {
   const t = (s: string) => s.trim();
   const from: BriefRow[] = [
     { label: "Name", value: t(v.name) },
+    { label: "WhatsApp", value: t(v.whatsapp) },
     { label: "Email", value: t(v.email) },
     { label: "Business / channel", value: t(v.business) },
     { label: "I am", value: whoLabel(v.who) },
@@ -147,9 +153,10 @@ export function formatBrief(v: BriefValues, dateLabel: string): string {
 }
 
 export function payloadFields(v: BriefValues): Record<string, string | string[]> {
+  const pkg = packageLabel(v.studio, v.pkg);
   return {
-    name: v.name.trim(), email: v.email.trim(), business: v.business.trim(), customerType: whoLabel(v.who),
-    studio: studioLabel(v.studio), services: serviceLabels(v.studio, v.services), package: packageLabel(v.studio, v.pkg),
-    links: v.links.trim(), timing: v.timing.trim(), budget: v.budget.trim(), message: v.message.trim(),
+    name: v.name.trim(), whatsapp: v.whatsapp.trim(), email: v.email.trim(), business: v.business.trim(), clientType: whoLabel(v.who),
+    studio: studioLabel(v.studio), services: [...serviceLabels(v.studio, v.services), ...(pkg ? [`Package: ${pkg}`] : [])],
+    footageLink: v.links.trim(), timing: v.timing.trim(), budget: v.budget.trim(), notes: v.message.trim(),
   };
 }

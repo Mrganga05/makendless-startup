@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import StartProject from "../../components/pricing/StartProject";
 import { Eyebrow } from "../../components/ui";
 
-export const metadata: Metadata = { title: "Start a Project", description: "Your selected services, estimated total and delivery time. Send it and we'll message you on WhatsApp within 24 hours.", robots: { index: false, follow: true } };
+export const metadata: Metadata = { title: "Start a Project", description: "Your selected services, estimated total and delivery time. Send it and we'll message you on WhatsApp within 24 hours.", robots: { index: false, follow: true }, alternates: { canonical: "/start-project" } };
 
 export default function Page() {
   return (

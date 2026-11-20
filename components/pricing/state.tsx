@@ -101,8 +101,17 @@ export function SelectionBar({ show }: { show: boolean }) {
   const { sel, ref } = useSelection();
   const est = useMemo(() => estimate(sel, !!ref), [sel, ref]);
   const on = show && est.count > 0;
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = document.documentElement;
+    const el = bar.current;
+    if (!on || !el) { root.style.setProperty("--svc-bar-h", "0px"); return; }
+    const ro = new ResizeObserver(() => root.style.setProperty("--svc-bar-h", `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => { ro.disconnect(); root.style.setProperty("--svc-bar-h", "0px"); };
+  }, [on]);
   return (
-    <div className="svc-bar" data-on={on} aria-hidden={!on} inert={!on}>
+    <div ref={bar} className="svc-bar" data-on={on} aria-hidden={!on} inert={!on}>
       <div className="svc-bar-in" role="region" aria-label="Your selection">
         <div className="svc-bar-info">
           <p className="svc-bar-main">

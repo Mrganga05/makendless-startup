@@ -6,6 +6,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { solutions, type SolutionService } from "../data/solutions";
 import { studios } from "../data/studios";
 import { Arrow, BetaBadge, ButtonLink, DemoCaption, Eyebrow, Reveal, useInView, useReducedMotion, useTabs } from "./ui";
+import { combos, COMBOS_ENABLED } from "../data/pricing";
+import { inr } from "../lib/pricing";
+/* Audience -> combo pack line (Part 5): shown only while combo packs are switched on. */
+const PACK: Record<string, (typeof combos)[number] | undefined> = { creator: combos.find((c) => c.id === "creator"), local: combos.find((c) => c.id === "local-business"), startup: combos.find((c) => c.id === "launch"), store: combos.find((c) => c.id === "growth") };
 import Scene from "./solutions/Scenes";
 
 const studioOf = (id: string) => studios.find((s) => s.id === id)!;
@@ -133,17 +137,17 @@ export default function Solutions() {
               </div>
             </div>
 
+            {COMBOS_ENABLED && PACK[s.id] && (
+              <p className="mt-5 text-[15px] font-bold"><a href={`#combo-${PACK[s.id]!.id}`} className="for-link">{PACK[s.id]!.name}: {inr(PACK[s.id]!.price)}{PACK[s.id]!.monthly ? "/month" : ""}</a></p>
+            )}
             {/* recommended services: every row is a real link to the studio page */}
-            <div className="mt-10 border-t border-line pt-6 md:mt-12">
+            {s.id !== "store" && <div className="mt-10 border-t border-line pt-6 md:mt-12">
               <p id="sol-svc-label" className="text-xs font-bold uppercase tracking-[0.3em] text-muted-dark">Recommended for a {s.label.toLowerCase()}</p>
               <ul key={`s${s.id}`} aria-labelledby="sol-svc-label" className="sol-swap mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {s.services.map((sv, i) => <ServiceLink key={sv.code} sv={sv} i={i} />)}
                 {s.later ? <ServiceLink sv={s.later} later i={s.services.length} /> : null}
               </ul>
-              <p className="mt-4 text-sm leading-relaxed text-muted-dark">
-                <span className="font-bold text-dark">GROW is in beta.</span> Digital marketing is not offered yet; it is shown here as a possible next step, not a current service.
-              </p>
-            </div>
+            </div>}
           </div>
         </div>
       </div>
