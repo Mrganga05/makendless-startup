@@ -9,4 +9,4 @@
 @keyframes hero-ph { to { transform: translateX(100%); } }
 
 /* H1 grey "raw" layer: drawn from data-text so the heading text exists once in the page */
-.hero-ghost::before { content: attr(data-text); }
+.hero-ghost::before { content: attr(data-c); }
