@@ -4,7 +4,7 @@
    showing the finished reel and the finished site. The camera dollies in as the section scrolls into view. */
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
-import { useDpr } from "../perf";
+import { fpsBounds, useDpr } from "../perf";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { color } from "../../data/tokens";
@@ -206,10 +206,10 @@ export default function CtaScene({ compact, active, onReady }: CtaSceneProps) {
     window.addEventListener("pointermove", move, { passive: true });
     return () => window.removeEventListener("pointermove", move);
   }, [compact]);
-  const [dpr, lowerDpr] = useDpr(compact, 1.75);
+  const { dpr, decline, incline, fallback } = useDpr(2);
   return (
-    <Canvas camera={{ position: [0, 1.6, 9], fov: 30, near: 0.1, far: 60 }} dpr={dpr} frameloop={active ? "always" : "never"} gl={{ antialias: !compact, alpha: true, powerPreference: "high-performance" }} onCreated={onReady}>
-      <PerformanceMonitor onDecline={lowerDpr} onFallback={lowerDpr} />
+    <Canvas camera={{ position: [0, 1.6, 9], fov: 30, near: 0.1, far: 60 }} dpr={dpr} frameloop={active ? "always" : "never"} gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }} onCreated={onReady}>
+      <PerformanceMonitor bounds={fpsBounds} flipflops={4} onDecline={decline} onIncline={incline} onFallback={fallback} />
       <Rig live={live} compact={compact} />
       <Environment resolution={compact ? 64 : 128} frames={1}>
         <Lightformer form="rect" intensity={2.2} color="#ffffff" position={[0, 5, 4]} scale={[9, 3, 1]} />

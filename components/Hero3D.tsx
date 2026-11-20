@@ -1,7 +1,7 @@
 "use client";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
-import { useDpr } from "./perf";
+import { fpsBounds, useDpr } from "./perf";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { BrowserScreen, PhoneScreen, clamp, seg } from "./HeroScreens";
@@ -301,11 +301,11 @@ export default function Hero3D({ p, mode, paused, compact, active, onReady }: He
         </group>
     </>
   ), [compact, showPhone, showLaptop, links]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [dpr, lowerDpr] = useDpr(compact, 1.5);
+  const { dpr, decline, incline, fallback } = useDpr(2);
   return (
     <div ref={wrap} className="absolute inset-0">
-      <Canvas camera={{ position: compact ? [0, 5, 375] : [-90, 15, 650], fov: 35, near: 10, far: 4000 }} dpr={dpr} frameloop={active ? "always" : "never"} gl={{ antialias: !compact, alpha: true, powerPreference: "high-performance" }} onCreated={onReady}>
-        <PerformanceMonitor onDecline={lowerDpr} onFallback={lowerDpr} />
+      <Canvas camera={{ position: compact ? [0, 5, 375] : [-90, 15, 650], fov: 35, near: 10, far: 4000 }} dpr={dpr} frameloop={active ? "always" : "never"} gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }} onCreated={onReady}>
+        <PerformanceMonitor bounds={fpsBounds} flipflops={4} onDecline={decline} onIncline={incline} onFallback={fallback} />
         {scene}
       </Canvas>
       {/* DOM screens, positioned by <ScreenSync>. Decorative demo: hidden from assistive tech and the Tab order. */}
