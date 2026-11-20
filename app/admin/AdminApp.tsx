@@ -198,8 +198,8 @@ export default function AdminApp() {
 
   const load = useCallback(async () => {
     const r = await fetch("/api/admin", { cache: "no-store" });
-    if (r.status === 401) return setState("login");
-    const j = await r.json();
+    const j = await r.json().catch(() => ({ ok: false }));
+    if (!r.ok || !j.ok) return setState("login");
     setD(j); setAlertEmail(j.settings?.alert_email || ""); setState("ok");
   }, []);
   useEffect(() => {

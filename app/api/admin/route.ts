@@ -12,7 +12,8 @@ const deny = (msg = "Please log in.", status = 401) => NextResponse.json({ ok: f
 /* GET /api/admin -> everything the dashboard shows (team members only). */
 export async function GET() {
   const me = await currentMember();
-  if (!me) return deny();
+  /* Logged out is a normal state for this page, not an error: answer 200 with no data so the browser console stays clean. */
+  if (!me) return NextResponse.json({ ok: false, login: true }, { headers: { "Cache-Control": "no-store" } });
   const [leads, codes, uses, waitlist, team, settings] = await Promise.all([list("leads"), list("referral_codes"), list("referral_uses"), list("waitlist"), list("team_members"), list("app_settings")]);
   return NextResponse.json({
     ok: true, me, leads, codes, uses, waitlist,
