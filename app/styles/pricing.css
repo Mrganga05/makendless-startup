@@ -1,11 +1,8 @@
 /* Services and prices, combo packs, refer and earn, bottom bar, final page. Selectors prefixed .svc-. Uses the site tokens only. */
 
-/* tabs: two studios */
-.svc-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-@media (min-width: 640px) { .svc-tabs { grid-template-columns: repeat(2, auto); } }
-
 /* sheet + cards */
 .svc-sheet { padding: 1rem; scroll-margin-top: 7.5rem; }
+.svc-cards > li, .svc-panel { scroll-margin-top: 7.5rem; } /* service anchors: /create#short-videos */
 .svc-cards { list-style: none; margin: 0; padding: .5rem 0 0; display: grid; gap: .75rem; }
 .svc-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; width: 100%; height: 100%; padding: 1.1rem 3rem 1.1rem 1.1rem; border-radius: 1.1rem; border: 1.5px solid var(--color-line); background: #fff; color: var(--color-dark); text-align: left; cursor: pointer; transition: border-color .2s ease, box-shadow .25s ease, transform .25s cubic-bezier(.2,.8,.2,1); }
 .svc-card:hover { border-color: var(--color-dark); box-shadow: 0 22px 44px -30px rgba(19,23,43,.55); transform: translateY(-2px); }
@@ -78,8 +75,8 @@
 .svc-help { display: flex; justify-content: space-between; gap: 1rem; margin-top: .4rem; font-size: .8125rem; color: var(--color-muted-dark); }
 
 /* bottom bar */
-.svc-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; padding: 0 .5rem calc(.5rem + env(safe-area-inset-bottom)); pointer-events: none; transform: translateY(110%); transition: transform .35s cubic-bezier(.2,.8,.2,1); }
-.svc-bar[data-on="true"] { transform: none; }
+.svc-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; padding: 0 .5rem calc(.5rem + env(safe-area-inset-bottom)); pointer-events: none; transform: translateY(110%); visibility: hidden; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s .35s; }
+.svc-bar[data-on="true"] { transform: none; visibility: visible; transition-delay: 0s; }
 .svc-bar-in { pointer-events: auto; display: flex; flex-direction: column; gap: .6rem; max-width: 80rem; margin: 0 auto; padding: .8rem 1rem; border-radius: 1.1rem; background: var(--color-ink); color: var(--color-light); box-shadow: 0 -10px 40px -12px rgba(8,11,26,.6), inset 0 0 0 1px rgba(246,248,255,.12); --focus: #22d3ee; }
 .svc-bar-info { min-width: 0; }
 .svc-bar-main { margin: 0; line-height: 1.35; }
@@ -147,10 +144,8 @@
 .svc-refer { padding: 1.5rem 1.25rem; border-radius: 1.5rem; background: rgba(12,16,36,.28); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }
 @media (min-width: 768px) { .svc-refer { padding: 2.25rem; } }
 .svc-combo:target { box-shadow: inset 0 0 0 3px var(--color-violet); }
-/* studio cards: link to prices / waitlist under each card */
+/* studio cards: waitlist under the GROW card */
 .stu-more { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-top: .6rem; padding-inline: .25rem; }
-.stu-prices { display: inline-flex; align-items: center; min-height: 2.75rem; font-size: .9375rem; font-weight: 800; color: var(--color-dark); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(19,23,43,.3); }
-.stu-prices:hover { text-decoration-color: currentColor; }
 .stu-fromall { display: block; flex-basis: 100%; margin-top: 4px; font-size: 14px; font-weight: 800; line-height: 1.2; }
 .stu-svc .stu-from { color: inherit; opacity: .8; font-weight: 700; }
 

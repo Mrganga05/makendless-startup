@@ -1,9 +1,10 @@
 /*
  * THE ONE SOURCE OF TRUTH for the whole site: studios, services, options, prices, delivery times, extras,
  * free items, "what we need" lists, popular tags, combo packs and the words around them.
- * Edit a price or a service here only. The selector, the /create, /build and /studios pages, the homepage
+ * Edit a price or a service here only. The selector on /create and /build, the /studios page, the homepage
  * studio cards, the "who it's for" cards, the contact form, the bottom bar, the final page and the server
- * all read this file, so one edit updates everywhere.
+ * all read this file, so one edit updates everywhere. Full prices are shown in one place only: the selector
+ * on each studio page.
  */
 
 export type StudioKey = "build" | "create";
@@ -206,6 +207,8 @@ export interface PlannedService { id: string; title: string; items: string[]; su
 export interface Studio {
   id: StudioId; verb: string; name: string; href: string; tagline: string; lead: string; accent: string;
   beta?: boolean;
+  /** "From" price shown on the studio cards, when it should not be the cheapest option of all (BUILD: projects start at ₹4,999; the ₹999 Quick Fix is a small Website Care job). */
+  cardFrom?: number;
   /** What it helps to have ready before a project starts. */
   inputs?: string[];
   /** GROW only. */
@@ -220,7 +223,7 @@ export const studios: Studio[] = [
     inputs: ["Raw footage", "Brand assets", "References"],
   },
   {
-    id: "build", verb: "BUILD", name: "Websites & Technology", href: "/build", accent: "#8b5cf6",
+    id: "build", verb: "BUILD", name: "Websites & Technology", href: "/build", accent: "#8b5cf6", cardFrom: 4999,
     tagline: "Websites, automation, AI and apps built to do a job.",
     lead: "Technology built to do a job: business websites, workflow automation, AI assistants, AI SaaS platforms, mobile apps and website care.",
     inputs: ["Content", "Branding", "Examples you like"],
@@ -240,8 +243,8 @@ export const studios: Studio[] = [
 export const STUDIOS = Object.fromEntries(studios.map((s) => [s.id, s])) as Record<StudioId, Studio>;
 /** The priced services of a studio, in display order (GROW has none). */
 export const servicesOf = (studio: StudioId) => services.filter((s) => s.studio === studio);
-/** Lowest "from" price in a studio, or null for GROW. */
-export const studioFrom = (studio: StudioId) => { const l = servicesOf(studio); return l.length ? Math.min(...l.map(startingFrom)) : null; };
+/** "From" price of a studio: its cardFrom if set, else the lowest price in it; null for GROW. */
+export const studioFrom = (studio: StudioId) => { const l = servicesOf(studio); return l.length ? STUDIOS[studio].cardFrom ?? Math.min(...l.map(startingFrom)) : null; };
 /** The options inside a service, popular first: "Reels & Shorts", "Ad Videos", "Monthly 12 Reels". */
 export const optionNames = (s: Service) => orderedOptions(s).map((o) => o.name);
 /** Name of any service or planned GROW item, by id. */

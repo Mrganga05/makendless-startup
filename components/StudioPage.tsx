@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { optionNames, servicesOf, startingFrom, studios, type StudioId } from "../data/pricing";
-import { inr } from "../lib/pricing";
+import { studios, type StudioId, type StudioKey } from "../data/pricing";
 import { process } from "../data/process";
 import { BuildWorld, CreateWorld, GrowWorld } from "./studios/Worlds";
 import Packages from "./Packages";
@@ -9,7 +8,7 @@ import Waitlist from "./Waitlist";
 import { Arrow, BetaBadge, ButtonLink, DemoCaption, Eyebrow, KineticHeading, Reveal } from "./ui";
 
 /* Division page (/create, /build, /grow). One template, three identities: accent colour, hero world and
-   surface tint all come from the studio id. Styling is Tailwind tokens only; the hero worlds reuse the
+   surface tint all come from the studio id. /create and /build have ONE services section: the price selector. Styling is Tailwind tokens only; the hero worlds reuse the
    homepage gateway visuals (styled in app/styles/studios.css). */
 
 const LOOK: Record<StudioId, { text: string; dot: string; ring: string; heroBg: string; stage: string; chip: string }> = {
@@ -32,11 +31,9 @@ export default function StudioPage({ id }: { id: StudioId }) {
   const L = LOOK[id];
   const others = studios.filter((x) => x.id !== id);
   const beta = !!s.beta;
-  /* The catalogue is read from data/pricing.ts: the same services, names and prices as the selector below.
-     GROW (beta) lists its three planned items instead, with no prices. */
-  const cards = beta
-    ? (s.planned ?? []).map((p) => ({ id: p.id, title: p.title, line: p.summary, tag: "In development", from: "", note: p.forWho, listLabel: "Planned scope", list: p.items, chips: [] as string[], href: `/contact?service=${id}&need=${p.id}` }))
-    : servicesOf(id).map((sv) => ({ id: sv.id, title: sv.name, line: sv.line, tag: sv.tag ?? "", from: inr(startingFrom(sv)), note: "", listLabel: "Options", list: optionNames(sv), chips: sv.free, href: `#svc-${sv.id}` }));
+  /* CREATE and BUILD have one services section: the price selector (services, options, free items, prices).
+     GROW (beta) has no prices, so it lists its three planned items instead. */
+  const planned = s.planned ?? [];
   return (
     <>
       {/* HERO — dark, division world on the right */}
@@ -75,76 +72,59 @@ export default function StudioPage({ id }: { id: StudioId }) {
         </div>
       </section>
 
-      {/* SERVICES — light editorial catalogue */}
-      <section id="services" data-tone="light" className="scroll-mt-16 bg-paper px-5 py-20 text-dark md:px-8 md:py-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:items-end">
-            <div>
-              <Eyebrow tone="light">{beta ? "What we're building" : "The catalogue"}</Eyebrow>
-              <KineticHeading text={beta ? "In development." : id === "create" ? "What we edit." : "What we build."} className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
-            </div>
-            <p className="max-w-xl text-[17px] leading-relaxed text-muted-dark lg:justify-self-end">
-              {beta
-                ? "These are the services GROW is being built around. They are not offered yet; tell us if you'd like to hear when they are."
-                : `${cards.length} services, each with a fixed starting price. Open one to see its options, extras and delivery time.`}
-            </p>
-          </div>
+      {/* SERVICES — CREATE / BUILD: "Services and prices", the selector for this studio only */}
+      {!beta && <PricingRegion><Packages studio={id as StudioKey} /></PricingRegion>}
 
-          <ol className="mt-12 grid gap-5">
-            {cards.map((c, i) => (
-              <li key={c.id} id={c.id} className="scroll-mt-24">
-                <Reveal kind={i % 2 ? "fade" : "wipe-right"}>
-                  <article className="group grid overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-line transition duration-300 hover:shadow-[0_30px_70px_-45px_rgba(19,23,43,.55)] lg:grid-cols-[1.15fr_1fr]">
-                    {/* what it is */}
-                    <div className="flex flex-col p-6 sm:p-8">
-                      <div className="flex min-h-4 items-center gap-3">
-                        {c.tag && <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet">{c.tag}</span>}
-                      </div>
-                      <h3 className="mt-5 text-2xl font-extrabold leading-tight sm:text-[1.9rem]">{c.title}</h3>
-                      <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted-dark">{c.line}</p>
-                      {c.from ? (
+      {/* SERVICES — GROW (beta): what is planned, no prices */}
+      {beta && (
+        <section id="services" data-tone="light" className="scroll-mt-16 bg-paper px-5 py-20 text-dark md:px-8 md:py-28">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:items-end">
+              <div>
+                <Eyebrow tone="light">What we&apos;re building</Eyebrow>
+                <KineticHeading text="In development." className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
+              </div>
+              <p className="max-w-xl text-[17px] leading-relaxed text-muted-dark lg:justify-self-end">
+                These are the services GROW is being built around. They are not offered yet; tell us if you&apos;d like to hear when they are.
+              </p>
+            </div>
+
+            <ol className="mt-12 grid gap-5">
+              {planned.map((c, i) => (
+                <li key={c.id} id={c.id} className="scroll-mt-24">
+                  <Reveal kind={i % 2 ? "fade" : "wipe-right"}>
+                    <article className="group grid overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-line transition duration-300 hover:shadow-[0_30px_70px_-45px_rgba(19,23,43,.55)] lg:grid-cols-[1.15fr_1fr]">
+                      {/* what it is */}
+                      <div className="flex flex-col p-6 sm:p-8">
+                        <div className="flex min-h-4 items-center gap-3">
+                          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet">In development</span>
+                        </div>
+                        <h3 className="mt-5 text-2xl font-extrabold leading-tight sm:text-[1.9rem]">{c.title}</h3>
+                        <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted-dark">{c.summary}</p>
                         <p className="mt-5 rounded-2xl bg-paper px-4 py-3 text-[15px] leading-relaxed">
-                          <span className="text-muted-dark">Starting from </span><span className="text-lg font-extrabold">{c.from}</span>
+                          <span className="font-bold">Made for: </span><span className="text-muted-dark">{c.forWho}</span>
                         </p>
-                      ) : (
-                        <p className="mt-5 rounded-2xl bg-paper px-4 py-3 text-[15px] leading-relaxed">
-                          <span className="font-bold">Made for: </span><span className="text-muted-dark">{c.note}</span>
-                        </p>
-                      )}
-                      <div className="mt-auto flex flex-wrap items-center gap-3 pt-7">
-                        {beta
-                          ? <ButtonLink href={c.href} tone="light">I&apos;m interested <Arrow /></ButtonLink>
-                          : <a href={c.href} className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-ink px-6 py-3 text-[15px] font-bold text-white transition duration-200 hover:bg-violet active:scale-[.96]">See prices<span className="sr-only">: {c.title}</span> <Arrow /></a>}
-                        {!beta && <span className="text-sm text-muted-dark">Opens this service in the price list below.</span>}
+                        <div className="mt-auto flex flex-wrap items-center gap-3 pt-7">
+                          <ButtonLink href={`/contact?service=${id}&need=${c.id}`} tone="light">I&apos;m interested <Arrow /></ButtonLink>
+                        </div>
                       </div>
-                    </div>
-                    {/* what is inside */}
-                    <div className="grid content-start gap-7 border-t border-line bg-paper/60 p-6 sm:grid-cols-2 sm:p-8 lg:border-l lg:border-t-0 lg:grid-cols-1">
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">{c.listLabel}</p>
-                        <ul className="mt-3 space-y-2.5 text-[15px]">
-                          {c.list.map((it) => (<li key={it} className="flex gap-3"><span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${L.dot}`} />{it}</li>))}
-                        </ul>
-                      </div>
-                      {c.chips.length > 0 && (
+                      {/* what is inside */}
+                      <div className="grid content-start gap-7 border-t border-line bg-paper/60 p-6 sm:grid-cols-2 sm:p-8 lg:border-l lg:border-t-0 lg:grid-cols-1">
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Free with every order</p>
-                          <ul className="mt-3 flex flex-wrap gap-2">
-                            {c.chips.map((x) => (<li key={x} className={`rounded-full px-3 py-1.5 text-[13px] font-semibold ${L.chip}`}>{x}</li>))}
+                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Planned scope</p>
+                          <ul className="mt-3 space-y-2.5 text-[15px]">
+                            {c.items.map((it) => (<li key={it} className="flex gap-3"><span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${L.dot}`} />{it}</li>))}
                           </ul>
                         </div>
-                      )}
-                    </div>
-                  </article>
-                </Reveal>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* SERVICES AND PRICES — the shared selector, opened on this studio */}
-      {id !== "grow" && <PricingRegion><Packages initial={id} /></PricingRegion>}
+                      </div>
+                    </article>
+                  </Reveal>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
 
       {/* HOW IT RUNS — dark */}
       <section data-tone="dark" className="bg-surface-2 px-5 py-20 text-light md:px-8 md:py-28">
@@ -178,7 +158,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <ButtonLink href={`/contact?service=${id}`} tone="light">{beta ? "Tell us you're interested" : "Start a Project"} <Arrow /></ButtonLink>
-              {!beta && <a href="#packages" className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-ink/25 px-6 py-3 text-[15px] font-bold text-dark transition duration-200 hover:border-ink hover:bg-ink/5 active:scale-[.96]">See prices</a>}
+              {!beta && <a href="#services" className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-ink/25 px-6 py-3 text-[15px] font-bold text-dark transition duration-200 hover:border-ink hover:bg-ink/5 active:scale-[.96]">See prices</a>}
             </div>
           </div>
           <div>

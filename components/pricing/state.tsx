@@ -83,7 +83,7 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Wraps the selector (and combo packs on the homepage). The sticky bottom bar shows while this area is on screen. */
+/** Wraps the selector on a studio page (and combo packs on the homepage). The sticky bottom bar shows while this area is on screen and something is selected. */
 export function PricingRegion({ children }: { children: React.ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
@@ -112,7 +112,8 @@ export function SelectionBar({ show }: { show: boolean }) {
   }, [on]);
   return (
     <div ref={bar} className="svc-bar" data-on={on} aria-hidden={!on} inert={!on}>
-      <div className="svc-bar-in" role="region" aria-label="Your selection">
+      {/* Drawn only once a service is selected: never "Estimated ₹0 · 0 selected". */}
+      {est.count > 0 && <div className="svc-bar-in" role="region" aria-label="Your selection">
         <div className="svc-bar-info">
           <p className="svc-bar-main">
             <span className="svc-bar-total">Estimated {est.totalText}</span>
@@ -124,7 +125,7 @@ export function SelectionBar({ show }: { show: boolean }) {
           {est.hint && <p className="svc-bar-hint">{est.hint}</p>}
         </div>
         <Link href="/start-project" className="svc-bar-btn">Start a Project →</Link>
-      </div>
+      </div>}
     </div>
   );
 }

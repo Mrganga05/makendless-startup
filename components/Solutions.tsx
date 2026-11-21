@@ -27,7 +27,7 @@ function ServiceLink({ sv, later, i }: { sv: SolutionService; later?: boolean; i
   return (
     <li style={{ ["--i" as string]: i }} className="flex">
       <Link
-        href={sv.studio === "grow" ? st.href : `#svc-${sv.id}`}
+        href={sv.studio === "grow" ? st.href : `${st.href}#${sv.id}`}
         className={`sol-svc group flex min-h-[7.25rem] w-full flex-col rounded-2xl p-4 xl:min-h-[11.5rem] ${later ? "border border-dashed border-violet/45 bg-white hover:border-violet" : "border border-line bg-paper hover:border-ink/40 hover:bg-white"}`}
       >
         <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-dark">
@@ -140,8 +140,8 @@ export default function Solutions() {
             {COMBOS_ENABLED && PACK[s.id] && (
               <p className="mt-5 text-[15px] font-bold"><a href={`#combo-${PACK[s.id]!.id}`} className="for-link">{PACK[s.id]!.name}: {inr(PACK[s.id]!.price)}{PACK[s.id]!.monthly ? "/month" : ""}</a></p>
             )}
-            {/* recommended services: every row is a real link to the studio page */}
-            {s.id !== "store" && <div className="mt-10 border-t border-line pt-6 md:mt-12">
+            {/* recommended services: every card opens that service on its studio page (/create#short-videos). Hidden for content creator and online store. */}
+            {s.id !== "store" && s.id !== "creator" && <div className="mt-10 border-t border-line pt-6 md:mt-12">
               <p id="sol-svc-label" className="text-xs font-bold uppercase tracking-[0.3em] text-muted-dark">Recommended for a {s.label.toLowerCase()}</p>
               <ul key={`s${s.id}`} aria-labelledby="sol-svc-label" className="sol-swap mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {s.services.map((sv, i) => <ServiceLink key={sv.id} sv={sv} i={i} />)}

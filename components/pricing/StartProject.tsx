@@ -47,6 +47,9 @@ export default function StartProject() {
   const est = useMemo(() => estimate(sel, codeState === "valid"), [sel, codeState]);
   const hasCreate = est.lines.some((l) => OPTIONS[l.id].service.studio === "create");
   const reqs = Object.entries(sel.reqs).filter(([id, t]) => SERVICES[id] && t.trim());
+  /* Prices live on the studio pages: one studio selected -> its page, both or none -> the Services page. */
+  const inStudios = Array.from(new Set(est.lines.map((l) => OPTIONS[l.id].service.studio)));
+  const editHref = inStudios.length === 1 ? `/${inStudios[0]}#services` : "/studios";
 
   const summary = () => [
     `Hi MAKENDLESS, I'd like to start a project.`, `Name: ${name}`, `WhatsApp: ${phone}`,
@@ -97,10 +100,10 @@ export default function StartProject() {
         <section aria-labelledby="sp-sel" className="svc-box">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="sp-sel" className="svc-h2">Your selection</h2>
-            <Link href="/#packages" className="for-link text-sm">Edit selection</Link>
+            <Link href={editHref} className="for-link text-sm">Edit selection</Link>
           </div>
           {!ready ? <p className="mt-3 text-muted-dark">Loading…</p> : est.count === 0 ? (
-            <p className="mt-3 text-muted-dark">You haven&apos;t selected any services yet. <Link href="/#packages" className="for-link">See services and prices</Link></p>
+            <p className="mt-3 text-muted-dark">You haven&apos;t selected any services yet. <Link href="/studios" className="for-link">See services and prices</Link></p>
           ) : (
             <ul className="svc-lines">
               {est.lines.map((l) => (

@@ -36,7 +36,7 @@ export default function Page() {
                 </div>
               </Link>
             </Reveal>
-            <div className="stu-more">{s.id === "grow" ? <Waitlist compact /> : <Link href={`/#packages-${s.id}`} className="stu-prices">See {s.verb} prices <Arrow /></Link>}</div>
+            {s.id === "grow" && <div className="stu-more"><Waitlist compact /></div>}
           </li>
         ))}
       </ul>

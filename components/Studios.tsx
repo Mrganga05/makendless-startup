@@ -38,7 +38,7 @@ export default function Studios() {
         <ul className="stu-list">
           {studios.map((s, i) => (
             <Gateway key={s.id} id={s.id} verb={s.verb} name={s.name} href={s.href} beta={!!s.beta} index={i} from={studioFromText(s.id)} services={studioServices(s.id, (s.planned ?? []).map((x) => x.title))}
-              after={<div className="stu-more">{s.id === "grow" ? <Waitlist compact /> : <Link href={`#packages-${s.id}`} className="stu-prices">See {s.verb} prices <Arrow /></Link>}</div>} />
+              after={s.id === "grow" ? <div className="stu-more"><Waitlist compact /></div> : undefined} />
           ))}
         </ul>
       </div>

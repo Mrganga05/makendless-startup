@@ -2,7 +2,7 @@ import Hero from "../components/Hero";
 import Studios from "../components/Studios";
 import OurWork from "../components/OurWork";
 import Solutions from "../components/Solutions";
-import Packages from "../components/Packages";
+import { ReferSection } from "../components/pricing/ReferEarn";
 import ComboPacks from "../components/pricing/ComboPacks";
 import { COMBOS_ENABLED } from "../data/pricing";
 import { PricingRegion } from "../components/pricing/state";
@@ -16,10 +16,9 @@ export default function Home() {
       <Studios />
       <OurWork />
       <Solutions />
-      <PricingRegion>
-        <Packages />
-        {COMBOS_ENABLED && <ComboPacks />}
-      </PricingRegion>
+      {/* Services and prices live on /create and /build only. */}
+      <ReferSection />
+      {COMBOS_ENABLED && <PricingRegion><ComboPacks /></PricingRegion>}
       <ProcessFaq />
       <FinalCta />
     </>
