@@ -1,5 +1,4 @@
-import { CARE_MONTHLY, COPY } from "./pricing";
-import { inr } from "../lib/pricing";
+import { COPY } from "./pricing";
 
 /*
  * How we work + FAQ copy.
@@ -48,10 +47,10 @@ export const faqGroups: { title: string; items: Faq[] }[] = [
   { title: "Offers", items: [
     { q: "What are combo packs?", a: "Ready-made bundles that cost less than buying each service alone, for example the Launch Pack (website + logo animation + 4 reels) or the Creator Pack (4 YouTube videos + 4 thumbnails + 8 reels every month). If your selections match a pack, our website applies the discount automatically." },
     { q: "Do you give discounts on more videos?", a: "Yes: 5% off for 2–5 videos, 10% off for 6–10 and 15% off for 11 or more. It's applied automatically." },
-    { q: "How does the referral offer work?", a: "Get your unique referral link on our website and share it. When a friend starts a project of ₹2,000 or more with your link, they get ₹500 off and you get ₹500 off your next order." },
+    { q: "How does the referral offer work?", a: "Get your unique referral link on our website and share it. When a friend starts a project of {referralMin} or more with your link, they get {referralReward} off and you get {referralReward} off your next order." },
   ] },
   { title: "Support", items: [
-    { q: "Do you offer ongoing support?", a: `Yes. Website Care is an add-on at ${inr(CARE_MONTHLY)}/month, and monthly care plans are available for automation and AI assistants. For videos, the Monthly 12 Reels plan and the Creator Pack cover regular editing.` },
+    { q: "Do you offer ongoing support?", a: `Yes. Website Care is an add-on at {websiteCare}/month, and monthly care plans are available for automation and AI assistants. For videos, the Monthly 12 Reels plan and the Creator Pack cover regular editing.` },
     { q: "Is digital marketing available?", a: "Digital marketing (GROW) is still in beta and not open for orders yet." },
   ] },
 ];
@@ -60,7 +59,7 @@ export const faqs: Faq[] = faqGroups.flatMap((g) => g.items);
 
 /** Homepage FAQ preview: these 6 only, same answers as /faq. */
 const HOME_QUESTIONS = ["How do I start a project?", "Are your prices fixed?", "How do I pay?", "How long will it take?", "Are changes free?", "How does the referral offer work?"];
-export const homeFaqs: Faq[] = HOME_QUESTIONS.map((q) => faqs.find((f) => f.q === q)!);
+export const homeFaqs = (): Faq[] => { const hits = HOME_QUESTIONS.map((q) => faqs.find((f) => f.q === q)).filter(Boolean) as Faq[]; return hits.length >= 3 ? hits : faqs.slice(0, 6); };
 
 /** Section copy that used to be hard-coded in components/ProcessFaq.tsx. */
 export const processCopy = {

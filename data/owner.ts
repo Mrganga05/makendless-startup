@@ -25,8 +25,6 @@ export const NUMBERS = {
   creditMonths: 6, // referral credits stay valid
 };
 
-const waDigits = OWNER.whatsapp.replace(/\D/g, "");
-/** Opens WhatsApp once a real number is set; until then falls back to the project form. */
 /** Default message when someone taps a WhatsApp button. */
 export const WHATSAPP_MESSAGE = "Hi MAKENDLESS, I want to start a project.";
 /** Social links. Leave "" to hide an icon. */
@@ -37,6 +35,3 @@ export const SOCIALS = {
   linkedin: "",
   x: "",
 };
-const waFull = waDigits.length === 10 ? `91${waDigits}` : waDigits;
-/** Opens WhatsApp with the default message; until a real number is set, falls back to the project form. */
-export const WHATSAPP_HREF = waDigits.length >= 10 ? `https://wa.me/${waFull}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}` : "/contact";

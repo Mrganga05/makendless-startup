@@ -7,6 +7,7 @@ import { ipHash, tooMany } from "../../../lib/guard";
 import { clean, estimate, inr } from "../../../lib/pricing";
 import { normalizePhone } from "../../../lib/referral";
 import { checkReferral } from "../../../lib/referral-server";
+import { loadContent } from "../../../lib/content";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ const s = (v: unknown, n: number) => String(v ?? "").trim().slice(0, n) || null;
    Totals and the referral are re-checked here, never trusted from the browser. */
 export async function POST(req: Request) {
   const b = (await req.json().catch(() => ({}))) as Body;
+  await loadContent();
   if (b.hp) return NextResponse.json({ ok: false }, { status: 400 });
   const name = String(b.name || "").trim().slice(0, 80);
   const whatsapp = normalizePhone(b.whatsapp || "");
@@ -40,8 +42,10 @@ export async function POST(req: Request) {
     const main = [...new Set(contact ? (contactServices.length ? contactServices : [s(b.studio, 80) || "Project"]) : est.lines.map((l) => l.service))].slice(0, 3).join(" + ") || "Project";
     const totalText = contact ? "To be quoted" : est.totalText;
 
-    const lead = await insert("leads", {
-      name, whatsapp, email: s(b.email, 254), business_name: s(b.business, 100), client_type: s(b.clientType, 60), source_page: contact ? "/contact" : "/start-project",
+    /* Until the control-room SQL upgrade is run, the form/lead_source columns don't exist: save without them. */
+    const save = (row: Record<string, unknown>) => insert("leads", row).catch((e) => { const { form: _f, lead_source: _s, ...old } = row; void _f; void _s; if (String(e).includes("column")) return insert("leads", old); throw e; });
+    const lead = await save({
+      name, whatsapp, email: s(b.email, 254), business_name: s(b.business, 100), client_type: s(b.clientType, 60), source_page: contact ? "/contact" : "/start-project", form: contact ? "Contact brief" : "Start a Project", lead_source: "Website",
       selections: { items, extras: contact ? [] : est.extras },
       combo_applied: est.combo?.name ?? null, video_discount: est.videoDiscount,
       referral_code: refOk?.code ?? null, referral_discount: est.referralDiscount,

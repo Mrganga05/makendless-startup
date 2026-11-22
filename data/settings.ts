@@ -17,16 +17,17 @@ export const SETTINGS = {
 };
 
 /** Digits for wa.me links (adds India's 91 to a 10-digit number). Empty until a real number is set in data/owner.ts. */
-export const WHATSAPP_DIGITS = (() => {
+export const whatsappDigits = () => {
   const d = SETTINGS.whatsapp.replace(/\D/g, "");
   if (d.length === 10) return `91${d}`;
   return d.length >= 11 ? d : "";
-})();
+};
 
 /** wa.me link to the team with an optional pre-filled message, or "" when no number is set yet. */
 export function whatsappTo(text?: string) {
-  if (!WHATSAPP_DIGITS) return "";
-  return `https://wa.me/${WHATSAPP_DIGITS}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+  const digits = whatsappDigits();
+  if (!digits) return "";
+  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
 }
 
 /** wa.me share link with no recipient (the visitor picks a chat). */

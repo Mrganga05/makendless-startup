@@ -1,9 +1,9 @@
 /* Homepage "Our work": real projects from data/work.ts. Hidden until links exist. */
-import { HAS_WORK, WORK } from "../data/work";
+import { hasWork, WORK } from "../data/work";
 import { Eyebrow, KineticHeading } from "./ui";
 
 export default function OurWork() {
-  if (!HAS_WORK) return null;
+  if (!hasWork()) return null;
   return (
     <section id="work" data-tone="light" aria-labelledby="work-title" className="bg-white px-4 py-16 text-dark sm:px-6 md:px-8 md:py-24">
       <div className="mx-auto max-w-7xl">

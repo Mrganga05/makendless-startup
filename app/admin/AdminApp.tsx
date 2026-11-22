@@ -1,31 +1,780 @@
 "use client";
-/* MAKENDLESS team dashboard: Overview, Leads (board + table), lead details, Referrals, Waitlist, Settings. */
+/* MAKENDLESS control room. Owner: everything. Team member: only the leads and projects assigned to them, no money.
+   The server (app/api/admin/route.ts) enforces the same rules: this UI only hides what the API never sends. */
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { SiteContent } from "../../data/content";
 import { inr } from "../../lib/pricing";
+import { downloadCsv, downloadXlsx, parseCsv, type Cell } from "../../lib/sheet";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
-type Data = { me: { email: string; name: string; role: "Admin" | "Member" }; leads: Row[]; codes: Row[]; uses: Row[]; waitlist: Row[]; team: Row[]; settings: Record<string, string> };
-const STATUSES = ["New", "Contacted", "Price confirmed", "Advance paid", "In progress", "Delivered", "Fully paid", "Lost"];
-const DAY = 864e5;
-const api = (body: object) => fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) }));
-const ago = (d: string) => { const m = Math.max(0, (Date.now() - new Date(d).getTime()) / 6e4); return m < 60 ? `${Math.round(m)}m` : m < 1440 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}d`; };
-const date = (d?: string) => (d ? new Date(d).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—");
-const services = (l: Row): string[] => [...new Set(((l.selections?.items as Row[]) || []).map((i) => String(i.service || i.option)).filter(Boolean))];
-const late = (l: Row) => l.status === "New" && Date.now() - new Date(l.created_at).getTime() > DAY;
-const initials = (email: string, team: Row[]) => { const n = String(team.find((t) => t.email === email)?.name || email || ""); return n.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0].toUpperCase()).join(""); };
-const total = (l: Row) => Number(l.estimated_total || 0) + Number(l.estimated_monthly || 0);
-function csv(name: string, rows: Row[], cols: string[]) {
-  const esc = (v: unknown) => `"${String(typeof v === "object" && v !== null ? JSON.stringify(v) : v ?? "").replace(/"/g, '""')}"`;
-  const blob = new Blob([[cols.join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\n")], { type: "text/csv" });
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href);
-}
-const card = "rounded-2xl bg-white p-4 ring-1 ring-line sm:p-5";
-const th = "border-b border-line px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-muted-dark";
-const td = "border-b border-line px-3 py-2.5 align-top text-sm";
+type Data = {
+  me: { email: string; name: string; role: "Owner" | "Team member" }; team: Row[]; leads: Row[]; projects: Row[];
+  expenses?: Row[]; codes?: Row[]; uses?: Row[]; settings?: Record<string, string>; content?: SiteContent; trash?: Row[]; activity?: Row[]; backups?: Row[];
+};
+type Api = { ok: boolean; error?: string; [k: string]: any }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-function Login() {
+const LEAD_STATUS = ["New", "Contacted", "Quote sent", "Won", "Lost"];
+const PROJECT_STATUS = ["Not started", "In progress", "In review", "Delivered", "Paid"];
+const FORMS = ["Start a Project", "Contact brief", "Referral", "GROW waitlist", "Added by hand", "Imported"];
+const SOURCES = ["Website", "WhatsApp", "Instagram", "Outreach", "Referral", "Other"];
+const CATS = ["Software & tools", "Ads & marketing", "Domain & hosting", "Equipment", "Registration & legal", "Other"];
+const OWNER_TABS = ["Home", "Leads", "Projects", "Expenses", "Team", "Referrals", "Website", "Reports", "Trash", "Activity", "Settings"] as const;
+const TEAM_TABS = ["Home", "Leads", "Projects"] as const;
+const DAY = 864e5;
+
+const api = (body: object): Promise<Api> => fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) }));
+const ymd = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+const TODAY = () => ymd(new Date());
+const ym = (d?: string) => String(d || "").slice(0, 7);
+const dateOf = (r: Row) => String(r.date || r.created_at || "").slice(0, 10);
+const nice = (d?: string) => (d ? new Date(d.length === 10 ? d + "T00:00" : d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—");
+const ago = (d: string) => { const m = Math.max(0, (Date.now() - new Date(d).getTime()) / 6e4); return m < 60 ? `${Math.round(m)}m` : m < 1440 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}d`; };
+const monthName = (k: string) => new Date(k + "-01T00:00").toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+const services = (l: Row): string[] => [...new Set(((l.selections?.items as Row[]) || []).map((i) => String(i.service || i.option || "")).filter(Boolean))];
+const estimate = (l: Row) => Number(l.estimated_total || 0) + Number(l.estimated_monthly || 0);
+const late = (l: Row) => l.status === "New" && Date.now() - new Date(l.created_at).getTime() > DAY;
+const money = (p: Row) => {
+  const pays = (p.payments as Row[]) || [];
+  const paid = pays.reduce((s, x) => s + Number(x.amount || 0), 0);
+  const adv = pays.filter((x) => x.kind === "Advance").reduce((s, x) => s + Number(x.amount || 0), 0);
+  return { paid, adv, bal: paid - adv, pending: Math.max(0, Number(p.price || 0) - paid) };
+};
+const confirmDelete = () => confirm("Are you sure? It moves to Trash, where the Owner can restore it for 30 days.");
+
+const card = "rounded-2xl bg-white p-4 ring-1 ring-line sm:p-5";
+const lbl = "grid gap-1 text-sm font-bold";
+const chip = (on: boolean) => `shrink-0 rounded-full px-3 py-1.5 text-sm font-bold ring-1 ${on ? "bg-ink text-white ring-ink" : "bg-white text-dark ring-line"}`;
+
+/* ---------------- shared pieces ---------------- */
+function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && onClose(); addEventListener("keydown", k); return () => removeEventListener("keydown", k); }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/40" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()} className="absolute inset-x-0 bottom-0 max-h-[92vh] overflow-y-auto rounded-t-3xl bg-paper p-4 pb-10 sm:p-6 md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-[36rem] md:rounded-none">
+        <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 bg-paper px-4 py-3 sm:-mx-6 sm:-mt-6 sm:px-6">
+          <h2 className="text-xl font-extrabold">{title}</h2>
+          <button type="button" className="for-btn for-btn-ghost !min-h-10 !px-4" onClick={onClose}>Close</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+type Col = { label: string; get: (r: Row) => React.ReactNode; raw?: (r: Row) => Cell };
+function List({ name, cols, rows, onOpen, tools }: { name: string; cols: Col[]; rows: Row[]; onOpen?: (r: Row) => void; tools?: React.ReactNode }) {
+  const exp = (kind: "csv" | "xlsx") => {
+    const head = cols.map((c) => c.label);
+    const body = rows.map((r) => cols.map((c) => { if (c.raw) return c.raw(r); const v = c.get(r); return typeof v === "string" || typeof v === "number" ? v : ""; }));
+    (kind === "csv" ? downloadCsv : downloadXlsx)(`MAKENDLESS ${name} ${TODAY()}`, head, body);
+  };
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        {tools}
+        <span className="ml-auto flex gap-2">
+          <button type="button" className="for-btn for-btn-ghost !min-h-10 !px-3 text-sm" onClick={() => exp("xlsx")}>Download as Excel</button>
+          <button type="button" className="for-btn for-btn-ghost !min-h-10 !px-3 text-sm" onClick={() => exp("csv")}>Download as CSV</button>
+        </span>
+      </div>
+      {rows.length === 0 ? <p className={`${card} text-muted-dark`}>Nothing here yet.</p> : (
+        <div className="md:overflow-x-auto md:rounded-2xl md:bg-white md:ring-1 md:ring-line">
+          <table className="adm-t w-full">
+            <thead><tr>{cols.map((c) => <th key={c.label}>{c.label}</th>)}</tr></thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={r.id ?? r.email ?? r.code ?? i} onClick={onOpen ? () => onOpen(r) : undefined} className={onOpen ? "cursor-pointer hover:bg-paper" : ""}>
+                  {cols.map((c) => <td key={c.label} data-label={c.label}>{c.get(r) ?? "—"}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ImportCsv({ entity, done }: { entity: "leads" | "projects" | "expenses"; done: () => void }) {
+  const [msg, setMsg] = useState("");
+  return (
+    <label className="for-btn for-btn-ghost !min-h-10 cursor-pointer !px-3 text-sm">
+      Import from CSV
+      <input type="file" accept=".csv,text/csv" className="sr-only" onChange={async (e) => {
+        const f = e.target.files?.[0]; e.target.value = "";
+        if (!f) return;
+        const rows = parseCsv(await f.text());
+        if (!rows.length) return setMsg("That file has no rows.");
+        if (!confirm(`Import ${rows.length} rows into ${entity}?`)) return;
+        const r = await api({ action: "import", entity, rows });
+        setMsg(r.ok ? `Imported ${r.added} rows.` : r.error || "Import failed."); done();
+      }} />
+      {msg && <span className="ml-2 text-xs">{msg}</span>}
+    </label>
+  );
+}
+
+const Stat = ({ label, value, tone = "" }: { label: string; value: string; tone?: string }) => (
+  <div className={card}><p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-dark">{label}</p><p className={`mt-1 text-2xl font-extrabold tabular-nums ${tone}`}>{value}</p></div>
+);
+const Err = ({ text }: { text: string }) => (text ? <p role="alert" className="for-error text-sm font-bold">{text}</p> : null);
+const memberName = (email: string, team: Row[]) => (email ? String(team.find((t) => t.email === email)?.name || email) : "—");
+function MemberSelect({ value, team, onChange }: { value: string; team: Row[]; onChange: (v: string) => void }) {
+  return (
+    <select className="for-field" value={value || ""} onChange={(e) => onChange(e.target.value)}>
+      <option value="">Not assigned</option>
+      {team.filter((t) => t.active).map((t) => <option key={t.email} value={t.email}>{t.name || t.email}</option>)}
+    </select>
+  );
+}
+
+/* ---------------- money maths (Owner) ---------------- */
+function monthStats(d: Data, key: string) {
+  const projects = d.projects.filter((p) => ym(p.created_at) === key);
+  const collected = d.projects.flatMap((p) => (p.payments as Row[]) || []).filter((x) => ym(x.date) === key).reduce((s, x) => s + Number(x.amount || 0), 0);
+  const payouts = d.projects.filter((p) => p.payout_done && ym(p.payout_date || p.updated_at) === key).reduce((s, p) => s + Number(p.team_payout || 0), 0);
+  const expenses = (d.expenses || []).filter((e) => ym(e.date) === key).reduce((s, e) => s + Number(e.amount || 0), 0);
+  const sales = projects.reduce((s, p) => s + Number(p.price || 0), 0);
+  return { projects: projects.length, sales, collected, payouts, expenses, profit: collected - payouts - expenses };
+}
+const lastMonths = (n: number) => Array.from({ length: n }, (_, i) => { const t = new Date(); t.setDate(1); t.setMonth(t.getMonth() - i); return ymd(t).slice(0, 7); });
+
+/* ---------------- Home ---------------- */
+function Home({ d, go }: { d: Data; go: (tab: string, id?: string) => void }) {
+  const owner = d.me.role === "Owner";
+  const today = TODAY(), weekAgo = Date.now() - 7 * DAY, in3 = ymd(new Date(Date.now() + 3 * DAY));
+  const newToday = d.leads.filter((l) => String(l.created_at).slice(0, 10) === today).length;
+  const newWeek = d.leads.filter((l) => new Date(l.created_at).getTime() >= weekAgo).length;
+  const waiting = d.leads.filter(late);
+  const due = d.projects.filter((p) => p.delivery_date && p.delivery_date >= today && p.delivery_date <= in3 && !["Delivered", "Paid"].includes(p.status));
+  const m = owner ? monthStats(d, today.slice(0, 7)) : null;
+  const target = Number(d.settings?.monthly_target || 100000);
+  const pending = owner ? d.projects.reduce((s, p) => s + money(p).pending, 0) : 0;
+  return (
+    <div className="grid gap-4">
+      {m && (
+        <>
+          <h2 className="text-lg font-extrabold">This month · {monthName(today.slice(0, 7))}</h2>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            <Stat label="Sales" value={inr(m.sales)} />
+            <Stat label="Collected" value={inr(m.collected)} />
+            <Stat label="Pending from clients" value={inr(pending)} />
+            <Stat label="Expenses" value={inr(m.expenses)} />
+            <Stat label="Team payouts" value={inr(m.payouts)} />
+            <Stat label="Profit" value={inr(m.profit)} tone={m.profit < 0 ? "text-[#c2183a]" : "text-[#0f6b4b]"} />
+          </div>
+          <div className={card}>
+            <div className="flex flex-wrap items-baseline justify-between gap-2"><p className="font-extrabold">Monthly target</p><p className="text-sm font-bold tabular-nums">{inr(m.sales)} of {inr(target)} · {target ? Math.round((m.sales / target) * 100) : 0}%</p></div>
+            <div className="mt-3 h-3 overflow-hidden rounded-full bg-paper-2" role="progressbar" aria-valuemin={0} aria-valuemax={target} aria-valuenow={m.sales}><div className="h-full rounded-full bg-violet" style={{ width: `${Math.min(100, target ? (m.sales / target) * 100 : 0)}%` }} /></div>
+            <p className="mt-2 text-xs text-muted-dark">Profit = collected − team payouts − expenses, this month.</p>
+          </div>
+        </>
+      )}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <Stat label={owner ? "New leads today" : "My new leads today"} value={String(newToday)} />
+        <Stat label="New this week" value={String(newWeek)} />
+        <Stat label="Waiting over 24h" value={String(waiting.length)} tone={waiting.length ? "text-[#c2183a]" : ""} />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className={card}>
+          <p className="font-extrabold">Waiting for a reply (over 24 hours)</p>
+          <ul className="mt-2 grid gap-1">
+            {waiting.map((l) => <li key={l.id}><button type="button" className="min-h-10 text-left text-sm font-bold text-[#c2183a] underline" onClick={() => go("Leads", l.id)}>{l.name} · {l.form} · waiting {ago(l.created_at)}</button></li>)}
+            {!waiting.length && <li className="text-sm text-muted-dark">Every new lead has been answered.</li>}
+          </ul>
+        </div>
+        <div className={card}>
+          <p className="font-extrabold">Projects due in the next 3 days</p>
+          <ul className="mt-2 grid gap-1">
+            {due.map((p) => <li key={p.id}><button type="button" className="min-h-10 text-left text-sm font-bold underline" onClick={() => go("Projects", p.id)}>{p.client} · {p.services} · {nice(p.delivery_date)}</button></li>)}
+            {!due.length && <li className="text-sm text-muted-dark">Nothing due in the next 3 days.</li>}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Leads ---------------- */
+function LeadSheet({ lead, d, close, reload }: { lead: Row; d: Data; close: () => void; reload: () => void }) {
+  const owner = d.me.role === "Owner";
+  const [f, setF] = useState({ name: lead.name || "", whatsapp: lead.whatsapp || "", email: lead.email || "", services: services(lead).join(", "), estimated_total: String(lead.estimated_total ?? ""), lead_source: lead.lead_source || "Website" });
+  const [reason, setReason] = useState(lead.lost_reason || "");
+  const [note, setNote] = useState("");
+  const [err, setErr] = useState("");
+  const run = async (body: object) => { const r = await api(body); if (!r.ok) setErr(r.error || "Something went wrong."); else { setErr(""); reload(); } return r; };
+  const first = String(lead.name || "").split(/[\s@]/)[0];
+  const svc = services(lead).join(", ");
+  const wa = lead.whatsapp ? `https://wa.me/91${String(lead.whatsapp).slice(-10)}?text=${encodeURIComponent(`Hi ${first}, this is the MAKENDLESS team. Thanks for your interest${svc ? ` in ${svc}` : ""}! We'd love to help. When is a good time to talk about your project?`)}` : "";
+  const items = (lead.selections?.items as Row[]) || [];
+  const setStatus = async (status: string) => {
+    if (status === "Lost" && !reason.trim()) return setErr("Please write the reason first, then choose Lost.");
+    await run({ action: "lead.update", id: lead.id, patch: { status, lost_reason: reason } });
+  };
+  return (
+    <Sheet title={lead.name} onClose={close}>
+      <div className="grid gap-4">
+        <div className="flex flex-wrap gap-2">
+          {wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className="for-btn !min-h-11 bg-[#25d366] text-white">WhatsApp</a> : <span className="text-sm text-muted-dark">No WhatsApp number{lead.email ? ` · ${lead.email}` : ""}</span>}
+          {owner && !lead.project_id && <button type="button" className="for-btn for-btn-primary !min-h-11" onClick={async () => { const r = await run({ action: "lead.won", id: lead.id }); if (r.ok) close(); }}>Mark as Won → Project</button>}
+          {lead.project_id && <span className="rounded-full bg-[#e7f7ef] px-3 py-2 text-sm font-bold text-[#0f6b4b]">Won · project created</span>}
+        </div>
+        <Err text={err} />
+        <div className={card}>
+          <p className="text-sm text-muted-dark">{nice(lead.created_at)} · {lead.form} · {lead.lead_source}{lead.source_page ? ` · ${lead.source_page}` : ""}</p>
+          {items.length > 0 && <ul className="mt-2 text-sm">{items.map((i, k) => <li key={k}>• {i.option ? `${i.service}: ${i.option}` : i.service}{i.qty > 1 ? ` × ${i.qty}` : ""}</li>)}</ul>}
+          {owner && lead.total_text && <p className="mt-2 font-bold">Estimate: {lead.total_text}</p>}
+          {lead.est_delivery && <p className="text-sm">Est. delivery: {lead.est_delivery}</p>}
+          {lead.extra_notes && <p className="mt-2 whitespace-pre-wrap text-sm">“{lead.extra_notes}”</p>}
+          {Object.entries(lead.requirements || {}).map(([k, v]) => <p key={k} className="mt-1 text-sm"><b>{k}:</b> {String(v)}</p>)}
+          {lead.footage_link && <p className="mt-1 break-all text-sm">Link: {lead.footage_link}</p>}
+          {lead.referral_code && <p className="mt-1 text-sm">Referral code: {lead.referral_code}</p>}
+        </div>
+        <div className={`${card} grid gap-3`}>
+          <p className="font-extrabold">Status</p>
+          <div className="flex flex-wrap gap-2">{LEAD_STATUS.map((s) => <button type="button" key={s} className={chip(lead.status === s)} onClick={() => setStatus(s)}>{s}</button>)}</div>
+          <label className={lbl}>Reason if Lost<input className="for-field" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. budget too low, went with someone else" /></label>
+          {owner && <label className={lbl}>Assigned to<MemberSelect value={lead.assigned_to} team={d.team} onChange={(v) => run({ action: "lead.update", id: lead.id, patch: { assigned_to: v } })} /></label>}
+        </div>
+        {owner && (
+          <form className={`${card} grid gap-3`} onSubmit={(e) => { e.preventDefault(); run({ action: "lead.update", id: lead.id, patch: f }); }}>
+            <p className="font-extrabold">Details</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className={lbl}>Name<input className="for-field" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
+              <label className={lbl}>WhatsApp<input className="for-field" inputMode="tel" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} /></label>
+              <label className={lbl}>Email<input className="for-field" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
+              <label className={lbl}>Lead source<select className="for-field" value={f.lead_source} onChange={(e) => setF({ ...f, lead_source: e.target.value })}>{SOURCES.map((s) => <option key={s}>{s}</option>)}</select></label>
+              <label className={lbl}>Services<input className="for-field" value={f.services} onChange={(e) => setF({ ...f, services: e.target.value })} /></label>
+              <label className={lbl}>Estimated price (₹)<input className="for-field" inputMode="numeric" value={f.estimated_total} onChange={(e) => setF({ ...f, estimated_total: e.target.value })} /></label>
+            </div>
+            <button className="for-btn for-btn-primary">Save details</button>
+          </form>
+        )}
+        <div className={`${card} grid gap-3`}>
+          <p className="font-extrabold">Notes</p>
+          <ul className="grid gap-2">{((lead.team_notes as Row[]) || []).map((n, i) => <li key={i} className="rounded-xl bg-paper p-3 text-sm"><p className="whitespace-pre-wrap">{n.body}</p><p className="mt-1 text-xs text-muted-dark">{n.author} · {nice(n.at)}</p></li>)}</ul>
+          <form className="flex gap-2" onSubmit={async (e) => { e.preventDefault(); if (!note.trim()) return; await run({ action: "lead.note", id: lead.id, body: note }); setNote(""); }}>
+            <input className="for-field min-w-0 flex-1" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note" />
+            <button className="for-btn for-btn-primary !px-4">Add</button>
+          </form>
+        </div>
+        {owner && <button type="button" className="for-btn for-btn-ghost text-[#c2183a]" onClick={async () => { if (confirmDelete() && (await run({ action: "delete", entity: "lead", id: lead.id })).ok) close(); }}>Delete lead</button>}
+      </div>
+    </Sheet>
+  );
+}
+
+function AddLead({ d, close, reload }: { d: Data; close: () => void; reload: () => void }) {
+  const [f, setF] = useState({ name: "", whatsapp: "", email: "", lead_source: "WhatsApp", services: "", estimated_total: "", assigned_to: "", notes: "" });
+  const [err, setErr] = useState("");
+  return (
+    <Sheet title="Add a lead" onClose={close}>
+      <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); const r = await api({ action: "lead.add", row: f }); if (!r.ok) return setErr(r.error || "Couldn't save."); reload(); close(); }}>
+        <label className={lbl}>Name<input className="for-field" required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
+        <label className={lbl}>WhatsApp<input className="for-field" inputMode="tel" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} /></label>
+        <label className={lbl}>Email<input className="for-field" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
+        <label className={lbl}>Lead source<select className="for-field" value={f.lead_source} onChange={(e) => setF({ ...f, lead_source: e.target.value })}>{SOURCES.map((s) => <option key={s}>{s}</option>)}</select></label>
+        <label className={lbl}>Services (comma separated)<input className="for-field" value={f.services} onChange={(e) => setF({ ...f, services: e.target.value })} /></label>
+        <label className={lbl}>Estimated price (₹)<input className="for-field" inputMode="numeric" value={f.estimated_total} onChange={(e) => setF({ ...f, estimated_total: e.target.value })} /></label>
+        <label className={lbl}>Assign to<MemberSelect value={f.assigned_to} team={d.team} onChange={(v) => setF({ ...f, assigned_to: v })} /></label>
+        <label className={lbl}>Notes<textarea className="for-field for-area-sm" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></label>
+        <Err text={err} />
+        <button className="for-btn for-btn-primary">Add lead</button>
+      </form>
+    </Sheet>
+  );
+}
+
+function Leads({ d, reload, openId, setOpenId }: { d: Data; reload: () => void; openId: string; setOpenId: (id: string) => void }) {
+  const owner = d.me.role === "Owner";
+  const [status, setStatus] = useState("All");
+  const [form, setForm] = useState("All");
+  const [q, setQ] = useState("");
+  const [adding, setAdding] = useState(false);
+  const rows = d.leads.filter((l) => (status === "All" || l.status === status) && (form === "All" || l.form === form) && (!q || `${l.name} ${l.whatsapp} ${l.email} ${services(l).join(" ")}`.toLowerCase().includes(q.toLowerCase())));
+  const open = d.leads.find((l) => l.id === openId);
+  const cols: Col[] = [
+    { label: "Date", get: (l) => nice(l.created_at), raw: (l) => String(l.created_at).slice(0, 10) },
+    { label: "Name", get: (l) => <span className={late(l) ? "font-bold text-[#c2183a]" : "font-bold"}>{l.name}</span>, raw: (l) => l.name },
+    { label: "WhatsApp", get: (l) => l.whatsapp || "—", raw: (l) => l.whatsapp },
+    { label: "Form", get: (l) => l.form },
+    { label: "Services", get: (l) => services(l).join(", ") || "—", raw: (l) => services(l).join(", ") },
+    ...(owner ? [{ label: "Est. price", get: (l: Row) => (estimate(l) ? inr(estimate(l)) : l.total_text || "—"), raw: (l: Row) => estimate(l) }] : []),
+    { label: "Source", get: (l) => l.lead_source },
+    { label: "Status", get: (l) => l.status + (l.status === "Lost" && l.lost_reason ? ` (${l.lost_reason})` : "") },
+    { label: "Assigned to", get: (l) => memberName(l.assigned_to, d.team), raw: (l) => l.assigned_to || "" },
+  ];
+  return (
+    <div className="grid gap-3">
+      <div className="flex gap-2 overflow-x-auto pb-1">{["All", ...LEAD_STATUS].map((s) => <button type="button" key={s} className={chip(status === s)} onClick={() => setStatus(s)}>{s} {s === "All" ? d.leads.length : d.leads.filter((l) => l.status === s).length}</button>)}</div>
+      <div className="grid gap-2 sm:grid-cols-[1fr_14rem]">
+        <input className="for-field" placeholder="Search name, number, service" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search leads" />
+        <select className="for-field" value={form} onChange={(e) => setForm(e.target.value)} aria-label="Form">{["All", ...FORMS].map((x) => <option key={x}>{x}</option>)}</select>
+      </div>
+      <List name="Leads" cols={cols} rows={rows} onOpen={(l) => setOpenId(l.id)} tools={owner && <><button type="button" className="for-btn for-btn-primary !min-h-10 !px-4 text-sm" onClick={() => setAdding(true)}>+ Add lead</button><ImportCsv entity="leads" done={reload} /></>} />
+      {open && <LeadSheet key={open.id + open.updated_at} lead={open} d={d} close={() => setOpenId("")} reload={reload} />}
+      {adding && <AddLead d={d} close={() => setAdding(false)} reload={reload} />}
+    </div>
+  );
+}
+
+/* ---------------- Projects ---------------- */
+function ProjectSheet({ p, d, close, reload }: { p: Row | null; d: Data; close: () => void; reload: () => void }) {
+  const owner = d.me.role === "Owner";
+  const isNew = !p;
+  const [f, setF] = useState({ client: p?.client || "", client_whatsapp: p?.client_whatsapp || "", studio: p?.studio || "", services: p?.services || "", price: String(p?.price ?? ""), delivery_date: p?.delivery_date || "", assigned_to: p?.assigned_to || "", team_payout: String(p?.team_payout ?? ""), status: p?.status || "Not started", notes: p?.notes || "" });
+  const [pay, setPay] = useState({ date: TODAY(), amount: "", kind: "Advance", method: "UPI" });
+  const [err, setErr] = useState("");
+  const run = async (body: object) => { const r = await api(body); if (!r.ok) setErr(r.error || "Something went wrong."); else { setErr(""); reload(); } return r; };
+  const m = p ? money(p) : null;
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isNew && owner && String(p!.price) !== String(Number(f.price || 0)) && !confirm(`Change the price from ${inr(Number(p!.price || 0))} to ${inr(Number(f.price || 0))}?`)) return;
+    const r = isNew ? await run({ action: "project.add", row: f }) : await run({ action: "project.update", id: p!.id, patch: owner ? f : { status: f.status, notes: f.notes } });
+    if (r.ok && isNew) close();
+  };
+  return (
+    <Sheet title={isNew ? "New project" : p!.client} onClose={close}>
+      <div className="grid gap-4">
+        {p?.client_whatsapp && <a className="for-btn !min-h-11 w-fit bg-[#25d366] text-white" target="_blank" rel="noopener noreferrer" href={`https://wa.me/91${String(p.client_whatsapp).slice(-10)}?text=${encodeURIComponent(`Hi ${String(p.client).split(" ")[0]}, an update on your MAKENDLESS project (${p.services}):`)}`}>WhatsApp client</a>}
+        {m && owner && (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="Price" value={inr(Number(p!.price || 0))} /><Stat label="Advance" value={inr(m.adv)} /><Stat label="Balance" value={inr(m.bal)} /><Stat label="Pending" value={inr(m.pending)} tone={m.pending ? "text-[#c2183a]" : "text-[#0f6b4b]"} />
+          </div>
+        )}
+        <Err text={err} />
+        <form className={`${card} grid gap-3`} onSubmit={save}>
+          <label className={lbl}>Status<select className="for-field" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}>{PROJECT_STATUS.map((s) => <option key={s}>{s}</option>)}</select></label>
+          {owner && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className={lbl}>Client<input className="for-field" required value={f.client} onChange={(e) => setF({ ...f, client: e.target.value })} /></label>
+              <label className={lbl}>Client WhatsApp<input className="for-field" inputMode="tel" value={f.client_whatsapp} onChange={(e) => setF({ ...f, client_whatsapp: e.target.value })} /></label>
+              <label className={lbl}>Studio<select className="for-field" value={f.studio} onChange={(e) => setF({ ...f, studio: e.target.value })}>{["", "CREATE", "BUILD", "CREATE + BUILD", "GROW"].map((s) => <option key={s} value={s}>{s || "—"}</option>)}</select></label>
+              <label className={lbl}>Service(s)<input className="for-field" value={f.services} onChange={(e) => setF({ ...f, services: e.target.value })} /></label>
+              <label className={lbl}>Price (₹)<input className="for-field" inputMode="numeric" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} /></label>
+              <label className={lbl}>Delivery date<input className="for-field" type="date" value={f.delivery_date || ""} onChange={(e) => setF({ ...f, delivery_date: e.target.value })} /></label>
+              <label className={lbl}>Assigned member<MemberSelect value={f.assigned_to} team={d.team} onChange={(v) => setF({ ...f, assigned_to: v })} /></label>
+              <label className={lbl}>Team payout (₹)<input className="for-field" inputMode="numeric" value={f.team_payout} onChange={(e) => setF({ ...f, team_payout: e.target.value })} /></label>
+            </div>
+          )}
+          {!owner && p && <p className="text-sm">{p.services} · due {nice(p.delivery_date)} · your payout {inr(Number(p.team_payout || 0))}{p.payout_done ? " (paid)" : ""}</p>}
+          <label className={lbl}>Notes<textarea className="for-field for-area-sm" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></label>
+          <button className="for-btn for-btn-primary">{isNew ? "Add project" : "Save"}</button>
+        </form>
+        {p && owner && (
+          <>
+            <div className={`${card} grid gap-3`}>
+              <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-extrabold">Payments</p>
+                <label className="flex min-h-11 items-center gap-2 text-sm font-bold"><input type="checkbox" checked={!!p.payout_done} onChange={(e) => run({ action: "project.update", id: p.id, patch: { payout_done: e.target.checked } })} /> Team payout done{p.payout_date ? ` (${nice(p.payout_date)})` : ""}</label>
+              </div>
+              <ul className="grid gap-1 text-sm">{((p.payments as Row[]) || []).map((x) => <li key={x.id} className="flex items-center justify-between gap-2 rounded-xl bg-paper px-3 py-2"><span>{nice(x.date)} · {x.kind} · {x.method}</span><span className="flex items-center gap-2 font-bold">{inr(Number(x.amount))}<button type="button" aria-label="Delete payment" className="px-2 text-[#c2183a]" onClick={() => confirmDelete() && run({ action: "delete", entity: "payment", id: x.id })}>×</button></span></li>)}
+                {!(p.payments as Row[])?.length && <li className="text-muted-dark">No payments yet.</li>}</ul>
+              <form className="grid grid-cols-2 gap-2 sm:grid-cols-5" onSubmit={async (e) => { e.preventDefault(); const r = await run({ action: "payment.add", row: { ...pay, project_id: p.id } }); if (r.ok) setPay({ ...pay, amount: "" }); }}>
+                <input className="for-field" type="date" aria-label="Payment date" value={pay.date} onChange={(e) => setPay({ ...pay, date: e.target.value })} />
+                <input className="for-field" inputMode="numeric" placeholder="Amount ₹" aria-label="Amount" value={pay.amount} onChange={(e) => setPay({ ...pay, amount: e.target.value })} />
+                <select className="for-field" aria-label="Type" value={pay.kind} onChange={(e) => setPay({ ...pay, kind: e.target.value })}>{["Advance", "Balance", "Other"].map((s) => <option key={s}>{s}</option>)}</select>
+                <select className="for-field" aria-label="Paid by" value={pay.method} onChange={(e) => setPay({ ...pay, method: e.target.value })}>{["UPI", "Payment link", "Cash", "Bank transfer"].map((s) => <option key={s}>{s}</option>)}</select>
+                <button className="for-btn for-btn-primary col-span-2 sm:col-span-1">Record payment</button>
+              </form>
+            </div>
+            <button type="button" className="for-btn for-btn-ghost text-[#c2183a]" onClick={async () => { if (confirmDelete() && (await run({ action: "delete", entity: "project", id: p.id })).ok) close(); }}>Delete project</button>
+          </>
+        )}
+      </div>
+    </Sheet>
+  );
+}
+
+function Projects({ d, reload, openId, setOpenId }: { d: Data; reload: () => void; openId: string; setOpenId: (id: string) => void }) {
+  const owner = d.me.role === "Owner";
+  const [status, setStatus] = useState("All");
+  const [adding, setAdding] = useState(false);
+  const rows = d.projects.filter((p) => status === "All" || p.status === status);
+  const open = d.projects.find((p) => p.id === openId);
+  const cols: Col[] = [
+    { label: "Client", get: (p) => <b>{p.client}</b>, raw: (p) => p.client },
+    { label: "Studio", get: (p) => p.studio || "—" },
+    { label: "Service(s)", get: (p) => p.services || "—" },
+    ...(owner ? [
+      { label: "Price", get: (p: Row) => inr(Number(p.price || 0)), raw: (p: Row) => Number(p.price || 0) },
+      { label: "Advance", get: (p: Row) => inr(money(p).adv), raw: (p: Row) => money(p).adv },
+      { label: "Balance", get: (p: Row) => inr(money(p).bal), raw: (p: Row) => money(p).bal },
+      { label: "Pending", get: (p: Row) => <span className={money(p).pending ? "font-bold text-[#c2183a]" : ""}>{inr(money(p).pending)}</span>, raw: (p: Row) => money(p).pending },
+    ] : []),
+    { label: "Delivery", get: (p) => nice(p.delivery_date), raw: (p) => p.delivery_date || "" },
+    { label: "Assigned", get: (p) => memberName(p.assigned_to, d.team), raw: (p) => p.assigned_to || "" },
+    { label: "Payout", get: (p) => inr(Number(p.team_payout || 0)), raw: (p) => Number(p.team_payout || 0) },
+    { label: "Payout done", get: (p) => (p.payout_done ? "Yes" : "No") },
+    { label: "Status", get: (p) => p.status },
+  ];
+  return (
+    <div className="grid gap-3">
+      <div className="flex gap-2 overflow-x-auto pb-1">{["All", ...PROJECT_STATUS].map((s) => <button type="button" key={s} className={chip(status === s)} onClick={() => setStatus(s)}>{s}</button>)}</div>
+      <List name="Projects" cols={cols} rows={rows} onOpen={(p) => setOpenId(p.id)} tools={owner && <><button type="button" className="for-btn for-btn-primary !min-h-10 !px-4 text-sm" onClick={() => setAdding(true)}>+ Add project</button><ImportCsv entity="projects" done={reload} /></>} />
+      {open && <ProjectSheet key={open.id + open.updated_at + ((open.payments as Row[]) || []).length} p={open} d={d} close={() => setOpenId("")} reload={reload} />}
+      {adding && <ProjectSheet p={null} d={d} close={() => setAdding(false)} reload={reload} />}
+    </div>
+  );
+}
+
+/* ---------------- Expenses ---------------- */
+function Expenses({ d, reload }: { d: Data; reload: () => void }) {
+  const [edit, setEdit] = useState<Row | null>(null);
+  const [err, setErr] = useState("");
+  const cols: Col[] = [
+    { label: "Date", get: (e) => nice(e.date), raw: (e) => e.date },
+    { label: "Item", get: (e) => <b>{e.item}</b>, raw: (e) => e.item },
+    { label: "Category", get: (e) => e.category },
+    { label: "Amount", get: (e) => inr(Number(e.amount || 0)), raw: (e) => Number(e.amount || 0) },
+    { label: "Paid by", get: (e) => e.paid_by || "—", raw: (e) => e.paid_by },
+    { label: "Notes", get: (e) => e.notes || "—", raw: (e) => e.notes },
+  ];
+  return (
+    <>
+      <List name="Expenses" cols={cols} rows={d.expenses || []} onOpen={(e) => setEdit({ ...e })} tools={<><button type="button" className="for-btn for-btn-primary !min-h-10 !px-4 text-sm" onClick={() => setEdit({ date: TODAY(), item: "", category: "Software & tools", amount: "", paid_by: "", notes: "" })}>+ Add expense</button><ImportCsv entity="expenses" done={reload} /></>} />
+      {edit && (
+        <Sheet title={edit.id ? "Edit expense" : "Add expense"} onClose={() => setEdit(null)}>
+          <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); const r = await api({ action: "expense.save", row: edit }); if (!r.ok) return setErr(r.error || "Couldn't save."); reload(); setEdit(null); }}>
+            <label className={lbl}>Date<input className="for-field" type="date" value={edit.date} onChange={(e) => setEdit({ ...edit, date: e.target.value })} /></label>
+            <label className={lbl}>Item<input className="for-field" required value={edit.item} onChange={(e) => setEdit({ ...edit, item: e.target.value })} /></label>
+            <label className={lbl}>Category<select className="for-field" value={edit.category} onChange={(e) => setEdit({ ...edit, category: e.target.value })}>{CATS.map((c) => <option key={c}>{c}</option>)}</select></label>
+            <label className={lbl}>Amount (₹)<input className="for-field" inputMode="numeric" value={edit.amount} onChange={(e) => setEdit({ ...edit, amount: e.target.value })} /></label>
+            <label className={lbl}>Paid by<input className="for-field" value={edit.paid_by} onChange={(e) => setEdit({ ...edit, paid_by: e.target.value })} /></label>
+            <label className={lbl}>Notes<textarea className="for-field for-area-sm" value={edit.notes} onChange={(e) => setEdit({ ...edit, notes: e.target.value })} /></label>
+            <Err text={err} />
+            <button className="for-btn for-btn-primary">Save</button>
+            {edit.id && <button type="button" className="for-btn for-btn-ghost text-[#c2183a]" onClick={async () => { if (confirmDelete() && (await api({ action: "delete", entity: "expense", id: edit.id })).ok) { reload(); setEdit(null); } }}>Delete expense</button>}
+          </form>
+        </Sheet>
+      )}
+    </>
+  );
+}
+
+/* ---------------- Team (members + payouts) ---------------- */
+function Members({ d, reload }: { d: Data; reload: () => void }) {
+  const [edit, setEdit] = useState<Row | null>(null);
+  const [err, setErr] = useState("");
+  return (
+    <div className={`${card} grid gap-3`}>
+      <div className="flex items-center justify-between gap-2"><p className="font-extrabold">Team members and roles</p><button type="button" className="for-btn for-btn-primary !min-h-10 !px-4 text-sm" onClick={() => setEdit({ email: "", name: "", whatsapp: "", role: "Team member", active: true, isNew: true })}>+ Add member</button></div>
+      <p className="text-xs text-muted-dark">Team logins work once the website&apos;s own email domain is verified for login emails. Until then only makendlessofficial@gmail.com can receive a login link.</p>
+      <ul className="grid gap-2">{d.team.map((t) => <li key={t.email}><button type="button" className="flex min-h-12 w-full flex-wrap items-center justify-between gap-2 rounded-xl bg-paper px-3 py-2 text-left text-sm" onClick={() => setEdit({ ...t })}><span><b>{t.name || t.email}</b> · {t.email}</span><span className={t.active ? "" : "text-muted-dark"}>{t.role}{t.active ? "" : " · inactive"}</span></button></li>)}</ul>
+      {edit && (
+        <Sheet title={edit.isNew ? "Add member" : "Edit member"} onClose={() => setEdit(null)}>
+          <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); if (!edit.isNew && !confirm("Save these changes to this member?")) return; const r = await api({ action: "team.save", row: edit }); if (!r.ok) return setErr(r.error || "Couldn't save."); reload(); setEdit(null); }}>
+            <label className={lbl}>Email<input className="for-field" type="email" required readOnly={!edit.isNew} value={edit.email} onChange={(e) => setEdit({ ...edit, email: e.target.value })} /></label>
+            <label className={lbl}>Name<input className="for-field" value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></label>
+            <label className={lbl}>WhatsApp<input className="for-field" inputMode="tel" value={edit.whatsapp || ""} onChange={(e) => setEdit({ ...edit, whatsapp: e.target.value })} /></label>
+            <label className={lbl}>Role<select className="for-field" value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value })}><option>Team member</option><option>Owner</option></select></label>
+            <label className="flex min-h-11 items-center gap-2 text-sm font-bold"><input type="checkbox" checked={edit.active !== false} onChange={(e) => setEdit({ ...edit, active: e.target.checked })} /> Active (can log in)</label>
+            <Err text={err} />
+            <button className="for-btn for-btn-primary">Save member</button>
+            {!edit.isNew && <button type="button" className="for-btn for-btn-ghost text-[#c2183a]" onClick={async () => { if (!confirmDelete()) return; const r = await api({ action: "delete", entity: "member", id: edit.email }); if (!r.ok) return setErr(r.error || "Couldn't remove."); reload(); setEdit(null); }}>Remove member</button>}
+          </form>
+        </Sheet>
+      )}
+    </div>
+  );
+}
+
+function Team({ d, reload }: { d: Data; reload: () => void }) {
+  const cols: Col[] = [
+    { label: "Name", get: (t) => <b>{t.name || "—"}</b>, raw: (t) => t.name },
+    { label: "Role", get: (t) => t.role },
+    { label: "Email", get: (t) => t.email },
+    { label: "WhatsApp", get: (t) => t.whatsapp || "—", raw: (t) => t.whatsapp },
+    { label: "Active", get: (t) => (t.active ? "Yes" : "No") },
+    { label: "Payouts owed", get: (t) => inr(owed(t)), raw: (t) => owed(t) },
+    { label: "Payouts paid", get: (t) => inr(paid(t)), raw: (t) => paid(t) },
+  ];
+  function owed(t: Row) { return d.projects.filter((p) => p.assigned_to === t.email && !p.payout_done).reduce((s, p) => s + Number(p.team_payout || 0), 0); }
+  function paid(t: Row) { return d.projects.filter((p) => p.assigned_to === t.email && p.payout_done).reduce((s, p) => s + Number(p.team_payout || 0), 0); }
+  return <div className="grid gap-4"><List name="Team" cols={cols} rows={d.team} /><Members d={d} reload={reload} /></div>;
+}
+
+/* ---------------- Referrals ---------------- */
+function Referrals({ d, reload }: { d: Data; reload: () => void }) {
+  const reward = Number(d.settings?.referral_reward || 500), min = Number(d.settings?.referral_min || 2000);
+  const projectOf = (leadId: string) => d.projects.find((p) => p.lead_id === leadId);
+  const usesOf = (code: string) => (d.uses || []).filter((u) => u.code === code);
+  const cols: Col[] = [
+    { label: "Code", get: (c) => <b>{c.code}</b>, raw: (c) => c.code },
+    { label: "Owner", get: (c) => `${c.referrer_name} · ${c.referrer_whatsapp}`, raw: (c) => `${c.referrer_name} ${c.referrer_whatsapp}` },
+    { label: "Used by", get: (c) => usesOf(c.code).map((u) => u.new_client_name).join(", ") || "—", raw: (c) => usesOf(c.code).map((u) => u.new_client_name).join(", ") },
+    { label: "Project value", get: (c) => usesOf(c.code).map((u) => { const p = projectOf(u.lead_id); return p ? `${inr(Number(p.price || 0))}${Number(p.price || 0) < min ? " (under minimum)" : ""}` : "no project yet"; }).join(", ") || "—", raw: (c) => usesOf(c.code).map((u) => Number(projectOf(u.lead_id)?.price || 0)).join(" + ") },
+    { label: "Rewards earned", get: (c) => inr(Number(c.credits_earned || 0)), raw: (c) => Number(c.credits_earned || 0) },
+    { label: "Given", get: (c) => inr(Number(c.credits_used || 0)), raw: (c) => Number(c.credits_used || 0) },
+    { label: "Owed", get: (c) => { const o = Number(c.credits_earned || 0) - Number(c.credits_used || 0); return o >= reward ? <button type="button" className="for-btn for-btn-ghost !min-h-9 !px-3 text-xs" onClick={async (e) => { e.stopPropagation(); if (confirm(`Mark ${inr(reward)} reward as given to ${c.referrer_name}?`)) { await api({ action: "credit.use", code: c.code }); reload(); } }}>{inr(o)} · Mark {inr(reward)} given</button> : inr(Math.max(0, o)); }, raw: (c) => Number(c.credits_earned || 0) - Number(c.credits_used || 0) },
+  ];
+  return (
+    <div className="grid gap-3">
+      <p className="text-sm text-muted-dark">A reward of {inr(reward)} is earned when a referred client&apos;s project of {inr(min)} or more is fully paid. Change these numbers in Settings.</p>
+      <List name="Referrals" cols={cols} rows={d.codes || []} />
+    </div>
+  );
+}
+
+/* ---------------- Website content ---------------- */
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `item-${Date.now()}`;
+const uid = () => Math.random().toString(36).slice(2, 10);
+function move<T>(arr: T[], i: number, dir: -1 | 1) { const a = [...arr]; const j = i + dir; if (j < 0 || j >= a.length) return a; [a[i], a[j]] = [a[j], a[i]]; return a; }
+const Up = ({ onUp, onDown }: { onUp: () => void; onDown: () => void }) => <span className="flex gap-1"><button type="button" aria-label="Move up" className="for-btn for-btn-ghost !min-h-9 !px-3" onClick={onUp}>↑</button><button type="button" aria-label="Move down" className="for-btn for-btn-ghost !min-h-9 !px-3" onClick={onDown}>↓</button></span>;
+
+function Website({ d, reload }: { d: Data; reload: () => void }) {
+  const [c, setC] = useState<SiteContent>(() => JSON.parse(JSON.stringify(d.content)));
+  const [part, setPart] = useState("Services & prices");
+  const [msg, setMsg] = useState("");
+  const set = (next: Partial<SiteContent>) => setC({ ...c, ...next });
+  const before = d.content!;
+  const priceChanges = c.services.flatMap((s) => s.options).filter((o) => { const p = before.services.flatMap((x) => x.options).find((x) => x.id === o.id); return p && p.price !== o.price; });
+  const save = async () => {
+    if (priceChanges.length && !confirm(`You changed ${priceChanges.length} price${priceChanges.length > 1 ? "s" : ""} (${priceChanges.map((o) => o.name).join(", ")}). The live website updates within a minute. Are you sure?`)) return;
+    const r = await api({ action: "content.save", content: c });
+    setMsg(r.ok ? "Saved. The live website shows it within a minute." : r.error || "Couldn't save."); if (r.ok) reload();
+  };
+  const optionIds = c.services.flatMap((s) => s.options.map((o) => ({ id: o.id, name: o.name })));
+  return (
+    <div className="grid gap-4">
+      <div className="flex gap-2 overflow-x-auto pb-1">{["Services & prices", "Combo packs", "FAQ", "Work samples", "Reviews"].map((p) => <button type="button" key={p} className={chip(part === p)} onClick={() => setPart(p)}>{p}</button>)}</div>
+      <div className="sticky top-[6.5rem] z-20 flex flex-wrap items-center gap-2 rounded-2xl bg-white/95 p-3 ring-1 ring-line backdrop-blur">
+        <button type="button" className="for-btn for-btn-primary !min-h-11" onClick={save}>Save to website</button>
+        <button type="button" className="for-btn for-btn-ghost !min-h-11" onClick={() => setC(JSON.parse(JSON.stringify(d.content)))}>Undo my changes</button>
+        {msg && <span className="text-sm font-bold" role="status">{msg}</span>}
+      </div>
+
+      {part === "Services & prices" && c.services.map((s, si) => {
+        const setS = (ns: Partial<typeof s>) => { const a = [...c.services]; a[si] = { ...s, ...ns }; set({ services: a }); };
+        return (
+          <details key={s.id} className={card} open={si === 0}>
+            <summary className="flex min-h-11 cursor-pointer items-center justify-between font-extrabold">{s.name} <span className="text-xs font-bold text-muted-dark">{s.studio.toUpperCase()}</span></summary>
+            <div className="mt-3 grid gap-3">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className={lbl}>Service name<input className="for-field" value={s.name} onChange={(e) => setS({ name: e.target.value })} /></label>
+                <label className={lbl}>Short line<input className="for-field" value={s.line} onChange={(e) => setS({ line: e.target.value })} /></label>
+                <label className={lbl}>Tag (optional)<input className="for-field" value={s.tag || ""} onChange={(e) => setS({ tag: e.target.value || undefined })} /></label>
+              </div>
+              <p className="text-sm font-extrabold">Options</p>
+              {s.options.map((o, oi) => {
+                const setO = (no: Partial<typeof o>) => { const a = [...s.options]; a[oi] = { ...o, ...no }; setS({ options: a }); };
+                return (
+                  <div key={o.id} className="grid gap-2 rounded-xl bg-paper p-3 sm:grid-cols-[2fr_1fr_1fr_1.4fr_.7fr_auto]">
+                    <label className={lbl}>Option<input className="for-field" value={o.name} onChange={(e) => setO({ name: e.target.value })} /></label>
+                    <label className={lbl}>Price ₹ (blank = custom)<input className="for-field" inputMode="numeric" value={o.price ?? ""} onChange={(e) => setO({ price: e.target.value.trim() === "" ? null : Math.max(0, Math.round(Number(e.target.value.replace(/\D/g, "")))) })} /></label>
+                    <label className={lbl}>Per<select className="for-field" value={o.unit} onChange={(e) => setO({ unit: e.target.value as typeof o.unit })}><option value="one">project</option><option value="each">each</option><option value="month">month</option><option value="issue">issue</option></select></label>
+                    <label className={lbl}>Delivery time<input className="for-field" value={o.delivery} onChange={(e) => setO({ delivery: e.target.value })} /></label>
+                    <label className={lbl}>Days<input className="for-field" inputMode="numeric" value={o.days ?? ""} onChange={(e) => setO({ days: e.target.value === "" ? null : Number(e.target.value.replace(/\D/g, "")) })} /></label>
+                    <div className="flex items-end gap-2">
+                      <label className="flex min-h-11 items-center gap-1 text-xs font-bold"><input type="checkbox" checked={!!o.popular} onChange={(e) => setO({ popular: e.target.checked })} />Popular</label>
+                      <button type="button" aria-label={`Remove ${o.name}`} className="for-btn for-btn-ghost !min-h-10 !px-3 text-[#c2183a]" onClick={() => confirm(`Remove ${o.name} from the website?`) && setS({ options: s.options.filter((_, i) => i !== oi) })}>×</button>
+                    </div>
+                  </div>
+                );
+              })}
+              <button type="button" className="for-btn for-btn-ghost w-fit !min-h-10 text-sm" onClick={() => { const name = prompt("New option name"); if (name) setS({ options: [...s.options, { id: slug(`${s.id}-${name}`), name, price: 0, unit: "one", delivery: "", days: 0 }] }); }}>+ Add option</button>
+              {s.extras.length > 0 && <p className="text-sm font-extrabold">Extras</p>}
+              {s.extras.map((x, xi) => (
+                <div key={x.id} className="grid grid-cols-[2fr_1fr_auto] items-end gap-2">
+                  <label className={lbl}>Extra<input className="for-field" value={x.name} onChange={(e) => { const a = [...s.extras]; a[xi] = { ...x, name: e.target.value }; setS({ extras: a }); }} /></label>
+                  <label className={lbl}>Price ₹<input className="for-field" inputMode="numeric" value={x.price} onChange={(e) => { const a = [...s.extras]; a[xi] = { ...x, price: Number(e.target.value.replace(/\D/g, "")) || 0 }; setS({ extras: a }); }} /></label>
+                  <label className="flex min-h-11 items-center gap-1 text-xs font-bold"><input type="checkbox" checked={!!x.monthly} onChange={(e) => { const a = [...s.extras]; a[xi] = { ...x, monthly: e.target.checked }; setS({ extras: a }); }} />Monthly</label>
+                </div>
+              ))}
+            </div>
+          </details>
+        );
+      })}
+
+      {part === "Combo packs" && (
+        <div className="grid gap-3">
+          {c.combos.map((k, ki) => {
+            const setK = (nk: Partial<typeof k>) => { const a = [...c.combos]; const merged = { ...k, ...nk }; merged.save = Math.max(0, merged.normal - merged.price); a[ki] = merged; set({ combos: a }); };
+            return (
+              <div key={k.id} className={`${card} grid gap-3`}>
+                <div className="flex items-center justify-between gap-2"><b>{k.name}</b><Up onUp={() => set({ combos: move(c.combos, ki, -1) })} onDown={() => set({ combos: move(c.combos, ki, 1) })} /></div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className={lbl}>Name<input className="for-field" value={k.name} onChange={(e) => setK({ name: e.target.value })} /></label>
+                  <label className={lbl}>Tag<input className="for-field" value={k.tag || ""} onChange={(e) => setK({ tag: e.target.value || undefined })} /></label>
+                  <label className={`${lbl} sm:col-span-2`}>What&apos;s inside (shown on the site)<input className="for-field" value={k.inside} onChange={(e) => setK({ inside: e.target.value })} /></label>
+                  <label className={lbl}>Pack price ₹<input className="for-field" inputMode="numeric" value={k.price} onChange={(e) => setK({ price: Number(e.target.value.replace(/\D/g, "")) || 0 })} /></label>
+                  <label className={lbl}>Normal price ₹<input className="for-field" inputMode="numeric" value={k.normal} onChange={(e) => setK({ normal: Number(e.target.value.replace(/\D/g, "")) || 0 })} /></label>
+                </div>
+                <label className="flex min-h-11 items-center gap-2 text-sm font-bold"><input type="checkbox" checked={!!k.monthly} onChange={(e) => setK({ monthly: e.target.checked })} /> Price is per month</label>
+                <p className="text-sm">Saves {inr(k.save)} · Applied automatically when the selection contains:</p>
+                {k.items.map((it, ii) => (
+                  <div key={ii} className="grid grid-cols-[1fr_5rem_auto] gap-2">
+                    <select className="for-field" aria-label="Option" value={it.id} onChange={(e) => { const a = [...k.items]; a[ii] = { ...it, id: e.target.value }; setK({ items: a }); }}>{optionIds.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
+                    <input className="for-field" aria-label="Quantity" inputMode="numeric" value={it.qty} onChange={(e) => { const a = [...k.items]; a[ii] = { ...it, qty: Math.max(1, Number(e.target.value.replace(/\D/g, "")) || 1) }; setK({ items: a }); }} />
+                    <button type="button" aria-label="Remove item" className="for-btn for-btn-ghost !min-h-10 !px-3" onClick={() => setK({ items: k.items.filter((_, i) => i !== ii) })}>×</button>
+                  </div>
+                ))}
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" className="for-btn for-btn-ghost !min-h-10 text-sm" onClick={() => setK({ items: [...k.items, { id: optionIds[0].id, qty: 1 }] })}>+ Add item</button>
+                  <button type="button" className="for-btn for-btn-ghost !min-h-10 text-sm text-[#c2183a]" onClick={() => confirm(`Remove the ${k.name} from the website?`) && set({ combos: c.combos.filter((_, i) => i !== ki) })}>Remove pack</button>
+                </div>
+              </div>
+            );
+          })}
+          <button type="button" className="for-btn for-btn-ghost w-fit" onClick={() => { const name = prompt("Pack name"); if (name) set({ combos: [...c.combos, { id: slug(name), name, inside: "", items: [{ id: optionIds[0].id, qty: 1 }], normal: 0, price: 0, save: 0 }] }); }}>+ Add combo pack</button>
+        </div>
+      )}
+
+      {part === "FAQ" && (
+        <div className="grid gap-3">
+          <p className="text-sm text-muted-dark">You can write {"{websiteCare}"}, {"{referralMin}"} or {"{referralReward}"} in an answer: the site fills in the current price.</p>
+          {c.faq.map((g, gi) => {
+            const setG = (ng: Partial<typeof g>) => { const a = [...c.faq]; a[gi] = { ...g, ...ng }; set({ faq: a }); };
+            return (
+              <div key={gi} className={`${card} grid gap-3`}>
+                <label className={lbl}>Group<input className="for-field" value={g.title} onChange={(e) => setG({ title: e.target.value })} /></label>
+                {g.items.map((it, ii) => {
+                  const setI = (ni: Partial<typeof it>) => { const a = [...g.items]; a[ii] = { ...it, ...ni }; setG({ items: a }); };
+                  return (
+                    <div key={ii} className="grid gap-2 rounded-xl bg-paper p-3">
+                      <input className="for-field font-bold" aria-label="Question" value={it.q} onChange={(e) => setI({ q: e.target.value })} />
+                      <textarea className="for-field for-area-sm" aria-label="Answer" value={it.a} onChange={(e) => setI({ a: e.target.value })} />
+                      {it.list && <textarea className="for-field for-area-sm" aria-label="Bullet points, one per line" value={it.list.join("\n")} onChange={(e) => setI({ list: e.target.value.split("\n") })} />}
+                      <div className="flex flex-wrap justify-between gap-2"><Up onUp={() => setG({ items: move(g.items, ii, -1) })} onDown={() => setG({ items: move(g.items, ii, 1) })} /><button type="button" className="for-btn for-btn-ghost !min-h-9 !px-3 text-sm text-[#c2183a]" onClick={() => confirm("Remove this question?") && setG({ items: g.items.filter((_, i) => i !== ii) })}>Remove</button></div>
+                    </div>
+                  );
+                })}
+                <button type="button" className="for-btn for-btn-ghost w-fit !min-h-10 text-sm" onClick={() => setG({ items: [...g.items, { q: "New question", a: "" }] })}>+ Add question</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {part === "Work samples" && (
+        <div className="grid gap-3">
+          <p className="text-sm text-muted-dark">&ldquo;Our Work&rdquo; appears on the homepage only when at least one visible sample exists. Reels: Instagram/YouTube links. Sites: website links. Image: an image URL (optional).</p>
+          {c.work.map((w, wi) => {
+            const setW = (nw: Partial<typeof w>) => { const a = [...c.work]; a[wi] = { ...w, ...nw }; set({ work: a }); };
+            return (
+              <div key={w.id} className={`${card} grid gap-2 sm:grid-cols-2`}>
+                <label className={lbl}>Type<select className="for-field" value={w.kind} onChange={(e) => setW({ kind: e.target.value as "reel" | "site" })}><option value="reel">Reel / video</option><option value="site">Website</option></select></label>
+                <label className={lbl}>Title<input className="for-field" value={w.title} onChange={(e) => setW({ title: e.target.value })} /></label>
+                <label className={lbl}>Link<input className="for-field" value={w.url} onChange={(e) => setW({ url: e.target.value })} /></label>
+                <label className={lbl}>Image URL<input className="for-field" value={w.image || ""} onChange={(e) => setW({ image: e.target.value || undefined })} /></label>
+                <div className="flex flex-wrap items-center justify-between gap-2 sm:col-span-2">
+                  <label className="flex min-h-11 items-center gap-2 text-sm font-bold"><input type="checkbox" checked={!!w.hidden} onChange={(e) => setW({ hidden: e.target.checked })} /> Hidden</label>
+                  <Up onUp={() => set({ work: move(c.work, wi, -1) })} onDown={() => set({ work: move(c.work, wi, 1) })} />
+                  <button type="button" className="for-btn for-btn-ghost !min-h-9 !px-3 text-sm text-[#c2183a]" onClick={() => confirm("Delete this sample? It goes to Trash when you save.") && set({ work: c.work.filter((_, i) => i !== wi) })}>Delete</button>
+                </div>
+              </div>
+            );
+          })}
+          <button type="button" className="for-btn for-btn-ghost w-fit" onClick={() => set({ work: [...c.work, { id: uid(), kind: "reel", title: "", url: "" }] })}>+ Add work sample</button>
+        </div>
+      )}
+
+      {part === "Reviews" && (
+        <div className="grid gap-3">
+          <p className="text-sm text-muted-dark">The reviews section appears on the homepage only when at least one visible review exists. Only add real reviews from real clients.</p>
+          {c.reviews.map((r, ri) => {
+            const setR = (nr: Partial<typeof r>) => { const a = [...c.reviews]; a[ri] = { ...r, ...nr }; set({ reviews: a }); };
+            return (
+              <div key={r.id} className={`${card} grid gap-2`}>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className={lbl}>Client name<input className="for-field" value={r.name} onChange={(e) => setR({ name: e.target.value })} /></label>
+                  <label className={lbl}>Business or role<input className="for-field" value={r.role || ""} onChange={(e) => setR({ role: e.target.value || undefined })} /></label>
+                </div>
+                <label className={lbl}>Review<textarea className="for-field for-area-sm" value={r.text} onChange={(e) => setR({ text: e.target.value })} /></label>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="flex min-h-11 items-center gap-2 text-sm font-bold"><input type="checkbox" checked={!!r.hidden} onChange={(e) => setR({ hidden: e.target.checked })} /> Hidden</label>
+                  <Up onUp={() => set({ reviews: move(c.reviews, ri, -1) })} onDown={() => set({ reviews: move(c.reviews, ri, 1) })} />
+                  <button type="button" className="for-btn for-btn-ghost !min-h-9 !px-3 text-sm text-[#c2183a]" onClick={() => confirm("Delete this review? It goes to Trash when you save.") && set({ reviews: c.reviews.filter((_, i) => i !== ri) })}>Delete</button>
+                </div>
+              </div>
+            );
+          })}
+          <button type="button" className="for-btn for-btn-ghost w-fit" onClick={() => set({ reviews: [...c.reviews, { id: uid(), name: "", text: "" }] })}>+ Add review</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- Reports, Trash, Activity, Settings ---------------- */
+function Reports({ d }: { d: Data }) {
+  const target = Number(d.settings?.monthly_target || 100000);
+  const rows = lastMonths(12).map((k) => ({ k, ...monthStats(d, k) }));
+  const cols: Col[] = [
+    { label: "Month", get: (r) => monthName(r.k), raw: (r) => r.k },
+    { label: "Projects", get: (r) => String(r.projects), raw: (r) => r.projects },
+    { label: "Sales", get: (r) => inr(r.sales), raw: (r) => r.sales },
+    { label: "Collected", get: (r) => inr(r.collected), raw: (r) => r.collected },
+    { label: "Team payouts", get: (r) => inr(r.payouts), raw: (r) => r.payouts },
+    { label: "Expenses", get: (r) => inr(r.expenses), raw: (r) => r.expenses },
+    { label: "Profit", get: (r) => <span className={r.profit < 0 ? "text-[#c2183a]" : ""}>{inr(r.profit)}</span>, raw: (r) => r.profit },
+    { label: "Sales vs target", get: (r) => `${target ? Math.round((r.sales / target) * 100) : 0}%`, raw: (r) => (target ? Math.round((r.sales / target) * 100) : 0) },
+  ];
+  return <div className="grid gap-3"><p className="text-sm text-muted-dark">Last 12 months. Sales = price of projects started that month. Profit = collected − team payouts − expenses.</p><List name="Monthly summary" cols={cols} rows={rows} /></div>;
+}
+
+function Trash({ d, reload }: { d: Data; reload: () => void }) {
+  const left = (t: Row) => Math.max(0, 30 - Math.floor((Date.now() - new Date(t.deleted_at).getTime()) / DAY));
+  const cols: Col[] = [
+    { label: "Item", get: (t) => <b>{t.label}</b>, raw: (t) => t.label },
+    { label: "Deleted", get: (t) => `${nice(t.deleted_at)} by ${t.deleted_by}`, raw: (t) => t.deleted_at },
+    { label: "Days left", get: (t) => String(left(t)), raw: (t) => left(t) },
+    { label: "Actions", get: (t) => <span className="flex gap-2"><button type="button" className="for-btn for-btn-ghost !min-h-9 !px-3 text-xs" onClick={async () => { const r = await api({ action: "trash.restore", id: t.id }); if (!r.ok) alert(r.error); reload(); }}>Restore</button><button type="button" className="for-btn for-btn-ghost !min-h-9 !px-3 text-xs text-[#c2183a]" onClick={async () => { if (confirm("Delete forever? This cannot be undone.")) { await api({ action: "trash.purge", id: t.id }); reload(); } }}>Delete forever</button></span>, raw: () => "" },
+  ];
+  return <div className="grid gap-3"><p className="text-sm text-muted-dark">Deleted items stay here for 30 days, then they are removed for good.</p><List name="Trash" cols={cols} rows={d.trash || []} /></div>;
+}
+
+function Activity({ d }: { d: Data }) {
+  const v = (x: unknown) => (x === null || x === undefined ? "" : typeof x === "string" ? x : JSON.stringify(x));
+  const cols: Col[] = [
+    { label: "When", get: (a) => new Date(a.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }), raw: (a) => a.created_at },
+    { label: "Who", get: (a) => a.actor },
+    { label: "What", get: (a) => `${a.action} · ${a.entity}` },
+    { label: "Old value", get: (a) => <span className="break-all text-xs">{v(a.old_value).slice(0, 300) || "—"}</span>, raw: (a) => v(a.old_value) },
+    { label: "New value", get: (a) => <span className="break-all text-xs">{v(a.new_value).slice(0, 300) || "—"}</span>, raw: (a) => v(a.new_value) },
+  ];
+  return <List name="Activity log" cols={cols} rows={d.activity || []} />;
+}
+
+function Settings({ d, reload }: { d: Data; reload: () => void }) {
+  const [s, setS] = useState<Record<string, string>>({ ...d.settings });
+  const [msg, setMsg] = useState("");
+  const F = ({ k, label, type = "text" }: { k: string; label: string; type?: string }) => <label className={lbl}>{label}<input className="for-field" type={type} inputMode={["monthly_target", "referral_reward", "referral_min", "whatsapp"].includes(k) ? "numeric" : undefined} value={s[k] ?? ""} onChange={(e) => setS({ ...s, [k]: e.target.value })} /></label>;
+  return (
+    <div className="grid gap-4">
+      <form className={`${card} grid gap-3`} onSubmit={async (e) => {
+        e.preventDefault();
+        const money = ["monthly_target", "referral_reward", "referral_min"].filter((k) => String(s[k]) !== String(d.settings?.[k]));
+        if (money.length && !confirm("You are changing a price or amount. Are you sure?")) return;
+        const r = await api({ action: "settings.save", settings: s }); setMsg(r.ok ? "Saved." : r.error || "Couldn't save."); reload();
+      }}>
+        <p className="font-extrabold">Settings</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {F({ k: "monthly_target", label: "Monthly target (₹)" })}
+          {F({ k: "whatsapp", label: "Official WhatsApp number (shown on the site)" })}
+          {F({ k: "email", label: "Official email (shown on the site)", type: "email" })}
+          {F({ k: "alert_email", label: "Email for new-lead alerts", type: "email" })}
+          {F({ k: "referral_reward", label: "Referral reward (₹)" })}
+          {F({ k: "referral_min", label: "Referral minimum project value (₹)" })}
+        </div>
+        <p className="text-xs text-muted-dark">Leave WhatsApp or email empty to keep the ones in the code.</p>
+        <button className="for-btn for-btn-primary w-fit">Save settings</button>
+        {msg && <p role="status" className="text-sm font-bold">{msg}</p>}
+      </form>
+      <Members d={d} reload={reload} />
+      <div className={`${card} grid gap-3`}>
+        <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-extrabold">Backups</p><button type="button" className="for-btn for-btn-ghost !min-h-10 text-sm" onClick={async () => { await api({ action: "backup.now" }); reload(); }}>Back up now</button></div>
+        <p className="text-xs text-muted-dark">A full backup is made automatically every week (Sunday night). The last 8 are kept.</p>
+        <ul className="grid gap-2">{(d.backups || []).map((b) => <li key={b.id} className="flex items-center justify-between gap-2 rounded-xl bg-paper px-3 py-2 text-sm"><span>{new Date(b.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span><button type="button" className="font-bold underline" onClick={async () => { const r = await api({ action: "backup.get", id: b.id }); if (!r.ok) return alert(r.error); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(r.data, null, 2)], { type: "application/json" })); a.download = `MAKENDLESS backup ${String(b.created_at).slice(0, 10)}.json`; a.click(); }}>Download</button></li>)}
+          {!(d.backups || []).length && <li className="text-sm text-muted-dark">No backups yet.</li>}</ul>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- login + shell ---------------- */
+function Login({ denied }: { denied?: boolean }) {
   const [email, setEmail] = useState("");
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(denied ? { ok: false, text: "That login link is not for a MAKENDLESS team account." } : null);
   const [busy, setBusy] = useState(false);
   return (
     <div className="mx-auto mt-10 max-w-md">
@@ -46,161 +795,22 @@ function Login() {
   );
 }
 
-function LeadDetails({ lead, d, onClose, reload }: { lead: Row; d: Data; onClose: () => void; reload: () => void }) {
-  const admin = d.me.role === "Admin";
-  const canEdit = admin || lead.assigned_to === d.me.email;
-  const [pay, setPay] = useState({ advance_paid: !!lead.advance_paid, advance_amount: lead.advance_amount ?? "", advance_date: lead.advance_date ?? "", balance_paid: !!lead.balance_paid, balance_amount: lead.balance_amount ?? "", balance_date: lead.balance_date ?? "" });
-  const [note, setNote] = useState("");
-  const [err, setErr] = useState("");
-  const save = async (patch: Row) => { const r = await api({ action: "lead.update", id: lead.id, patch }); if (!r.ok) setErr(r.error); else { setErr(""); reload(); } };
-  const svc = services(lead).join(", ") || "your project";
-  const wa = `https://wa.me/91${lead.whatsapp}?text=${encodeURIComponent(`Hi ${String(lead.name).split(" ")[0]}, thanks for choosing MAKENDLESS! About your project: ${svc}…`)}`;
-  const items = (lead.selections?.items as Row[]) || [];
-  const extras = (lead.selections?.extras as Row[]) || [];
-  const F = ({ k, v }: { k: string; v: unknown }) => (v || v === 0 ? <div className="grid grid-cols-[8.5rem_1fr] gap-2 py-1 text-sm"><dt className="font-bold text-muted-dark">{k}</dt><dd className="min-w-0 break-words">{String(v)}</dd></div> : null);
-  return (
-    <div className="fixed inset-0 z-[60] flex justify-end bg-ink/50" role="dialog" aria-modal="true" aria-label={`Lead: ${lead.name}`} onClick={onClose}>
-      <div className="h-full w-full overflow-y-auto bg-paper p-4 sm:max-w-2xl sm:p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-3">
-          <div><h2 className="text-2xl font-extrabold">{lead.name}</h2><p className="text-sm text-muted-dark">{date(lead.created_at)} · {lead.source_page}</p></div>
-          <button className="for-btn for-btn-ghost !min-h-10" onClick={onClose}>Close</button>
-        </div>
-        <a href={wa} target="_blank" rel="noopener noreferrer" className="for-btn mt-4 w-full bg-[#25d366] text-white sm:w-auto">Chat on WhatsApp</a>
-        {err && <p className="for-error mt-3 text-sm font-bold">{err}</p>}
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <label className="text-sm font-bold">Status
-            <select className="for-field mt-1" value={lead.status} disabled={!canEdit} onChange={(e) => save({ status: e.target.value })}>{STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
-          </label>
-          <label className="text-sm font-bold">Assigned to
-            <select className="for-field mt-1" value={lead.assigned_to || ""} disabled={!admin && !!lead.assigned_to && lead.assigned_to !== d.me.email} onChange={(e) => save({ assigned_to: e.target.value || null })}>
-              <option value="">Nobody</option>{d.team.filter((t) => t.active).map((t) => <option key={t.email} value={t.email}>{t.name || t.email}</option>)}
-            </select>
-          </label>
-        </div>
-        <section className={`${card} mt-4`}>
-          <h3 className="font-extrabold">Selection</h3>
-          <ul className="mt-2 grid gap-1 text-sm">
-            {items.map((i, k) => <li key={k} className="flex justify-between gap-3"><span>{i.service ? `${i.service}: ` : ""}<b>{i.option}</b>{i.qty > 1 ? ` × ${i.qty}` : ""}</span><span>{i.price === null || i.price === undefined ? "Custom quote" : inr(Number(i.total ?? i.price)) + (i.unit === "month" ? "/month" : "")}</span></li>)}
-            {extras.map((x, k) => <li key={`x${k}`} className="flex justify-between text-muted-dark"><span>+ {x.name}</span><span>{inr(Number(x.price))}{x.monthly ? "/month" : ""}</span></li>)}
-            {!items.length && <li className="text-muted-dark">No services selected.</li>}
-          </ul>
-          <dl className="mt-3 border-t border-line pt-2">
-            <F k="Total" v={lead.total_text} /><F k="Monthly" v={lead.estimated_monthly ? inr(lead.estimated_monthly) + "/month" : ""} /><F k="Est. delivery" v={lead.est_delivery} />
-            <F k="Combo" v={lead.combo_applied} /><F k="Video discount" v={lead.video_discount ? inr(lead.video_discount) : ""} /><F k="Referral" v={lead.referral_code ? `${lead.referral_code} (−${inr(lead.referral_discount)})` : ""} />
-            <F k="WhatsApp" v={lead.whatsapp} /><F k="Email" v={lead.email} /><F k="Business" v={lead.business_name} /><F k="Client type" v={lead.client_type} />
-            <F k="Budget" v={lead.budget} /><F k="Timing" v={lead.timing} /><F k="Footage / link" v={lead.footage_link} /><F k="Notes" v={lead.extra_notes} />
-            {Object.entries((lead.requirements as Record<string, string>) || {}).map(([k, v]) => <F key={k} k={k} v={v} />)}
-          </dl>
-        </section>
-        <section className={`${card} mt-4`}>
-          <h3 className="font-extrabold">Payments</h3>
-          {(["advance", "balance"] as const).map((p) => (
-            <div key={p} className="mt-3 grid grid-cols-2 items-center gap-2 text-sm sm:grid-cols-[auto_1fr_1fr]">
-              <label className="col-span-2 flex items-center gap-2 font-bold capitalize sm:col-span-1"><input type="checkbox" disabled={!canEdit} checked={pay[`${p}_paid`]} onChange={(e) => setPay({ ...pay, [`${p}_paid`]: e.target.checked })} />{p} received</label>
-              <input className="for-field !min-h-10 !py-1" placeholder="Amount ₹" inputMode="numeric" disabled={!canEdit} value={pay[`${p}_amount`]} onChange={(e) => setPay({ ...pay, [`${p}_amount`]: e.target.value.replace(/\D/g, "") })} />
-              <input className="for-field !min-h-10 !py-1" type="date" disabled={!canEdit} value={pay[`${p}_date`]} onChange={(e) => setPay({ ...pay, [`${p}_date`]: e.target.value })} />
-            </div>
-          ))}
-          <button className="for-btn for-btn-primary mt-3 !min-h-10" disabled={!canEdit} onClick={() => save({ ...pay, advance_amount: pay.advance_amount ? Number(pay.advance_amount) : null, balance_amount: pay.balance_amount ? Number(pay.balance_amount) : null, advance_date: pay.advance_date || null, balance_date: pay.balance_date || null })}>Save payments</button>
-          <p className="mt-2 text-xs text-muted-dark">Marking the balance as received moves the lead to Fully paid.</p>
-        </section>
-        <section className={`${card} mt-4`}>
-          <h3 className="font-extrabold">Team notes</h3>
-          <ul className="mt-2 grid gap-2">{((lead.team_notes as Row[]) || []).map((n, k) => <li key={k} className="rounded-xl bg-paper p-3 text-sm"><p className="whitespace-pre-wrap">{n.body}</p><p className="mt-1 text-xs text-muted-dark">{n.author} · {date(n.at)}</p></li>)}</ul>
-          <form className="mt-3 flex gap-2" onSubmit={async (e) => { e.preventDefault(); if (!note.trim()) return; await api({ action: "lead.note", id: lead.id, body: note }); setNote(""); reload(); }}>
-            <input className="for-field !min-h-10 flex-1 !py-1" placeholder="Add a private note" value={note} onChange={(e) => setNote(e.target.value)} />
-            <button className="for-btn for-btn-primary !min-h-10">Add</button>
-          </form>
-        </section>
-        <section className={`${card} mt-4`}>
-          <h3 className="font-extrabold">Activity</h3>
-          <ul className="mt-2 grid gap-1 text-sm">{[...((lead.activity as Row[]) || [])].reverse().map((a, k) => <li key={k}><b>{a.actor}</b> {a.action} <span className="text-muted-dark">· {date(a.at)}</span></li>)}<li className="text-muted-dark">Lead created · {date(lead.created_at)}</li></ul>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function Board({ d, open, reload }: { d: Data; open: (l: Row) => void; reload: () => void }) {
-  const [showLost, setShowLost] = useState(false);
-  const [over, setOver] = useState("");
-  const drop = async (status: string, id: string) => {
-    setOver("");
-    const l = d.leads.find((x) => x.id === id);
-    if (!l || l.status === status) return;
-    const r = await api({ action: "lead.update", id, patch: { status } });
-    if (!r.ok) alert(r.error); reload();
-  };
-  const cols = STATUSES.filter((s) => s !== "Lost" || showLost);
-  return (
-    <div>
-      <button className="for-btn for-btn-ghost !min-h-9 mb-3 text-sm" onClick={() => setShowLost(!showLost)}>{showLost ? "Hide" : "Show"} Lost ({d.leads.filter((l) => l.status === "Lost").length})</button>
-      <div className="flex snap-x gap-3 overflow-x-auto pb-4">
-        {cols.map((s) => {
-          const ls = d.leads.filter((l) => l.status === s);
-          return (
-            <div key={s} className={`w-[78vw] max-w-[17rem] shrink-0 snap-start rounded-2xl p-2 sm:w-64 ${over === s ? "bg-violet/15" : "bg-paper-2"}`}
-              onDragOver={(e) => { e.preventDefault(); setOver(s); }} onDragLeave={() => setOver("")} onDrop={(e) => drop(s, e.dataTransfer.getData("text/plain"))}>
-              <p className="px-2 py-1 text-xs font-extrabold uppercase tracking-[0.12em] text-muted-dark">{s} · {ls.length}</p>
-              <ul className="mt-1 grid gap-2">
-                {ls.map((l) => (
-                  <li key={l.id} draggable onDragStart={(e) => e.dataTransfer.setData("text/plain", l.id)}>
-                    <button className={`w-full rounded-xl bg-white p-3 text-left text-sm ring-1 ring-line hover:ring-ink ${late(l) ? "border-l-4 border-[#c2183a]" : ""}`} onClick={() => open(l)}>
-                      <span className="flex justify-between gap-2"><b>{l.name}</b><span className="text-xs text-muted-dark">{ago(l.created_at)}</span></span>
-                      <span className="mt-1 block text-muted-dark">{services(l).join(" + ") || "—"}</span>
-                      <span className="mt-1 flex items-center justify-between gap-2"><b>{l.total_text}</b>{l.assigned_to && <span className="grid h-6 min-w-6 place-items-center rounded-full bg-ink px-1 text-[10px] font-bold text-white">{initials(l.assigned_to, d.team)}</span>}</span>
-                      {l.est_delivery && <span className="block text-xs text-muted-dark">⏱ {l.est_delivery}</span>}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function LeadTable({ d, open }: { d: Data; open: (l: Row) => void }) {
-  const [f, setF] = useState({ q: "", status: "", service: "", assigned: "", from: "" });
-  const all = useMemo(() => [...new Set(d.leads.flatMap(services))], [d.leads]);
-  const rows = d.leads.filter((l) => (!f.q || `${l.name} ${l.whatsapp} ${l.email || ""} ${services(l).join(" ")}`.toLowerCase().includes(f.q.toLowerCase()))
-    && (!f.status || l.status === f.status) && (!f.service || services(l).includes(f.service)) && (!f.assigned || (l.assigned_to || "none") === f.assigned) && (!f.from || l.created_at >= f.from));
-  return (
-    <div>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
-        <input className="for-field !min-h-10 !py-1 lg:col-span-2" placeholder="Search name, WhatsApp, service" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} />
-        <select className="for-field !min-h-10 !py-1" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">All statuses</option>{STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
-        <select className="for-field !min-h-10 !py-1" value={f.service} onChange={(e) => setF({ ...f, service: e.target.value })}><option value="">All services</option>{all.map((s) => <option key={s}>{s}</option>)}</select>
-        <select className="for-field !min-h-10 !py-1" value={f.assigned} onChange={(e) => setF({ ...f, assigned: e.target.value })}><option value="">Anyone</option><option value="none">Unassigned</option>{d.team.map((t) => <option key={t.email} value={t.email}>{t.name || t.email}</option>)}</select>
-        <input className="for-field !min-h-10 !py-1" type="date" aria-label="Created from" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} />
-      </div>
-      {d.me.role === "Admin" && <button className="for-btn for-btn-ghost !min-h-9 mt-3 text-sm" onClick={() => csv("makendless-leads.csv", rows, ["created_at", "name", "whatsapp", "email", "status", "assigned_to", "total_text", "estimated_total", "estimated_monthly", "est_delivery", "referral_code", "selections", "requirements", "extra_notes"])}>Export CSV</button>}
-      <div className="mt-3 overflow-x-auto rounded-2xl bg-white ring-1 ring-line"><table className="w-full min-w-[760px]">
-        <thead><tr><th className={th}>Created</th><th className={th}>Client</th><th className={th}>Services</th><th className={th}>Total</th><th className={th}>Status</th><th className={th}>Assigned</th></tr></thead>
-        <tbody>{rows.map((l) => <tr key={l.id} className="cursor-pointer hover:bg-paper" onClick={() => open(l)}><td className={td}>{date(l.created_at)}</td><td className={td}><b>{l.name}</b><br /><span className="text-muted-dark">{l.whatsapp}</span></td><td className={td}>{services(l).join(", ")}</td><td className={`${td} font-bold`}>{l.total_text}</td><td className={`${td} ${late(l) ? "font-bold text-[#c2183a]" : ""}`}>{l.status}</td><td className={td}>{l.assigned_to || "—"}</td></tr>)}
-          {!rows.length && <tr><td className={td} colSpan={6}>No leads match.</td></tr>}</tbody>
-      </table></div>
-    </div>
-  );
-}
-
 export default function AdminApp() {
-  const [d, setD] = useState<Data | null>(null);
   const [state, setState] = useState<"loading" | "login" | "denied" | "ok">("loading");
-  const [tab, setTab] = useState("Overview");
-  const [view, setView] = useState<"board" | "table">("board");
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [newM, setNewM] = useState({ email: "", name: "", role: "Member" });
-  const [alertEmail, setAlertEmail] = useState("");
-  const [note, setNote] = useState("");
-
+  const [d, setD] = useState<Data | null>(null);
+  const [tab, setTabState] = useState("Home");
+  const [openId, setOpenId] = useState("");
   const load = useCallback(async () => {
     const r = await fetch("/api/admin", { cache: "no-store" });
     const j = await r.json().catch(() => ({ ok: false }));
-    if (!r.ok || !j.ok) return setState("login");
-    setD(j); setAlertEmail(j.settings?.alert_email || ""); setState("ok");
+    if (!r.ok || !j.ok) return setState((s) => (s === "denied" ? s : "login"));
+    setD(j); setState("ok");
+  }, []);
+  const tabs: readonly string[] = d?.me.role === "Owner" ? OWNER_TABS : TEAM_TABS;
+  const setTab = useCallback((t: string, id = "") => {
+    setTabState(t); setOpenId(id);
+    const u = new URL(location.href); u.searchParams.set("tab", t); if (id) u.searchParams.set("id", id); else u.searchParams.delete("id"); u.searchParams.delete("lead");
+    history.replaceState(null, "", u.pathname + u.search);
   }, []);
   useEffect(() => {
     (async () => {
@@ -209,111 +819,42 @@ export default function AdminApp() {
       if (token) {
         history.replaceState(null, "", location.pathname + location.search);
         const r = await api({ action: "session", token });
-        if (!r.ok) return setState("denied");
+        if (!r.ok) { setState("denied"); return; }
       }
-      const lead = new URLSearchParams(location.search).get("lead");
-      if (lead) { setOpenId(lead); setTab("Leads"); }
+      const sp = new URLSearchParams(location.search);
+      const lead = sp.get("lead");
+      if (lead) { setTabState("Leads"); setOpenId(lead); }
+      else { if (sp.get("tab")) setTabState(sp.get("tab")!); if (sp.get("id")) setOpenId(sp.get("id")!); }
       load();
     })();
   }, [load]);
+  /* A typed URL can't open an Owner tab for a Team member: it falls back to Home (and the API never sends that data). */
+  const active = tabs.includes(tab) ? tab : "Home";
+  const counts = useMemo(() => (d ? { Leads: d.leads.filter((l) => l.status === "New").length, Trash: d.trash?.length || 0 } : {}), [d]) as Record<string, number>;
 
   if (state === "loading") return <p className="mt-10 text-muted-dark">Loading…</p>;
-  if (state === "denied") return <p className="mt-10 text-xl font-extrabold">This area is for the MAKENDLESS team only.</p>;
-  if (state === "login" || !d) return <Login />;
-
-  const admin = d.me.role === "Admin";
-  const week = Date.now() - 7 * DAY;
-  const owed = d.codes.reduce((s, c) => s + Number(c.credits_earned || 0) - Number(c.credits_used || 0), 0);
-  const weeks = Array.from({ length: 8 }, (_, i) => { const end = Date.now() - (7 - i) * 7 * DAY; return { label: new Date(end - 6 * DAY).toLocaleDateString("en-IN", { day: "numeric", month: "short" }), n: d.leads.filter((l) => { const t = new Date(l.created_at).getTime(); return t > end - 7 * DAY && t <= end; }).length }; });
-  const maxW = Math.max(1, ...weeks.map((w) => w.n));
-  const lead = openId ? d.leads.find((l) => l.id === openId) : null;
-  const tabs = ["Overview", "Leads", "Referrals", "Waitlist", ...(admin ? ["Settings"] : [])];
-
+  if (state === "login" || state === "denied" || !d) return <Login denied={state === "denied"} />;
   return (
-    <div className="lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-8">
-      <aside className="mb-4 lg:mb-0">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Team dashboard</p>
-        <p className="mt-1 truncate text-sm font-bold">{d.me.name || d.me.email} · {d.me.role}</p>
-        <nav aria-label="Dashboard" className="mt-3 flex gap-1 overflow-x-auto lg:flex-col">
-          {tabs.map((t) => <button key={t} aria-current={tab === t ? "page" : undefined} onClick={() => setTab(t)} className={`shrink-0 rounded-xl px-3 py-2 text-left text-sm font-bold ${tab === t ? "bg-ink text-white" : "hover:bg-paper-2"}`}>{t}</button>)}
-          <button className="shrink-0 rounded-xl px-3 py-2 text-left text-sm font-bold text-muted-dark hover:bg-paper-2" onClick={async () => { await api({ action: "logout" }); location.reload(); }}>Log out</button>
-        </nav>
-      </aside>
-      <div className="min-w-0">
-        {tab === "Overview" && (
-          <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <div className={card}><p className="text-xs font-bold uppercase text-muted-dark">New leads this week</p><p className="mt-1 text-3xl font-extrabold">{d.leads.filter((l) => new Date(l.created_at).getTime() > week).length}</p></div>
-              <div className={card}><p className="text-xs font-bold uppercase text-muted-dark">In progress</p><p className="mt-1 text-3xl font-extrabold">{d.leads.filter((l) => l.status === "In progress").length}</p></div>
-              {admin && <div className={card}><p className="text-xs font-bold uppercase text-muted-dark">Expected revenue</p><p className="mt-1 text-3xl font-extrabold">{inr(d.leads.filter((l) => l.status !== "Fully paid" && l.status !== "Lost").reduce((s, l) => s + total(l), 0))}</p></div>}
-              <div className={card}><p className="text-xs font-bold uppercase text-muted-dark">Referral credits owed</p><p className="mt-1 text-3xl font-extrabold">{inr(owed)}</p></div>
-            </div>
-            <div className={card}>
-              <p className="font-extrabold">Leads per week</p>
-              <div className="mt-4 flex h-40 items-end gap-2">{weeks.map((w) => <div key={w.label} className="flex h-full flex-1 flex-col items-center justify-end gap-1"><span className="text-xs font-bold">{w.n}</span><span className="w-full rounded-t-md bg-violet" style={{ height: `${(w.n / maxW) * 75}%`, minHeight: 2 }} /><span className="text-[10px] text-muted-dark">{w.label}</span></div>)}</div>
-            </div>
-            <div className={card}>
-              <p className="font-extrabold">Needs reply</p>
-              <ul className="mt-2 grid gap-1">{d.leads.filter(late).map((l) => <li key={l.id}><button className="text-left text-sm font-bold text-[#c2183a] underline" onClick={() => setOpenId(l.id)}>{l.name} · {services(l).join(" + ")} · waiting {ago(l.created_at)}</button></li>)}
-                {!d.leads.some(late) && <li className="text-sm text-muted-dark">All new leads answered within 24 hours.</li>}</ul>
-            </div>
-          </div>
-        )}
-        {tab === "Leads" && (
-          <div>
-            <div className="mb-3 flex gap-2"><button className={`for-btn !min-h-9 text-sm ${view === "board" ? "for-btn-primary" : "for-btn-ghost"}`} onClick={() => setView("board")}>Board</button><button className={`for-btn !min-h-9 text-sm ${view === "table" ? "for-btn-primary" : "for-btn-ghost"}`} onClick={() => setView("table")}>Table</button></div>
-            {view === "board" ? <Board d={d} open={(l) => setOpenId(l.id)} reload={load} /> : <LeadTable d={d} open={(l) => setOpenId(l.id)} />}
-          </div>
-        )}
-        {tab === "Referrals" && (
-          <div className="grid gap-4">
-            {note && <p className="for-error text-sm font-bold">{note}</p>}
-            <div className="overflow-x-auto rounded-2xl bg-white ring-1 ring-line"><table className="w-full min-w-[760px]">
-              <thead><tr><th className={th}>Code</th><th className={th}>Referrer</th><th className={th}>WhatsApp</th><th className={th}>Created</th><th className={th}>Times used</th><th className={th}>Earned</th><th className={th}>Used</th><th className={th}></th></tr></thead>
-              <tbody>{d.codes.map((c) => <tr key={c.code}><td className={`${td} font-bold`}>{c.code}</td><td className={td}>{c.referrer_name}</td><td className={td}>{c.referrer_whatsapp}</td><td className={td}>{date(c.created_at)}</td><td className={td}>{d.uses.filter((u) => u.code === c.code).length}</td><td className={td}>{inr(c.credits_earned || 0)}</td><td className={td}>{inr(c.credits_used || 0)}</td>
-                <td className={td}>{Number(c.credits_earned || 0) > Number(c.credits_used || 0) && <button className="for-btn for-btn-ghost !min-h-8 !px-3 text-xs" onClick={async () => { const r = await api({ action: "credit.use", code: c.code }); setNote(r.ok ? "" : r.error); load(); }}>Mark credit used</button>}</td></tr>)}
-                {!d.codes.length && <tr><td className={td} colSpan={8}>No referral codes yet.</td></tr>}</tbody>
-            </table></div>
-            <div className="overflow-x-auto rounded-2xl bg-white ring-1 ring-line"><table className="w-full min-w-[560px]">
-              <thead><tr><th className={th}>Date</th><th className={th}>Code</th><th className={th}>New client</th><th className={th}>Lead</th><th className={th}>Status</th></tr></thead>
-              <tbody>{d.uses.map((u) => { const l = d.leads.find((x) => x.id === u.lead_id); return <tr key={u.id}><td className={td}>{date(u.created_at)}</td><td className={td}>{u.code}</td><td className={td}>{u.new_client_name}<br /><span className="text-muted-dark">{u.new_client_whatsapp}</span></td><td className={td}>{l ? <button className="for-link" onClick={() => setOpenId(l.id)}>{l.status}</button> : "—"}</td><td className={`${td} font-bold`}>{u.status}</td></tr>; })}
-                {!d.uses.length && <tr><td className={td} colSpan={5}>No referral uses yet. A use becomes Paid automatically when its lead reaches Fully paid.</td></tr>}</tbody>
-            </table></div>
-          </div>
-        )}
-        {tab === "Waitlist" && (
-          <div>
-            <button className="for-btn for-btn-ghost !min-h-9 mb-3 text-sm" onClick={() => csv("makendless-grow-waitlist.csv", d.waitlist, ["created_at", "email", "interest"])}>Export CSV</button>
-            <div className="overflow-x-auto rounded-2xl bg-white ring-1 ring-line"><table className="w-full min-w-[420px]"><thead><tr><th className={th}>Email</th><th className={th}>Interest</th><th className={th}>Joined</th></tr></thead>
-              <tbody>{d.waitlist.map((w) => <tr key={w.id || w.email}><td className={td}>{w.email}</td><td className={td}>{w.interest}</td><td className={td}>{date(w.created_at)}</td></tr>)}{!d.waitlist.length && <tr><td className={td} colSpan={3}>No one on the waitlist yet.</td></tr>}</tbody></table></div>
-          </div>
-        )}
-        {tab === "Settings" && admin && (
-          <div className="grid gap-4">
-            <div className={card}>
-              <p className="font-extrabold">Team</p>
-              <ul className="mt-3 grid gap-2">{d.team.map((t) => (
-                <li key={t.email} className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="min-w-0 basis-full break-all sm:flex-1 sm:basis-auto"><b>{t.name || "—"}</b> <span className="text-muted-dark">{t.email}</span>{!t.active && <span className="ml-2 font-bold text-[#c2183a]">Deactivated</span>}</span>
-                  <select className="for-field !min-h-9 !w-auto !py-0" value={t.role} onChange={async (e) => { const r = await api({ action: "team.save", member: { ...t, role: e.target.value } }); setNote(r.ok ? "" : r.error); load(); }}><option>Admin</option><option>Member</option></select>
-                  <button className="for-btn for-btn-ghost !min-h-9 !px-3 text-xs" onClick={async () => { const r = await api({ action: "team.save", member: { ...t, active: !t.active } }); setNote(r.ok ? "" : r.error); load(); }}>{t.active ? "Deactivate" : "Reactivate"}</button>
-                </li>))}</ul>
-              {note && <p className="for-error mt-2 text-sm font-bold">{note}</p>}
-              <form className="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]" onSubmit={async (e) => { e.preventDefault(); const r = await api({ action: "team.save", member: { ...newM, active: true } }); setNote(r.ok ? "" : r.error); if (r.ok) setNewM({ email: "", name: "", role: "Member" }); load(); }}>
-                <input className="for-field !min-h-10 !py-1" type="email" placeholder="Email" required value={newM.email} onChange={(e) => setNewM({ ...newM, email: e.target.value })} />
-                <input className="for-field !min-h-10 !py-1" placeholder="Name" value={newM.name} onChange={(e) => setNewM({ ...newM, name: e.target.value })} />
-                <select className="for-field !min-h-10 !py-1" value={newM.role} onChange={(e) => setNewM({ ...newM, role: e.target.value })}><option>Member</option><option>Admin</option></select>
-                <button className="for-btn for-btn-primary !min-h-10">Add member</button>
-              </form>
-            </div>
-            <form className={card} onSubmit={async (e) => { e.preventDefault(); await api({ action: "settings.save", alert_email: alertEmail }); load(); }}>
-              <label htmlFor="alert-email" className="font-extrabold">Lead alert email</label>
-              <div className="mt-2 flex gap-2"><input id="alert-email" type="email" className="for-field !min-h-10 flex-1 !py-1" value={alertEmail} onChange={(e) => setAlertEmail(e.target.value)} /><button className="for-btn for-btn-primary !min-h-10">Save</button></div>
-            </form>
-          </div>
-        )}
-      </div>
-      {lead && <LeadDetails key={lead.id + String(lead.updated_at)} lead={lead} d={d} onClose={() => { setOpenId(null); history.replaceState(null, "", "/admin"); }} reload={load} />}
+    <div>
+      <nav aria-label="Control room" className="sticky top-12 z-30 -mx-3 mb-4 flex gap-1 overflow-x-auto border-b border-line bg-paper/95 px-3 py-2 backdrop-blur sm:-mx-5 sm:px-5 md:-mx-8 md:px-8">
+        {tabs.map((t) => (
+          <button type="button" key={t} onClick={() => setTab(t)} aria-current={active === t ? "page" : undefined} className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-bold ${active === t ? "bg-ink text-white" : "text-dark hover:bg-white"}`}>
+            {t}{counts[t] ? <span className="ml-1.5 rounded-full bg-violet px-1.5 text-[11px] text-white">{counts[t]}</span> : null}
+          </button>
+        ))}
+      </nav>
+      <p className="mb-4 text-sm text-muted-dark">Signed in as <b>{d.me.name || d.me.email}</b> · {d.me.role}</p>
+      {active === "Home" && <Home d={d} go={setTab} />}
+      {active === "Leads" && <Leads d={d} reload={load} openId={openId} setOpenId={(id) => setTab("Leads", id)} />}
+      {active === "Projects" && <Projects d={d} reload={load} openId={openId} setOpenId={(id) => setTab("Projects", id)} />}
+      {active === "Expenses" && <Expenses d={d} reload={load} />}
+      {active === "Team" && <Team d={d} reload={load} />}
+      {active === "Referrals" && <Referrals d={d} reload={load} />}
+      {active === "Website" && d.content && <Website key={String(d.content.updatedAt || "")} d={d} reload={load} />}
+      {active === "Reports" && <Reports d={d} />}
+      {active === "Trash" && <Trash d={d} reload={load} />}
+      {active === "Activity" && <Activity d={d} />}
+      {active === "Settings" && <Settings d={d} reload={load} />}
     </div>
   );
 }

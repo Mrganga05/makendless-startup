@@ -108,3 +108,16 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .stu-item[data-after] .stu-body { padding-bottom: 7.5rem; }
 .stu-after { position: absolute; left: 1rem; right: 1rem; bottom: 1rem; z-index: 3; margin: 0; padding: 0; transition: opacity .3s ease; }
 .stu-item[data-in="false"] .stu-after { opacity: 0; }
+
+/* /admin lists: a table on desktop, one card per row on phones. */
+.adm-t { border-collapse: collapse; }
+.adm-t th { border-bottom: 1px solid var(--color-line, #e3e5ee); padding: .55rem .75rem; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #5b6079; white-space: nowrap; }
+.adm-t td { border-bottom: 1px solid var(--color-line, #e3e5ee); padding: .6rem .75rem; vertical-align: top; font-size: 14px; }
+@media (max-width: 767px) {
+  .adm-t thead { display: none; }
+  .adm-t, .adm-t tbody { display: block; }
+  .adm-t tr { display: block; margin-bottom: .75rem; padding: .4rem .9rem; border-radius: 1rem; background: #fff; box-shadow: inset 0 0 0 1px #e3e5ee; }
+  .adm-t td { display: flex; justify-content: space-between; gap: 1rem; padding: .4rem 0; border-bottom: 1px solid #f0f1f6; text-align: right; overflow-wrap: anywhere; }
+  .adm-t td:last-child { border-bottom: 0; }
+  .adm-t td::before { content: attr(data-label); flex: none; max-width: 45%; text-align: left; font-size: 12px; font-weight: 700; color: #5b6079; }
+}

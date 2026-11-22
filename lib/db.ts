@@ -7,7 +7,9 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-export type Table = "leads" | "referral_codes" | "referral_uses" | "waitlist" | "team_members" | "app_settings";
+export type Table = "leads" | "referral_codes" | "referral_uses" | "waitlist" | "team_members" | "app_settings"
+  | "projects" | "payments" | "expenses" | "trash" | "activity_log" | "backups" | "site_content";
+export const KEYED: Partial<Record<Table, string>> = { referral_codes: "code", team_members: "email", app_settings: "key", site_content: "key" };
 export type Row = Record<string, unknown>;
 export class NotConfigured extends Error {}
 export class Conflict extends Error {}
@@ -38,16 +40,19 @@ const FILE = path.join(process.cwd(), ".data", "dev-db.json");
 const UNIQUE: Record<Table, string[][]> = {
   leads: [], referral_codes: [["code"], ["referrer_whatsapp"]], referral_uses: [["new_client_whatsapp"]],
   waitlist: [["email", "interest"]], team_members: [["email"]], app_settings: [["key"]],
+  projects: [], payments: [], expenses: [], trash: [], activity_log: [], backups: [], site_content: [["key"]],
 };
 type Db = Record<Table, Row[]>;
 async function load(): Promise<Db> {
-  try { return JSON.parse(await fs.readFile(FILE, "utf8")) as Db; } catch {
-    return { leads: [], referral_codes: [], referral_uses: [], waitlist: [], team_members: [{ email: "makendlessofficial@gmail.com", name: "MAKENDLESS", role: "Admin", active: true }], app_settings: [{ key: "alert_email", value: "makendlessofficial@gmail.com" }] };
+  try { const d = JSON.parse(await fs.readFile(FILE, "utf8")) as Db; for (const t of Object.keys(UNIQUE) as Table[]) d[t] ??= []; return d; } catch {
+    return { projects: [], payments: [], expenses: [], trash: [], activity_log: [], backups: [], site_content: [], leads: [], referral_codes: [], referral_uses: [], waitlist: [], team_members: [{ email: "makendlessofficial@gmail.com", name: "MAKENDLESS", role: "Admin", active: true }], app_settings: [{ key: "alert_email", value: "makendlessofficial@gmail.com" }] };
   }
 }
 async function save(db: Db) { await fs.mkdir(path.dirname(FILE), { recursive: true }); await fs.writeFile(FILE, JSON.stringify(db, null, 2)); }
 const DEFAULTS: Partial<Record<Table, Row>> = {
-  leads: { status: "New", team_notes: [], activity: [], advance_paid: false, balance_paid: false },
+  leads: { status: "New", team_notes: [], activity: [], advance_paid: false, balance_paid: false, form: "Start a Project", lead_source: "Website", whatsapp: "" },
+  projects: { status: "Not started", price: 0, team_payout: 0, payout_done: false, notes: "", services: "", studio: "", client_whatsapp: "" },
+  payments: { kind: "Advance", method: "UPI" }, expenses: { category: "Other", amount: 0, paid_by: "", notes: "" },
   referral_codes: { credits_earned: 0, credits_used: 0 }, referral_uses: { status: "Pending" }, waitlist: { interest: "GROW" },
 };
 
@@ -66,7 +71,7 @@ export async function insert(table: Table, row: Row): Promise<Row> {
   const db = await load();
   for (const cols of UNIQUE[table]) if (db[table].some((r) => cols.every((c) => r[c] === row[c]))) throw new Conflict(`${table}.${cols.join("+")}`);
   const now = new Date().toISOString();
-  const full = { ...(table === "referral_codes" || table === "team_members" || table === "app_settings" ? {} : { id: randomUUID() }), created_at: now, ...(table === "leads" ? { updated_at: now } : {}), ...DEFAULTS[table], ...row };
+  const full = { ...(KEYED[table] ? {} : { id: randomUUID() }), created_at: now, ...(table === "leads" || table === "projects" ? { updated_at: now } : {}), ...(table === "trash" ? { deleted_at: now } : {}), ...DEFAULTS[table], ...row };
   db[table].unshift(full);
   await save(db);
   return full;
@@ -98,9 +103,9 @@ export async function remove(table: Table, col: string, values: string[]): Promi
   await save(db);
 }
 
-export async function list(table: Table, limit = 1000): Promise<Row[]> {
+export async function list(table: Table, limit = 5000): Promise<Row[]> {
   need();
-  const order = table === "team_members" || table === "app_settings" ? "" : "&order=created_at.desc";
+  const order = table === "team_members" || table === "app_settings" || table === "site_content" ? "" : table === "trash" ? "&order=deleted_at.desc" : "&order=created_at.desc";
   if (useSupabase) return sb(`${table}?select=*${order}&limit=${limit}`);
   return (await load())[table].slice(0, limit);
 }

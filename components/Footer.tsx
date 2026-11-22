@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Wordmark } from "./Nav";
 import { SETTINGS, whatsappTo } from "../data/settings";
-import { HAS_WORK } from "../data/work";
+import { hasWork } from "../data/work";
 import { Socials } from "./WhatsAppFloat";
 
 const cols: { title: string; links: { label: string; href: string; beta?: boolean }[] }[] = [
@@ -47,7 +47,7 @@ export default function Footer() {
       </div>
       <div className="mx-auto mt-12 flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-sm text-muted">
         <p>© {new Date().getFullYear()} MAKENDLESS</p>
-        <p>{HAS_WORK ? "Demo animations on this site are concept pieces. Our work section shows real projects." : "All demo visuals on this site are original concept pieces."}</p>
+        <p>{hasWork() ? "Demo animations on this site are concept pieces. Our work section shows real projects." : "All demo visuals on this site are original concept pieces."}</p>
       </div>
       {/* Ghost wordmark: SVG textLength makes it span the container exactly at every width (CSS font sizing clipped it). */}
       <svg aria-hidden="true" viewBox="0 0 1000 118" className="pointer-events-none mx-auto mt-10 block w-full max-w-7xl select-none">

@@ -9,7 +9,8 @@ import { Arrow, BetaBadge, ButtonLink, DemoCaption, Eyebrow, Reveal, useInView, 
 import { combos, COMBOS_ENABLED, serviceTitle } from "../data/pricing";
 import { inr } from "../lib/pricing";
 /* Audience -> combo pack line (Part 5): shown only while combo packs are switched on. */
-const PACK: Record<string, (typeof combos)[number] | undefined> = { creator: combos.find((c) => c.id === "creator"), local: combos.find((c) => c.id === "local-business"), startup: combos.find((c) => c.id === "launch"), store: combos.find((c) => c.id === "growth") };
+const PACK_ID: Record<string, string> = { creator: "creator", local: "local-business", startup: "launch", store: "growth" };
+const pack = (id: string) => combos.find((c) => c.id === PACK_ID[id]);
 import Scene from "./solutions/Scenes";
 
 const studioOf = (id: string) => studios.find((s) => s.id === id)!;
@@ -137,8 +138,8 @@ export default function Solutions() {
               </div>
             </div>
 
-            {COMBOS_ENABLED && PACK[s.id] && (
-              <p className="mt-5 text-[15px] font-bold"><a href={`/studios#combo-${PACK[s.id]!.id}`} className="for-link">{PACK[s.id]!.name}: {inr(PACK[s.id]!.price)}{PACK[s.id]!.monthly ? "/month" : ""}</a></p>
+            {COMBOS_ENABLED && pack(s.id) && (
+              <p className="mt-5 text-[15px] font-bold"><a href={`/studios#combo-${pack(s.id)!.id}`} className="for-link">{pack(s.id)!.name}: {inr(pack(s.id)!.price)}{pack(s.id)!.monthly ? "/month" : ""}</a></p>
             )}
             {/* recommended services: every card opens that service on its studio page (/create#short-videos). Hidden for content creator and online store. */}
             {s.id !== "store" && s.id !== "creator" && <div className="mt-10 border-t border-line pt-6 md:mt-12">

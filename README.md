@@ -23,6 +23,7 @@ npm run build && npm start
 - **Referral**: ₹500 off for the friend and ₹500 credit for the referrer, on projects of ₹2,000 or more.
 - **Forms** (Start a Project, contact brief, referral, GROW waitlist) save to Supabase and email the team (see SETUP-GUIDE.md).
 - **Meta Pixel**: set `NEXT_PUBLIC_META_PIXEL_ID` in Vercel. Empty = no pixel. Never loads on `/admin`. Events: PageView, ViewContent (/create /build /grow), Lead (successful form sends), Contact (WhatsApp clicks).
-- **/admin**: team dashboard only, no public header/footer.
+- **/admin = control room**: Home (month money, target, leads waiting), Leads (all 4 forms + hand-added), Projects + payments, Expenses, Team + payouts, Referrals, Website content, Reports (12 months, Excel/CSV), Trash (30 days), Activity log, Settings + backups. Owner (makendlessofficial@gmail.com) sees everything; a Team member sees only leads and projects assigned to them, without money, and the API enforces it.
+- **Website content lives in the database** (table `site_content`, edited in /admin → Website). `data/pricing.ts`, `data/process.ts` and `data/work.ts` are the defaults until the Owner saves. Pages refresh within 60 s (`lib/content.ts`).
 - About page talks about the studio only (the MAKENDLESS Team); the public location is "India" (Terms name the courts in Hyderabad, Telangana).
 - GROW is **Beta**; no results or guarantees are shown. Demos are labelled illustrative.

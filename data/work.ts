@@ -15,4 +15,7 @@ export const WORK: {
     // { name: "Client website", url: "https://example.com", image: "/work/site-1.jpg" },
   ],
 };
-export const HAS_WORK = WORK.reels.length + WORK.sites.length > 0;
+export const hasWork = () => WORK.reels.length + WORK.sites.length > 0;
+
+/** Client reviews (edited in /admin → Website content). The homepage section shows only when there is at least one. */
+export const REVIEWS: { name: string; role?: string; text: string }[] = [];

@@ -3,13 +3,17 @@ import PageShell from "../../components/PageShell";
 import { Arrow, ButtonLink } from "../../components/ui";
 import { Bullets } from "../../components/Prose";
 import { faqGroups } from "../../data/process";
-import { OWNER as O, WHATSAPP_HREF } from "../../data/owner";
+
 import { pageMeta } from "../../lib/site";
-import { COPY } from "../../data/pricing";
+import { COPY, fillTokens } from "../../data/pricing";
+import { SETTINGS, whatsappTo } from "../../data/settings";
+import { loadContent } from "../../lib/content";
 
 export const metadata: Metadata = pageMeta("FAQ", "Prices, payment, delivery times, free changes and referrals, answered plainly.", "/faq");
 
-export default function Page() {
+export default async function Page() {
+  await loadContent();
+  const waHref = whatsappTo(SETTINGS.whatsappMessage) || "/contact";
   return (
     <PageShell eyebrow="FAQ" title="Questions," accent="answered plainly." intro="Your final price and delivery time are confirmed with you on WhatsApp before any work starts." light>
       <div className="grid gap-12 lg:grid-cols-[1.6fr_1fr]">
@@ -25,9 +29,9 @@ export default function Page() {
                       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full ring-1 ring-line transition group-open:rotate-45 group-open:bg-violet group-open:text-white group-open:ring-violet" aria-hidden="true">+</span>
                     </summary>
                     <div className="max-w-2xl space-y-3 pb-6 text-[17px] leading-relaxed text-muted-dark">
-                      <p>{f.a}</p>
-                      {f.list && <Bullets items={f.list} />}
-                      {f.after && <p>{f.after}</p>}
+                      <p>{fillTokens(f.a)}</p>
+                      {f.list && <Bullets items={f.list.map(fillTokens)} />}
+                      {f.after && <p>{fillTokens(f.after)}</p>}
                     </div>
                   </details>
                 ))}
@@ -37,10 +41,10 @@ export default function Page() {
         </div>
         <aside className="h-fit rounded-[1.75rem] bg-ink p-7 text-light lg:sticky lg:top-24">
           <h2 className="text-2xl font-extrabold">Still have a question?</h2>
-          <p className="mt-3 text-[15px] leading-relaxed text-muted">Message us on WhatsApp at {O.whatsapp} or press &ldquo;Start a Project&rdquo; and ask in the &ldquo;{COPY.requirementsName}&rdquo; box.</p>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted">Message us on WhatsApp at {SETTINGS.whatsapp} or press &ldquo;Start a Project&rdquo; and ask in the &ldquo;{COPY.requirementsName}&rdquo; box.</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <ButtonLink href="/start-project">Start a Project <Arrow /></ButtonLink>
-            <ButtonLink href={WHATSAPP_HREF} variant="secondary">Chat on WhatsApp</ButtonLink>
+            <ButtonLink href={waHref} variant="secondary">Chat on WhatsApp</ButtonLink>
           </div>
         </aside>
       </div>

@@ -8,6 +8,8 @@ import { HOME_DESCRIPTION, HOME_TITLE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } f
 import WhatsAppFloat from "../components/WhatsAppFloat";
 import PublicChrome from "../components/PublicChrome";
 import MetaPixel from "../components/MetaPixel";
+import ContentBoot from "../components/ContentBoot";
+import { loadContent } from "../lib/content";
 import { services } from "../data/pricing";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", adjustFontFallback: false });
@@ -25,7 +27,11 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = { themeColor: "#0c1024", width: "device-width", initialScale: 1 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+/* Website content (prices, FAQ, work, reviews) comes from the database: pages refresh at most every 60 s. */
+export const revalidate = 60;
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const { c, s } = await loadContent();
   return (
     <html lang="en" className={syne.variable}>
       <body>
@@ -36,10 +42,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           description: SITE_DESCRIPTION, slogan: "We make ideas impossible to ignore.",
           knowsAbout: services.map((s) => s.name),
         }) }} />
-        <PublicChrome><Nav /></PublicChrome>
-        <SelectionProvider><main id="main">{children}</main><WhatsAppFloat /></SelectionProvider>
-        <PublicChrome><Footer /></PublicChrome>
-        <MetaPixel />
+        <ContentBoot c={c} s={s}>
+          <PublicChrome><Nav /></PublicChrome>
+          <SelectionProvider><main id="main">{children}</main><WhatsAppFloat /></SelectionProvider>
+          <PublicChrome><Footer /></PublicChrome>
+          <MetaPixel />
+        </ContentBoot>
       </body>
     </html>
   );

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { loadContent } from "../../lib/content";
 import Link from "next/link";
 import PageShell from "../../components/PageShell";
 import { StudioWorld } from "../../components/StudioPage";
@@ -12,7 +13,8 @@ import { pageMeta } from "../../lib/site";
 
 export const metadata: Metadata = pageMeta("Services", "CREATE, BUILD and GROW: video editing, websites, automation and AI, plus combo packs. Digital marketing in beta.", "/studios");
 
-export default function Page() {
+export default async function Page() {
+  await loadContent();
   return (
     <>
     <PageShell eyebrow="Our three studios" title="Three worlds." accent="Endless possibilities." intro="Create the content. Build the experience. Grow, in beta. Each studio has its own team, tools and way of working." light>

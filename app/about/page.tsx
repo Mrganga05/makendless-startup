@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { loadContent } from "../../lib/content";
 import Link from "next/link";
 import PageShell from "../../components/PageShell";
 import { ButtonLink, Arrow, BetaBadge, Eyebrow, KineticHeading, Reveal } from "../../components/ui";
-import { WHATSAPP_HREF } from "../../data/owner";
+import { SETTINGS, whatsappTo } from "../../data/settings";
 import { pageMeta } from "../../lib/site";
 
 export const metadata: Metadata = pageMeta("About", "MAKENDLESS is one studio for videos, websites and automation, with clear prices and one point of contact.", "/about");
@@ -31,12 +32,13 @@ function Buttons({ center = false }: { center?: boolean }) {
   return (
     <div className={`mt-7 flex flex-wrap gap-3 ${center ? "justify-center" : ""}`}>
       <ButtonLink href="/start-project">Start a Project <Arrow /></ButtonLink>
-      <ButtonLink href={WHATSAPP_HREF} variant="secondary">Chat on WhatsApp</ButtonLink>
+      <ButtonLink href={whatsappTo(SETTINGS.whatsappMessage) || "/contact"} variant="secondary">Chat on WhatsApp</ButtonLink>
     </div>
   );
 }
 
-export default function Page() {
+export default async function Page() {
+  await loadContent();
   return (
     <>
       <PageShell

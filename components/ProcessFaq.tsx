@@ -2,7 +2,8 @@
 /* Homepage section 6 — How we work + FAQ. Light paper, calm. Styles: app/styles/process.css (.pro-*). */
 import Link from "next/link";
 import { useId, useState, type CSSProperties } from "react";
-import { homeFaqs as faqs, process, processCopy } from "../data/process";
+import { homeFaqs, process, processCopy } from "../data/process";
+import { fillTokens } from "../data/pricing";
 import { Bullets } from "./Prose";
 import { Arrow, ButtonLink, Eyebrow, KineticHeading, Reveal, useReducedMotion } from "./ui";
 import { StepVignette } from "./process/Vignettes";
@@ -46,7 +47,7 @@ function Faq() {
   const [open, setOpen] = useState<number | null>(0);
   return (
     <div className="pro-faq">
-      {faqs.map((f, i) => {
+      {homeFaqs().map((f, i) => {
         const isOpen = open === i;
         return (
           <div key={f.q} className={`pro-item ${isOpen ? "is-open" : ""}`}>
@@ -57,7 +58,7 @@ function Faq() {
               </button>
             </h4>
             <div id={`${uid}-a${i}`} role="region" aria-labelledby={`${uid}-q${i}`} className="pro-panel" inert={!isOpen}>
-              <div className="pro-panel-in"><div className="pro-a space-y-3"><p>{f.a}</p>{f.list && <Bullets items={f.list} />}{f.after && <p>{f.after}</p>}</div></div>
+              <div className="pro-panel-in"><div className="pro-a space-y-3"><p>{fillTokens(f.a)}</p>{f.list && <Bullets items={f.list} />}{f.after && <p>{f.after}</p>}</div></div>
             </div>
           </div>
         );

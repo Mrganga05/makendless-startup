@@ -192,13 +192,19 @@ export const orderedOptions = (s: Service) => [...s.options.filter((o) => o.popu
 export const startingFrom = (s: Service) => Math.min(...s.options.filter((o) => o.price !== null).map((o) => o.price!));
 export const mostPicked = (s: Service) => s.options.find((o) => o.popular)?.name ?? s.options[0].name;
 
-export const OPTIONS: Record<string, Option & { service: Service }> = Object.fromEntries(
-  services.flatMap((s) => s.options.map((o) => [o.id, { ...o, service: s }])),
-);
-export const EXTRAS: Record<string, Extra & { service: Service }> = Object.fromEntries(
-  services.flatMap((s) => s.extras.map((x) => [x.id, { ...x, service: s }])),
-);
-export const SERVICES: Record<string, Service> = Object.fromEntries(services.map((s) => [s.id, s]));
+export const OPTIONS: Record<string, Option & { service: Service }> = {};
+export const EXTRAS: Record<string, Extra & { service: Service }> = {};
+export const SERVICES: Record<string, Service> = {};
+/** Rebuilds the lookups above in place (after website content is loaded from the database). */
+export function rebuildIndexes() {
+  for (const m of [OPTIONS, EXTRAS, SERVICES] as Record<string, unknown>[]) for (const k of Object.keys(m)) delete m[k];
+  for (const s of services) {
+    SERVICES[s.id] = s;
+    for (const o of s.options) OPTIONS[o.id] = { ...o, service: s };
+    for (const x of s.extras) EXTRAS[x.id] = { ...x, service: s };
+  }
+}
+rebuildIndexes();
 
 /* ---------------- STUDIOS ---------------- */
 export type StudioId = StudioKey | "grow";
@@ -307,14 +313,19 @@ export const COPY = {
     "Domain, hosting, WhatsApp API, AI usage and app store fees, if needed, are paid at actual cost.",
     "Full refund if work hasn't started. No refund once work has started.",
   ],
-  referShare: (link: string) => `I use MAKENDLESS for websites and videos. Use my link to get ₹500 off your first order: ${link}`,
+  referShare: (link: string) => `I use MAKENDLESS for websites and videos. Use my link to get ₹${REFERRAL.discount} off your first order: ${link}`,
 };
 
 export const REQUIREMENTS_MAX = 500;
 
 /** Website Care monthly price (Monthly Maintenance), shown everywhere as "Add-on · ₹X/month". */
-export const CARE_MONTHLY = services.find((s) => s.id === "website-care")!.options.find((o) => o.id === "monthly-maintenance")!.price!;
+export const careMonthly = () => OPTIONS["monthly-maintenance"]?.price ?? 0;
 /** Referral rule, written once for every referral section and the FAQ. */
 /** Card price text: "from ₹4,999", or "Add-on · ₹1,499/month" for Website Care. */
-export const cardPriceText = (s: Service) => s.id === "website-care" ? `Add-on · ₹${CARE_MONTHLY.toLocaleString("en-IN")}/month` : `from ₹${startingFrom(s).toLocaleString("en-IN")}`;
-export const REFERRAL_RULE = `on projects of ₹${REFERRAL.minTotal.toLocaleString("en-IN")} or more`;
+export const cardPriceText = (s: Service) => s.id === "website-care" ? `Add-on · ₹${careMonthly().toLocaleString("en-IN")}/month` : `from ₹${startingFrom(s).toLocaleString("en-IN")}`;
+export const referralRule = () => `on projects of ₹${REFERRAL.minTotal.toLocaleString("en-IN")} or more`;
+/** FAQ / copy tokens that always show the current price-file values. */
+export const fillTokens = (t: string) => t
+  .replace(/\{websiteCare\}/g, `₹${careMonthly().toLocaleString("en-IN")}`)
+  .replace(/\{referralMin\}/g, `₹${REFERRAL.minTotal.toLocaleString("en-IN")}`)
+  .replace(/\{referralReward\}/g, `₹${REFERRAL.discount.toLocaleString("en-IN")}`);

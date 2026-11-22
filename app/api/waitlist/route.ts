@@ -13,6 +13,7 @@ export async function POST(req: Request) {
     const ip = ipHash(req);
     if (await tooMany("waitlist", ip)) return NextResponse.json({ ok: false }, { status: 429 });
     await insert("waitlist", { email, interest: "GROW", ip_hash: ip });
+    await insert("leads", { name: email, whatsapp: "", email, form: "GROW waitlist", lead_source: "Website", source_page: "/grow", status: "New", ip_hash: ip }).catch(() => null);
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof Conflict) return NextResponse.json({ ok: true });

@@ -14,6 +14,10 @@ Do these once. Each step says exactly where to click. Keys go into **Vercel only
    - **anon / publishable** key
    - **service_role / secret** key (click **Reveal**). Keep this one secret.
 
+### 1b. Control room upgrade (2026-11-22) — run once
+Supabase → SQL Editor → New query → paste all of `supabase/upgrade-2026-11-22-control-room.sql` → Run.
+It adds projects, payments, expenses, trash, activity log, backups and website content, and moves old lead statuses to New / Contacted / Quote sent / Won / Lost. Safe to run twice.
+
 ## 2. Email alerts: Resend (free)
 1. Open https://resend.com → **Sign up** with **makendlessofficial@gmail.com** (important: on the free plan Resend only sends to the email you signed up with).
 2. Left menu → **API Keys** → **Create API Key** → name `makendless` → permission **Sending access** → **Add**. Copy the key (starts with `re_`).
@@ -28,6 +32,9 @@ Do these once. Each step says exactly where to click. Keys go into **Vercel only
    | `SUPABASE_SERVICE_ROLE_KEY` | the service_role / secret key |
    | `RESEND_API_KEY` | the Resend key |
 3. Top menu → **Deployments** → on the newest one click **⋯** → **Redeploy** → **Redeploy**.
+
+### Weekly backup key
+Add `CRON_SECRET` in Vercel (any long random text, e.g. 40 letters and numbers), Production. Vercel's cron sends it every Sunday night to `/api/admin/backup`; without it the weekly backup doesn't run (Settings → "Back up now" still works).
 
 ## 4. Check it works
 1. Open https://makendless.vercel.app/contact, fill in the form, press **Review my brief**, then **Start a Project**. You should see "Thanks, …".

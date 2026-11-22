@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { loadContent } from "../../lib/content";
 import PageShell from "../../components/PageShell";
 import { ButtonLink } from "../../components/ui";
 import { LegalSections, type LegalSection } from "../../components/Prose";
@@ -83,7 +84,8 @@ const sections: LegalSection[] = [
   ] },
 ];
 
-export default function Page() {
+export default async function Page() {
+  await loadContent();
   return (
     <PageShell eyebrow="Legal" title="Privacy" accent="Policy." intro={`Last updated: ${O.lastUpdated}`} light>
       <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">

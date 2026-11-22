@@ -20,6 +20,7 @@ export async function POST(req: Request) {
     for (let i = 0; i < 6; i++) {
       try {
         const row = await insert("referral_codes", { code: makeCode(name), referrer_name: name, referrer_whatsapp: whatsapp, ip_hash: ip });
+        await insert("leads", { name, whatsapp, form: "Referral", lead_source: "Website", source_page: "/#refer", status: "New", total_text: `Referral code ${row.code}`, ip_hash: ip }).catch(() => null);
         return NextResponse.json({ code: row.code, existing: false });
       } catch (e) {
         if (!(e instanceof Conflict)) throw e;

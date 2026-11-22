@@ -3,7 +3,7 @@
    Sits inside the Services and prices section on /create and /build, and is its own small section on the homepage. */
 import Link from "next/link";
 import { useState } from "react";
-import { COPY, REFERRAL_RULE } from "../../data/pricing";
+import { COPY, REFERRAL, referralRule } from "../../data/pricing";
 import { trackPixel } from "../MetaPixel";
 import { SETTINGS, whatsappShare } from "../../data/settings";
 import { normalizePhone } from "../../lib/referral";
@@ -58,8 +58,8 @@ export default function ReferEarn({ standalone = false }: { standalone?: boolean
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-white">Referrals</p>
           <Title id="refer-title" className="mt-3 text-[clamp(1.9rem,5.5vw,3rem)] font-extrabold leading-tight text-white">Refer and earn</Title>
-          <p className="mt-3 text-[clamp(1.25rem,3.4vw,1.75rem)] font-extrabold leading-snug"><span className="pac-accent">You get ₹500. Your friend gets ₹500.</span></p>
-          <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-white/90">Share your link with a business or creator. When they start a project, they get ₹500 off their first order and you get ₹500 off your next one, {REFERRAL_RULE}. No limit on referrals.</p>
+          <p className="mt-3 text-[clamp(1.25rem,3.4vw,1.75rem)] font-extrabold leading-snug"><span className="pac-accent">You get ₹{REFERRAL.credit}. Your friend gets ₹{REFERRAL.discount}.</span></p>
+          <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-white/90">Share your link with a business or creator. When they start a project, they get ₹{REFERRAL.discount} off their first order and you get ₹{REFERRAL.credit} off your next one, {referralRule()}. No limit on referrals.</p>
         </div>
         <div className="svc-refer-card" data-tone="light">
           {step === "start" && (

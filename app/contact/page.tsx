@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { loadContent } from "../../lib/content";
 import { Fragment } from "react";
 import BriefForm from "../../components/form/BriefForm";
 import { initialFromParams } from "../../components/form/brief";
@@ -19,6 +20,7 @@ const STEPS = [
 ];
 
 export default async function Page({ searchParams }: { searchParams: Promise<Params> }) {
+  await loadContent();
   const params = await searchParams;
   const initial = initialFromParams(params);
   // Dev-only test switch (?simulate=error | delivered). Ignored in production. See lib/submit-brief.ts.
