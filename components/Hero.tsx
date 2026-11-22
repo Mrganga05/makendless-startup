@@ -179,10 +179,10 @@ export default function Hero() {
             </span>
           </div>
           <p className="mt-2.5 max-w-md text-[14.5px] leading-snug text-[#b9bed6] sm:mt-5 sm:text-lg sm:leading-relaxed">
-            Premium video editing and website development for creators and businesses. Digital marketing in beta.
+            Video editing, websites, automation and AI for creators and businesses. Digital marketing in beta.
           </p>
           <div className="mt-4 flex gap-2.5 sm:mt-8 sm:gap-3">
-            <Magnetic className="flex-1 sm:flex-none"><Link href="/contact" className="block rounded-full bg-white whitespace-nowrap px-2 py-3.5 text-center text-[13px] min-[390px]:text-sm font-extrabold text-[#13172b] transition-colors hover:bg-[#c7a6ff] sm:px-8 sm:text-base">Start a Project</Link></Magnetic>
+            <Magnetic className="flex-1 sm:flex-none"><Link href="/start-project" className="block rounded-full bg-white whitespace-nowrap px-2 py-3.5 text-center text-[13px] min-[390px]:text-sm font-extrabold text-[#13172b] transition-colors hover:bg-[#c7a6ff] sm:px-8 sm:text-base">Start a Project</Link></Magnetic>
             <Magnetic className="flex-1 sm:flex-none"><Link href="#studios" className="block rounded-full border border-white/30 bg-[#0c1024]/40 whitespace-nowrap px-2 py-3.5 text-center text-[13px] min-[390px]:text-sm font-bold transition-colors hover:border-white hover:bg-white/10 sm:px-8 sm:text-base">Explore Studios</Link></Magnetic>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
 import StudioPage from "../../components/StudioPage";
-export const metadata: Metadata = { title: "GROW — Digital Marketing (Beta)", description: "GROW is MAKENDLESS's digital marketing studio, currently in beta: Meta and Google Ads, social media management and local presence. Not offered yet; register your interest.", alternates: { canonical: "/grow" }, openGraph: { title: "GROW — Digital Marketing (Beta) — MAKENDLESS", description: "GROW is MAKENDLESS's digital marketing studio, currently in beta: Meta and Google Ads, social media management and local presence. Not offered yet; register your interest.", url: "/grow", images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "MAKENDLESS — We make ideas impossible to ignore." }] } };
+import { pageMeta } from "../../lib/site";
+export const metadata: Metadata = pageMeta("GROW — Digital Marketing (Beta)", "GROW is MAKENDLESS's digital marketing studio, currently in beta: Meta and Google Ads, social media management and local presence. Not offered yet; register your interest.", "/grow");
 export default function Page() { return <StudioPage id="grow" />; }

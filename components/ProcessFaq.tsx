@@ -85,7 +85,7 @@ export default function ProcessFaq() {
             <h3 id="faq-title" className="text-[1.7rem] leading-[1.1] font-extrabold sm:text-3xl lg:text-4xl">{processCopy.faqTitle}</h3>
             <p className="mt-4 max-w-md text-muted-dark">{processCopy.faqIntro}</p>
             <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2">
-              <ButtonLink href="/contact" tone="light">{processCopy.cta} <Arrow /></ButtonLink>
+              <ButtonLink href="/start-project" tone="light">{processCopy.cta} <Arrow /></ButtonLink>
               <Link href="/faq" className="pro-link inline-flex min-h-11 items-center gap-2 font-bold text-dark">{processCopy.allQuestions}</Link>
             </div>
           </div>

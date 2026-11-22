@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import BriefForm from "../../components/form/BriefForm";
 import { initialFromParams } from "../../components/form/brief";
 import { Eyebrow } from "../../components/ui";
 import { SETTINGS, whatsappTo } from "../../data/settings";
 import { readSimulate } from "../../lib/submit-brief";
+import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = { alternates: { canonical: "/contact" },
-  title: "Start a Project",
-  description: "Tell us what you need and get your final price on WhatsApp within 24 hours.",
-};
+export const metadata: Metadata = pageMeta("Contact", "Tell us what you need and get your final price on WhatsApp within 24 hours.", "/contact");
 
 type Params = Record<string, string | string[] | undefined>;
-const H1 = ["Let's", "make", "something"];
-const H1_ACCENT = ["worth", "remembering."];
+const H1 = ["Tell", "us", "what"];
+const H1_ACCENT = ["you", "need."];
 const STEPS = [
   { n: "01", title: "Write it", text: "Who you are, which studio, what you need." },
   { n: "02", title: "Review it", text: "See the finished brief before anything else happens." },
@@ -30,11 +29,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
         <div className="for-hero-beam" aria-hidden="true" />
         <div className="for-hero-frame" aria-hidden="true" />
         <div className="relative mx-auto max-w-7xl">
-          <Eyebrow>Start a project</Eyebrow>
+          <Eyebrow>Contact</Eyebrow>
           {/* Server-rendered kinetic headline (CSS only, so it reads before hydration). */}
           <h1 aria-label={`${H1.join(" ")} ${H1_ACCENT.join(" ")}`} className="for-h1 mt-5 font-extrabold text-light">
             {[...H1.map((w) => ({ w, a: false })), ...H1_ACCENT.map((w) => ({ w, a: true }))].map((x, i) => (
-              <span key={i} aria-hidden="true" className="for-h1-word" style={{ ["--i" as string]: i }}><span className={x.a ? "prism-text" : undefined}>{x.w}</span></span>
+              <Fragment key={i}><span aria-hidden="true" className="for-h1-word" style={{ ["--i" as string]: i }}><span className={x.a ? "prism-text" : undefined}>{x.w}</span></span>{" "}</Fragment>
             ))}
           </h1>
           <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:items-end lg:gap-16">

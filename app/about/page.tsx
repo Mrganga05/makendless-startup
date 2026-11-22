@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "../../components/PageShell";
 import { ButtonLink, Arrow, BetaBadge, Eyebrow, KineticHeading, Reveal } from "../../components/ui";
-import { Bullets } from "../../components/Prose";
-import { LIVE_URL, NUMBERS as N, OWNER as O, WHATSAPP_HREF } from "../../data/owner";
+import { WHATSAPP_HREF } from "../../data/owner";
+import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = { alternates: { canonical: `${LIVE_URL}/about` }, title: "About", description: "A startup studio of creators, editors and developers making studio-quality work affordable." };
+export const metadata: Metadata = pageMeta("About", "MAKENDLESS is one studio for videos, websites and automation, with clear prices and one point of contact.", "/about");
 
 const pillars = [
   { verb: "CREATE", label: "Video Editing", href: "/create", text: "Reels and Shorts, YouTube videos, ads, podcasts, and motion graphics like logo animations, intros and thumbnails." },
@@ -30,7 +30,7 @@ const steps = [
 function Buttons({ center = false }: { center?: boolean }) {
   return (
     <div className={`mt-7 flex flex-wrap gap-3 ${center ? "justify-center" : ""}`}>
-      <ButtonLink href="/contact">Start a Project <Arrow /></ButtonLink>
+      <ButtonLink href="/start-project">Start a Project <Arrow /></ButtonLink>
       <ButtonLink href={WHATSAPP_HREF} variant="secondary">Chat on WhatsApp</ButtonLink>
     </div>
   );
@@ -43,7 +43,7 @@ export default function Page() {
         eyebrow="About"
         title="Create. Build."
         accent="Grow."
-        intro={`MAKENDLESS is a creative and technology studio from ${O.city}, India. We edit videos, build websites, and set up automation and AI for creators and businesses at prices that make sense for small teams.`}
+        intro={`MAKENDLESS is a creative and technology studio from India. We edit videos, build websites, and set up automation and AI for creators and businesses at prices that make sense for small teams.`}
         aside={<Buttons />}
       />
 
@@ -51,31 +51,22 @@ export default function Page() {
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_1.3fr]">
           <div>
             <Eyebrow tone="light">Our story</Eyebrow>
-            <KineticHeading text="Started by a creator," accent="built for creators and businesses." accentClass="text-violet" className="mt-4 text-[clamp(2rem,5.5vw,3.4rem)] font-extrabold leading-tight tracking-tight" />
-            {O.founderPhoto && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={O.founderPhoto} alt={O.founderName} className="mt-8 aspect-[4/5] w-full max-w-xs rounded-[1.75rem] object-cover ring-1 ring-line" />
-            )}
+            <KineticHeading text="One studio," accent="built for creators and businesses." accentClass="text-violet" className="mt-4 text-[clamp(2rem,5.5vw,3.4rem)] font-extrabold leading-tight tracking-tight" />
           </div>
           <div className="space-y-5 text-[18px] leading-relaxed text-muted-dark">
-            <p>MAKENDLESS was started by {O.founderName}, a video editor and YouTube creator. His channel, Move with Raghu, has grown to {N.subscribers} subscribers with fast, entertaining challenge videos, and through his editing studio RAQVINE he has edited videos for creators and brands.</p>
-            <p>Working with creators and small businesses, he kept seeing the same problem: good agencies were too expensive, and cheap freelancers were hard to trust. MAKENDLESS is the answer: one studio for videos, websites and automation, with clear prices and the quality of a real team.</p>
+            <p>Creators and small businesses kept running into the same problem: good agencies were too expensive, and cheap freelancers were hard to trust.</p>
+            <p>MAKENDLESS is our answer: one studio for videos, websites and automation, with clear prices published on our website and the quality of a real team.</p>
+            <p className="font-bold text-dark">The MAKENDLESS Team</p>
           </div>
         </div>
 
         <div className="mx-auto mt-20 grid max-w-7xl gap-12 border-t border-line pt-20 lg:grid-cols-[1fr_1.3fr]">
           <div>
             <Eyebrow tone="light">The studio</Eyebrow>
-            <KineticHeading text="Small team," accent="serious craft." accentClass="text-violet" className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
+            <KineticHeading text="One team," accent="serious craft." accentClass="text-violet" className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
           </div>
           <div className="space-y-5 text-[18px] leading-relaxed text-muted-dark">
-            <p>We&rsquo;re a team of {N.teamSize}:</p>
-            <Bullets items={[
-              `**${N.editors} video editors**: reels, YouTube, ads and motion graphics`,
-              `**${N.developers} web developers**: websites, automation, AI assistants and apps`,
-              `**${N.clientLeads} client leads**: your single point of contact from first message to final delivery`,
-            ]} />
-            <p>Every project has one person responsible for it from start to finish, so you always know who to talk to.</p>
+            <p>One team, one point of contact. Every project has one person responsible from start to finish.</p>
           </div>
         </div>
       </section>
@@ -133,7 +124,7 @@ export default function Page() {
           </ol>
           <div className="mt-16 border-t border-white/15 pt-10">
             <Eyebrow>Where we work</Eyebrow>
-            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-[#c3c8de]">Based in {O.city}, {O.state}. We work online with clients across India and abroad.</p>
+            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-[#c3c8de]">Based in India. We work online with clients across India and abroad.</p>
           </div>
         </div>
       </section>

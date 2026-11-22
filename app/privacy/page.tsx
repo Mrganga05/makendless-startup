@@ -2,15 +2,12 @@ import type { Metadata } from "next";
 import PageShell from "../../components/PageShell";
 import { ButtonLink } from "../../components/ui";
 import { LegalSections, type LegalSection } from "../../components/Prose";
-import { LIVE_URL, NUMBERS as N, OWNER as O } from "../../data/owner";
+import { NUMBERS as N, OWNER as O } from "../../data/owner";
+import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = {
-  alternates: { canonical: `${LIVE_URL}/privacy` },
-  title: "Privacy Policy",
-  description: "What information MAKENDLESS collects, why we collect it, how long we keep it and the choices you have.",
-};
+export const metadata: Metadata = pageMeta("Privacy Policy", "What information MAKENDLESS collects, why we collect it, how long we keep it and the choices you have.", "/privacy");
 
-const lead = `MAKENDLESS ("we", "us") is a creative and technology studio based in ${O.city}, India. We edit videos, build websites, set up automation and AI assistants, and build apps for creators and businesses. This policy explains what information we collect, why, and the choices you have. We follow India's Digital Personal Data Protection Act, 2023.`;
+const lead = `MAKENDLESS ("we", "us") is a creative and technology studio based in India. We edit videos, build websites, set up automation and AI assistants, and build apps for creators and businesses. This policy explains what information we collect, why, and the choices you have. We follow India's Digital Personal Data Protection Act, 2023.`;
 
 const sections: LegalSection[] = [
   { id: "collect", title: "1. Information we collect", body: [
@@ -24,7 +21,7 @@ const sections: LegalSection[] = [
     { h: "Payment information" },
     ["We record what you paid and when. Card, UPI and bank details are handled by our payment provider. We never see or store them."],
     { h: "Information collected automatically" },
-    ["Our website currently uses no analytics, advertising or tracking cookies. If we add analytics later, we will update this policy first."],
+    ["We use Meta Pixel to measure how well our ads work. It records visits and form sends on our website (not on our team dashboard). See [Meta's Privacy Policy](https://www.facebook.com/privacy/policy/)."],
   ] },
   { id: "use", title: "2. How we use your information", body: [
     [
@@ -79,8 +76,9 @@ const sections: LegalSection[] = [
       `**Grievance contact:** ${O.grievanceName}`,
       `**Email:** ${O.email}`,
       `**WhatsApp:** ${O.whatsapp}`,
-      `**Location:** ${O.city}, ${O.state}, India`,
+      `**Location:** ${O.country}`,
     ],
+    `We reply to privacy questions and complaints within ${N.replyDays} days.`,
     "If you are not satisfied with our reply, you can complain to the Data Protection Board of India.",
   ] },
 ];
@@ -92,7 +90,7 @@ export default function Page() {
         <LegalSections lead={lead} sections={sections} />
         <aside className="h-fit rounded-[1.75rem] bg-white p-7 ring-1 ring-line lg:sticky lg:top-24">
           <p className="text-[15px] leading-relaxed text-muted-dark">Questions about your information, or want to use your rights? Email {O.email} or message us on WhatsApp at {O.whatsapp}.</p>
-          <ButtonLink href="/contact" tone="light" className="mt-5">Start a Project</ButtonLink>
+          <ButtonLink href="/start-project" tone="light" className="mt-5">Start a Project</ButtonLink>
         </aside>
       </div>
     </PageShell>

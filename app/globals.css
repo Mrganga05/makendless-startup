@@ -98,3 +98,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .rv-wipe-right, .rv-clip-down { clip-path: none !important; }
   .rv-scale-in, .rv-fade { opacity: 1 !important; transform: none !important; }
 }
+
+/* Scroll reveals (owner rule 2026-11-22): start once 10% is visible, finish within 0.4s, never leave a section blank. */
+.rv-mask-up > .rv-inner, .rv-wipe-right, .rv-clip-down, .rv-scale-in, .rv-fade { transition-duration: .32s !important; transition-delay: min(var(--rv-delay, 0s), .08s) !important; }
+.kh-inner, .sol-h2 > span > span, .pac-title-word > span, .cta-word-in { transition-duration: .32s !important; }
+.sol-h2 > span > span, .pac-title-word > span, .cta-word-in { transition-delay: 0s !important; }
+.for-h1-word > span { animation-duration: .32s !important; animation-delay: calc(var(--i, 0) * .01s) !important; }
+.stu-item[data-after] { position: relative; }
+.stu-item[data-after] .stu-body { padding-bottom: 7.5rem; }
+.stu-after { position: absolute; left: 1rem; right: 1rem; bottom: 1rem; z-index: 3; margin: 0; padding: 0; transition: opacity .3s ease; }
+.stu-item[data-in="false"] .stu-after { opacity: 0; }

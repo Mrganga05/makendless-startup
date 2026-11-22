@@ -6,11 +6,15 @@ import { Arrow, BetaBadge, Reveal } from "../../components/ui";
 import { studios } from "../../data/studios";
 import { studioFromText, studioServices } from "../../components/Studios";
 import Waitlist from "../../components/Waitlist";
+import ComboPacks from "../../components/pricing/ComboPacks";
+import { PricingRegion } from "../../components/pricing/state";
+import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = { alternates: { canonical: "/studios" }, title: "Studios", description: "CREATE, BUILD and GROW: video editing, websites and digital marketing (beta)." };
+export const metadata: Metadata = pageMeta("Services", "CREATE, BUILD and GROW: video editing, websites, automation and AI, plus combo packs. Digital marketing in beta.", "/studios");
 
 export default function Page() {
   return (
+    <>
     <PageShell eyebrow="Our three studios" title="Three worlds." accent="Endless possibilities." intro="Create the content. Build the experience. Grow, in beta. Each studio has its own team, tools and way of working." light>
       <ul className="grid gap-6 lg:grid-cols-3">
         {studios.map((s, i) => (
@@ -27,7 +31,7 @@ export default function Page() {
                   <h2 className="mt-2 text-[1.55rem] font-extrabold leading-tight sm:text-3xl lg:text-[1.65rem] xl:text-3xl">{s.name}</h2>
                   <p className="mt-3 text-[16px] leading-relaxed text-muted-dark">{s.tagline}</p>
                   <ul className="mt-5 space-y-2 border-t border-line pt-5 text-[15px]">
-                    {studioServices(s.id, (s.planned ?? []).map((sv) => sv.title)).map((sv) => (<li key={sv.name} className="flex justify-between gap-3"><span>{sv.name}</span>{sv.from && <span className="shrink-0 font-bold text-muted-dark">from {sv.from}</span>}</li>))}
+                    {studioServices(s.id, (s.planned ?? []).map((sv) => sv.title)).map((sv) => (<li key={sv.name} className="flex justify-between gap-3"><span>{sv.name}</span>{sv.from && <span className="shrink-0 font-bold text-muted-dark">{sv.from}</span>}</li>))}
                   </ul>
                   <span className="mt-auto flex items-center justify-between pt-7 text-[15px] font-extrabold">
                     {s.beta ? "Preview the GROW studio" : `Enter the ${s.verb} studio`}
@@ -41,5 +45,7 @@ export default function Page() {
         ))}
       </ul>
     </PageShell>
+    <PricingRegion><ComboPacks /></PricingRegion>
+    </>
   );
 }

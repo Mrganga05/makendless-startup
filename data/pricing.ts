@@ -251,8 +251,8 @@ export const optionNames = (s: Service) => orderedOptions(s).map((o) => o.name);
 export const serviceTitle = (id: string) => SERVICES[id]?.name ?? studios.flatMap((s) => s.planned ?? []).find((p) => p.id === id)?.title ?? "";
 
 /* ---------------- combo packs ---------------- */
-/** Combo packs are switched off for now (owner will add them later). true = section, auto-apply and hints come back. */
-export const COMBOS_ENABLED = false;
+/** Combo packs: listed on /studios (and the homepage), applied automatically on /start-project when the selection matches. */
+export const COMBOS_ENABLED = true;
 
 export interface Combo {
   id: string;
@@ -294,6 +294,8 @@ export const REFERRAL = { discount: 500, credit: 500, minTotal: 2000, prefix: "M
 export const COPY = {
   heading: "Services and prices",
   delivery: "Delivery starts after the 50% advance and once we have everything we need from you. Bulk video orders are delivered in batches.",
+  /** One name for the free-text box everywhere (selector, Start a Project, contact form, FAQ). */
+  requirementsName: "Your requirements",
   requirementsLabel: "Your requirements (optional)",
   requirementsHelp: "Tell us anything special. For a custom quote, describe what you need here.",
   smallChanges: "Small changes are always free: text, images, colors and small fixes. We only charge for new work, like new pages, new features or new videos.",
@@ -309,3 +311,10 @@ export const COPY = {
 };
 
 export const REQUIREMENTS_MAX = 500;
+
+/** Website Care monthly price (Monthly Maintenance), shown everywhere as "Add-on · ₹X/month". */
+export const CARE_MONTHLY = services.find((s) => s.id === "website-care")!.options.find((o) => o.id === "monthly-maintenance")!.price!;
+/** Referral rule, written once for every referral section and the FAQ. */
+/** Card price text: "from ₹4,999", or "Add-on · ₹1,499/month" for Website Care. */
+export const cardPriceText = (s: Service) => s.id === "website-care" ? `Add-on · ₹${CARE_MONTHLY.toLocaleString("en-IN")}/month` : `from ₹${startingFrom(s).toLocaleString("en-IN")}`;
+export const REFERRAL_RULE = `on projects of ₹${REFERRAL.minTotal.toLocaleString("en-IN")} or more`;

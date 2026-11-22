@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import StartProject from "../../components/pricing/StartProject";
 import { Eyebrow } from "../../components/ui";
+import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = { title: "Start a Project", description: "Your selected services, estimated total and delivery time. Send it and we'll message you on WhatsApp within 24 hours.", robots: { index: false, follow: true }, alternates: { canonical: "/start-project" } };
+export const metadata: Metadata = pageMeta("Start a Project", "Your selected services, estimated total and delivery time. Send it and we'll message you on WhatsApp within 24 hours.", "/start-project", { robots: { index: false, follow: true } });
 
 export default function Page() {
   return (

@@ -67,7 +67,7 @@ export default function Nav() {
               {current(l.href) && <span className="absolute inset-x-4 bottom-1.5 h-0.5 rounded-full" style={{ background: "var(--prism)" }} />}
             </Link>
           ))}
-          <Link href="/contact" aria-current={current("/contact") ? "page" : undefined} className={`ml-3 flex min-h-11 items-center rounded-full px-5 text-sm font-bold transition active:scale-[.96] ${light ? "bg-ink text-white hover:bg-violet" : "bg-white text-dark hover:bg-violet-soft"}`}>Start a Project</Link>
+          <Link href="/start-project" aria-current={current("/start-project") ? "page" : undefined} className={`ml-3 flex min-h-11 items-center rounded-full px-5 text-sm font-bold transition active:scale-[.96] ${light ? "bg-ink text-white hover:bg-violet" : "bg-white text-dark hover:bg-violet-soft"}`}>Start a Project</Link>
         </nav>
         <button ref={toggle} className="grid h-11 w-11 place-items-center rounded-full border border-current/20 md:hidden" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((o) => !o)}>
           <span className="relative block h-3 w-5" aria-hidden="true">
@@ -85,7 +85,7 @@ export default function Nav() {
             <Link key={l.href} href={l.href} onClick={() => setOpen(false)} aria-current={current(l.href) ? "page" : undefined}
               className={`nav-sheet-item flex min-h-14 items-center border-b border-white/10 ${i < links.length ? "text-2xl font-extrabold" : "text-base font-semibold text-[#c3c8de]"} ${current(l.href) ? "text-aqua-bright" : ""}`} style={{ animationDelay: `${i * 0.04}s` }}>{l.label}</Link>
           ))}
-          <Link href="/contact" onClick={() => setOpen(false)} className="nav-sheet-item mt-6 flex min-h-14 items-center justify-center rounded-full bg-white text-lg font-extrabold text-dark active:scale-[.97]" style={{ animationDelay: ".28s" }}>Start a Project</Link>
+          <Link href="/start-project" onClick={() => setOpen(false)} className="nav-sheet-item mt-6 flex min-h-14 items-center justify-center rounded-full bg-white text-lg font-extrabold text-dark active:scale-[.97]" style={{ animationDelay: ".28s" }}>Start a Project</Link>
         </nav>
       </div>
     </>

@@ -48,7 +48,7 @@ export default function Solutions() {
   const [out, setOut] = useState<{ i: number; dir: 1 | -1; key: number } | null>(null);
   const reduced = useReducedMotion();
   const idxRef = useRef(0);
-  const [headRef, headIn] = useInView<HTMLHeadingElement>({ once: true, margin: "0px 0px -10% 0px" });
+  const [headRef, headIn] = useInView<HTMLHeadingElement>({ once: true });
   const [stageRef, stageIn] = useInView<HTMLDivElement>({ threshold: 0.05 });
 
   const select = useCallback((i: number) => {
@@ -76,7 +76,7 @@ export default function Solutions() {
           <div>
             <Eyebrow tone="light">Solutions for you</Eyebrow>
             <h2 ref={headRef} id="sol-title" aria-label="Made for what you're building." className={`sol-h2 mt-4 font-extrabold ${headIn ? "sol-in" : ""}`}>
-              <span aria-hidden="true"><span>Made for what</span></span>
+              <span aria-hidden="true"><span>Made for what</span></span>{" "}
               <span aria-hidden="true"><span className="sol-accent">you&apos;re building.</span></span>
             </h2>
           </div>
@@ -94,7 +94,7 @@ export default function Solutions() {
                   <span className="sol-tab-bar" aria-hidden="true" />
                   <span className="hidden text-xs font-bold tabular-nums tracking-[0.14em] opacity-70 lg:block" aria-hidden="true">0{i + 1}</span>
                   <span className="min-w-0 lg:flex-1">
-                    <span className="block whitespace-nowrap text-sm font-bold lg:text-[21px] lg:font-extrabold lg:leading-tight">{x.label}</span>
+                    <span className="block whitespace-nowrap text-sm font-bold lg:whitespace-normal lg:pr-3 lg:text-[18px] lg:font-extrabold lg:leading-tight xl:text-[21px]">{x.label}</span>
                     <span className="mt-1 hidden text-[13px] font-semibold leading-snug text-muted-dark lg:block">{x.hint}</span>
                   </span>
                   <Arrow className="sol-tab-arrow hidden lg:block" />
@@ -131,14 +131,14 @@ export default function Solutions() {
               <div style={{ ["--i" as string]: 1 }}>
                 <p className="min-h-[6.5em] text-base leading-relaxed text-muted-dark sm:min-h-[4.9em] md:min-h-[6.5em] xl:min-h-[4.9em]">{s.blurb}</p>
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <ButtonLink href={`/contact?for=${s.id}`} tone="light" className="max-[400px]:flex-1 max-[400px]:px-4">Start a Project</ButtonLink>
+                  <ButtonLink href="/start-project" tone="light" className="max-[400px]:flex-1 max-[400px]:px-4">Start a Project</ButtonLink>
                   <ButtonLink href={primary.href} variant="secondary" tone="light" className="max-[400px]:flex-1 max-[400px]:px-4">Explore Services<span className="sr-only">: {primary.verb}, {primary.name}</span> <Arrow /></ButtonLink>
                 </div>
               </div>
             </div>
 
             {COMBOS_ENABLED && PACK[s.id] && (
-              <p className="mt-5 text-[15px] font-bold"><a href={`#combo-${PACK[s.id]!.id}`} className="for-link">{PACK[s.id]!.name}: {inr(PACK[s.id]!.price)}{PACK[s.id]!.monthly ? "/month" : ""}</a></p>
+              <p className="mt-5 text-[15px] font-bold"><a href={`/studios#combo-${PACK[s.id]!.id}`} className="for-link">{PACK[s.id]!.name}: {inr(PACK[s.id]!.price)}{PACK[s.id]!.monthly ? "/month" : ""}</a></p>
             )}
             {/* recommended services: every card opens that service on its studio page (/create#short-videos). Hidden for content creator and online store. */}
             {s.id !== "store" && s.id !== "creator" && <div className="mt-10 border-t border-line pt-6 md:mt-12">

@@ -2,14 +2,14 @@ import Link from "next/link";
 import { studios } from "../data/site";
 import { Arrow, Eyebrow, KineticHeading } from "./ui";
 import Gateway from "./studios/Gateway";
-import { servicesOf, startingFrom, studioFrom, type StudioId } from "../data/pricing";
+import { cardPriceText, servicesOf, studioFrom, type StudioId } from "../data/pricing";
 import { inr } from "../lib/pricing";
 import Waitlist from "./Waitlist";
 
 /* CREATE and BUILD cards list the current priced services; GROW (beta) keeps its plan. */
 export const studioServices = (id: StudioId, fallback: string[]): { name: string; from?: string }[] => {
   const list = servicesOf(id);
-  return list.length ? list.map((s) => ({ name: s.name, from: inr(startingFrom(s)) })) : fallback.map((name) => ({ name }));
+  return list.length ? list.map((s) => ({ name: s.name, from: cardPriceText(s) })) : fallback.map((name) => ({ name }));
 };
 /** "From ₹399" for a studio (lowest price in data/pricing.ts), or undefined for GROW. */
 export const studioFromText = (id: StudioId) => { const n = studioFrom(id); return n === null ? undefined : `From ${inr(n)}`; };

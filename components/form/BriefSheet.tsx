@@ -10,15 +10,15 @@ export function StudioMotif({ studio, className = "" }: { studio: StudioChoice; 
 }
 
 export function Essentials({ values, tone }: { values: BriefValues; tone: "dark" | "light" }) {
-  const items = (["name", "email", "message"] as const).map((k) => ({ k, label: k === "message" ? "What you need" : k === "name" ? "Name" : "Email", ok: !validateField(k, values) }));
+  const items = (["name", "whatsapp"] as const).map((k) => ({ k, label: k === "name" ? "Name" : "WhatsApp number", ok: !!values[k].trim() && !validateField(k, values) }));
   const done = items.filter((i) => i.ok).length;
   return (
     <div className={`for-essentials for-essentials-${tone}`}>
       <p className="flex items-baseline justify-between gap-3 text-xs font-bold uppercase tracking-[0.18em]">
         <span>Essentials</span>
-        <span className="tabular-nums">{done} of 3</span>
+        <span className="tabular-nums">{done} of {items.length}</span>
       </p>
-      <ul className="mt-2.5 grid grid-cols-3 gap-2">
+      <ul className="mt-2.5 grid grid-cols-2 gap-2">
         {items.map((i) => (
           <li key={i.k} data-ok={i.ok} className="for-ess-item">
             <span className="for-ess-bar" aria-hidden="true" />

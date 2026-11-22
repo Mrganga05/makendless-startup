@@ -1,6 +1,8 @@
 "use client";
 /* GROW (beta) "Join the waitlist" email box. Saves to the waitlist table. */
+import Link from "next/link";
 import { useState } from "react";
+import { trackPixel } from "./MetaPixel";
 
 export default function Waitlist({ compact = false, tone = "light" }: { compact?: boolean; tone?: "light" | "dark" }) {
   const [email, setEmail] = useState("");
@@ -13,6 +15,7 @@ export default function Waitlist({ compact = false, tone = "light" }: { compact?
     try {
       const r = await fetch("/api/waitlist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, hp }) });
       setState(r.ok ? "done" : "error");
+      if (r.ok) trackPixel("Lead");
     } catch { setState("error"); }
   };
   const dark = tone === "dark";
@@ -26,6 +29,7 @@ export default function Waitlist({ compact = false, tone = "light" }: { compact?
         <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" value={hp} onChange={(e) => setHp(e.target.value)} />
         <button type="submit" disabled={state === "busy"} className={`for-btn ${dark ? "bg-white text-dark hover:bg-violet-soft" : "for-btn-primary"} !min-h-11 shrink-0 !px-4`}>Join the waitlist</button>
       </div>
+      <p className={`text-xs ${dark ? "text-white/70" : "text-muted-dark"}`}>We use these details only to reply to you. <Link href="/privacy" className="underline underline-offset-2">Privacy Policy</Link></p>
       {(state === "invalid" || state === "error") && <p role="alert" className={`text-sm font-semibold ${dark ? "text-[#ffb4c0]" : "for-error"}`}>{state === "invalid" ? "Please enter a valid email." : "Something went wrong. Please try again."}</p>}
     </form>
   );

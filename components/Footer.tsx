@@ -5,7 +5,7 @@ import { HAS_WORK } from "../data/work";
 import { Socials } from "./WhatsAppFloat";
 
 const cols: { title: string; links: { label: string; href: string; beta?: boolean }[] }[] = [
-  { title: "Studios", links: [{ label: "CREATE", href: "/create" }, { label: "BUILD", href: "/build" }, { label: "GROW", href: "/grow", beta: true }, { label: "Studios", href: "/studios" }] },
+  { title: "Services", links: [{ label: "CREATE", href: "/create" }, { label: "BUILD", href: "/build" }, { label: "GROW", href: "/grow", beta: true }, { label: "All services", href: "/studios" }] },
   { title: "Company", links: [{ label: "About", href: "/about" }, { label: "FAQ", href: "/faq" }, { label: "Refer & Earn", href: "/#refer" }, { label: "Contact", href: "/contact" }] },
   { title: "Legal", links: [{ label: "Privacy", href: "/privacy" }, { label: "Terms", href: "/terms" }] },
 ];
@@ -14,7 +14,7 @@ export default function Footer() {
   return (
     <footer data-tone="dark" className="relative overflow-hidden bg-[#080b1a] px-5 pb-10 pt-14 text-light md:px-8 md:pt-20">
       <div className="absolute inset-x-0 top-0 h-px" style={{ background: "var(--prism)" }} aria-hidden="true" />
-      <div className="mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 md:grid-cols-[1.4fr_repeat(4,1fr)]">
+      <div className="mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-[1.2fr_repeat(3,0.8fr)_1.6fr]">
         <div>
           <Link href="/" aria-label="MAKENDLESS — home" className="inline-flex min-h-11 items-center text-xl"><Wordmark /></Link>
           <p className="mt-2 text-sm font-semibold tracking-[0.3em] text-muted">CREATE • BUILD • GROW</p>
@@ -38,7 +38,7 @@ export default function Footer() {
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-muted">Contact</p>
           <ul className="mt-2">
-            {SETTINGS.email && <li><a href={`mailto:${SETTINGS.email}`} className="flex min-h-11 items-center break-all text-[15px] font-semibold hover:text-aqua-bright hover:underline">{SETTINGS.email}</a></li>}
+            {SETTINGS.email && <li><a href={`mailto:${SETTINGS.email}`} className="flex min-h-11 items-center whitespace-nowrap text-[14px] font-semibold hover:text-aqua-bright hover:underline">{SETTINGS.email}</a></li>}
             {SETTINGS.whatsapp && <li><a href={whatsappTo(SETTINGS.whatsappMessage)} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center text-[15px] font-semibold hover:text-aqua-bright hover:underline">WhatsApp {SETTINGS.whatsapp}</a></li>}
             <li className="flex min-h-11 items-center text-[15px] font-semibold text-muted">{SETTINGS.location}</li>
           </ul>

@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { accentOf, color } from "../../data/tokens";
 import { submitBrief, type Simulate } from "../../lib/submit-brief";
 import { Arrow, BetaBadge } from "../ui";
+import { COPY } from "../../data/pricing";
 import BriefResult, { ICON, useCopy } from "./BriefResult";
 import { Essentials, LiveBrief, StudioMotif } from "./BriefSheet";
 import {
@@ -213,7 +214,7 @@ export default function BriefForm({ initial, simulate }: { initial: BriefValues;
 
           <Step n="03" title="The details">
             <div>
-              <Label htmlFor="bf-message" optional>{grow ? "What would you want from marketing support?" : "Tell us what you're building"}</Label>
+              <Label htmlFor="bf-message" optional>{grow ? "What would you want from marketing support?" : COPY.requirementsName}</Label>
               <p id="bf-message-hint" className="mt-1 text-sm text-muted-dark">What it is, who it is for and what a good result looks like. A few sentences is plenty.</p>
               <textarea id="bf-message" name="message" rows={6} maxLength={LIMITS.message} value={v.message}
                 onChange={(e) => set("message", e.target.value)} onBlur={() => blurCheck("message")}

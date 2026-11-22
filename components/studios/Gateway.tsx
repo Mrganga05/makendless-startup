@@ -35,7 +35,7 @@ export default function Gateway({ id, verb, name, href, beta, index, from, servi
   const cta = beta ? `Preview the ${verb} studio` : `Enter the ${verb} studio`;
 
   return (
-    <li ref={ref} className="stu-item" data-in={seen} data-live={live} style={{ ["--i" as string]: index }}>
+    <li ref={ref} className="stu-item" data-after={after ? "" : undefined} data-in={seen} data-live={live} style={{ ["--i" as string]: index }}>
       <Link
         href={href}
         className={`stu-gate stu-${id}`}
@@ -57,7 +57,7 @@ export default function Gateway({ id, verb, name, href, beta, index, from, servi
             </h3>
             <span className="stu-cap"><DemoCaption kind={beta ? "illustrative" : "concept"} tone={id === "grow" ? "light" : "dark"} /></span>
             <ul className="stu-svc">
-              {services.map((t) => <li key={t.name}>{t.name}{t.from && <span className="stu-from">· from {t.from}</span>}</li>)}
+              {services.map((t) => <li key={t.name}>{t.name}{t.from && <span className="stu-from">· {t.from}</span>}</li>)}
             </ul>
             <span className="stu-cta">
               <span className="stu-cta-label">{cta}</span>
@@ -66,7 +66,7 @@ export default function Gateway({ id, verb, name, href, beta, index, from, servi
           </div>
         </div>
       </Link>
-      {after}
+      {after && <div className="stu-after">{after}</div>}
     </li>
   );
 }

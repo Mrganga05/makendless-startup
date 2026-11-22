@@ -2,18 +2,15 @@ import type { Metadata } from "next";
 import PageShell from "../../components/PageShell";
 import { ButtonLink } from "../../components/ui";
 import { LegalSections, type LegalSection } from "../../components/Prose";
-import { LIVE_URL, NUMBERS as N, OWNER as O } from "../../data/owner";
+import { NUMBERS as N, OWNER as O } from "../../data/owner";
+import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = {
-  alternates: { canonical: `${LIVE_URL}/terms` },
-  title: "Terms of Service",
-  description: "Prices, payment, delivery, revisions, refunds, referrals and ownership when you work with MAKENDLESS.",
-};
+export const metadata: Metadata = pageMeta("Terms of Service", "Prices, payment, delivery, revisions, refunds, referrals and ownership when you work with MAKENDLESS.", "/terms");
 
 const lead = "These terms apply when you use the MAKENDLESS website or hire us for any service. By starting a project with us, you agree to them.";
 
 const sections: LegalSection[] = [
-  { id: "who", title: "1. Who we are", body: [`MAKENDLESS is a creative and technology studio based in ${O.city}, India. We provide video editing, motion graphics, websites, workflow automation, AI assistants, AI software and mobile apps.`] },
+  { id: "who", title: "1. Who we are", body: [`MAKENDLESS is a creative and technology studio based in India. We provide video editing, motion graphics, websites, workflow automation, AI assistants, AI software and mobile apps.`] },
   { id: "prices", title: "2. Prices and quotes", body: [[
     "Prices on our website are fixed starting prices for each service.",
     "Your estimate on the website is a guide. We confirm the final price, scope and delivery time with you on WhatsApp before any work starts.",
@@ -89,12 +86,12 @@ const sections: LegalSection[] = [
     "We are not responsible for problems caused by outside services (hosting, WhatsApp, payment gateways, app stores, AI providers).",
     "Our total responsibility for any project is limited to the amount you paid for that project.",
   ]] },
-  { id: "law", title: "14. Governing law", body: [`These terms follow the laws of India. Any dispute will be handled by the courts in ${O.city}, ${O.state}.`] },
+  { id: "law", title: "14. Governing law", body: [`These terms follow the laws of India. Any dispute will be handled by the ${O.courts}.`] },
   { id: "changes", title: "15. Changes to these terms", body: ["We may update these terms. The date at the top shows the latest version. Projects already confirmed follow the terms that applied when they started."] },
   { id: "contact", title: "16. Contact", body: [[
     `**Email:** ${O.email}`,
     `**WhatsApp:** ${O.whatsapp}`,
-    `**Location:** ${O.city}, ${O.state}, India`,
+    `**Location:** ${O.country}`,
   ]] },
 ];
 
@@ -111,7 +108,7 @@ export default function Page() {
               ))}
             </ol>
           </nav>
-          <ButtonLink href="/contact" tone="light" className="mt-5">Start a Project</ButtonLink>
+          <ButtonLink href="/start-project" tone="light" className="mt-5">Start a Project</ButtonLink>
         </aside>
         <LegalSections lead={lead} sections={sections} />
       </div>

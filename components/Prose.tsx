@@ -1,7 +1,12 @@
 /* Small text helpers for Privacy, Terms, FAQ and About. "**bold**" inside a string renders bold. */
 
-export function Rich({ text, strong = "font-bold text-dark" }: { text: string; strong?: string }) {
+function Bold({ text, strong }: { text: string; strong: string }) {
   return <>{text.split("**").map((s, i) => (i % 2 ? <strong key={i} className={strong}>{s}</strong> : s))}</>;
+}
+/** "**bold**" and "[link text](https://…)" inside a string. */
+export function Rich({ text, strong = "font-bold text-dark" }: { text: string; strong?: string }) {
+  const parts = text.split(/\[([^\]]+)\]\(([^)]+)\)/);
+  return <>{parts.map((p, i) => i % 3 === 1 ? <a key={i} href={parts[i + 1]} target="_blank" rel="noopener noreferrer" className="font-bold underline underline-offset-2">{p}</a> : i % 3 === 2 ? null : <Bold key={i} text={p} strong={strong} />)}</>;
 }
 
 export function Bullets({ items, strong, className = "" }: { items: string[]; strong?: string; className?: string }) {

@@ -22,7 +22,7 @@ const ENABLE_CTA_3D = true;
 export default function FinalCta() {
   const [nearRef, near] = useInView<HTMLElement>({ once: true, margin: "700px 0px", threshold: 0 });
   const [stageRef, onScreen] = useInView<HTMLDivElement>({ threshold: 0.02 });
-  const [headRef, shown] = useInView<HTMLHeadingElement>({ once: true, margin: "0px 0px -12% 0px", threshold: 0.2 });
+  const [headRef, shown] = useInView<HTMLHeadingElement>({ once: true });
   const [mode, setMode] = useState<"pending" | "3d" | "still">("pending");
   const [compact, setCompact] = useState(false);
   const [ready, setReady] = useState(false);
@@ -83,7 +83,7 @@ export default function FinalCta() {
           Tell us what you&rsquo;re building. We&rsquo;ll help you take the next step.
         </p>
         <div className="cta-action mt-8 sm:mt-10">
-          <MagneticLink href="/contact">Start a Project</MagneticLink>
+          <MagneticLink href="/start-project">Start a Project</MagneticLink>
         </div>
       </div>
     </section>

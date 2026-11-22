@@ -32,7 +32,8 @@ export function Socials({ className = "" }: { className?: string }) {
 export default function WhatsAppFloat() {
   const path = usePathname();
   const href = whatsappTo(SETTINGS.whatsappMessage);
-  if (!href || path?.startsWith("/admin")) return null;
+  /* Hidden on /admin, and on /start-project and /contact (they show WhatsApp already; the button covered form fields). */
+  if (!href || /^\/(admin|start-project|contact)(\/|$)/.test(path || "")) return null;
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="wa-float" aria-label="Chat on WhatsApp" title="Chat on WhatsApp">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d={WA} /></svg>

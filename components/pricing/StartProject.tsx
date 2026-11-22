@@ -7,6 +7,7 @@ import { SETTINGS, whatsappTo } from "../../data/settings";
 import { estimate, inr, unitLabel } from "../../lib/pricing";
 import { normalizeCode, normalizePhone } from "../../lib/referral";
 import { useSelection } from "./state";
+import { trackPixel } from "../MetaPixel";
 
 type CodeState = "" | "checking" | "valid" | "invalid" | "own" | "used";
 const CODE_MSG: Record<string, string> = { valid: "✓ ₹500 off applied", invalid: "This code isn't valid.", own: "You can't use your own referral code.", used: "This WhatsApp number has already used a referral discount." };
@@ -75,6 +76,7 @@ export default function StartProject() {
       if (!r.ok || !d.ok) throw new Error("save failed");
       setDone({ name: name.trim().split(/\s+/)[0], code: d.referralApplied ? d.code ?? null : null });
       setStatus("done");
+      trackPixel("Lead");
       clear(); setRef(null);
       window.scrollTo({ top: 0 });
     } catch {
@@ -103,7 +105,13 @@ export default function StartProject() {
             <Link href={editHref} className="for-link text-sm">Edit selection</Link>
           </div>
           {!ready ? <p className="mt-3 text-muted-dark">Loading…</p> : est.count === 0 ? (
-            <p className="mt-3 text-muted-dark">You haven&apos;t selected any services yet. <Link href="/studios" className="for-link">See services and prices</Link></p>
+            <div className="mt-3">
+              <p className="text-muted-dark">You haven&apos;t selected any services yet. Choose how you&apos;d like to start:</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Link href="/studios" className="for-btn for-btn-primary">Pick services and see prices</Link>
+                <Link href="/contact" className="for-btn for-btn-secondary">Not sure? Write us a brief</Link>
+              </div>
+            </div>
           ) : (
             <ul className="svc-lines">
               {est.lines.map((l) => (
@@ -126,7 +134,7 @@ export default function StartProject() {
               <>
                 <h2 className="svc-h2">Savings</h2>
                 <ul className="svc-savings">
-                  {est.combo && <li>{est.combo.name} applied: you save {inr(est.combo.save)}</li>}
+                  {est.combo && <li><b>{est.combo.name} applied</b> ({est.combo.inside}): you save {inr(est.combo.save)}</li>}
                   {est.videoDiscount > 0 && <li>Video discount ({est.videoPct}% off): −{inr(est.videoDiscount)}</li>}
                   {est.referralDiscount > 0 && <li>Referral discount −{inr(est.referralDiscount)}</li>}
                 </ul>
@@ -142,7 +150,7 @@ export default function StartProject() {
         {/* 4. requirements */}
         {reqs.length > 0 && (
           <section aria-labelledby="sp-req" className="svc-box">
-            <h2 id="sp-req" className="svc-h2">Your requirements</h2>
+            <h2 id="sp-req" className="svc-h2">{COPY.requirementsName} per service</h2>
             <dl className="svc-reqs">{reqs.map(([id, t]) => <div key={id}><dt>{SERVICES[id].name}</dt><dd>{t}</dd></div>)}</dl>
           </section>
         )}
@@ -181,7 +189,7 @@ export default function StartProject() {
           </div>
         )}
         <div>
-          <label htmlFor="sp-notes" className="svc-h4">Anything else we should know? (optional)</label>
+          <label htmlFor="sp-notes" className="svc-h4">{COPY.requirementsLabel}</label>
           <textarea id="sp-notes" className="for-field for-area-sm" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Deadline, budget, reference websites or videos you like" maxLength={1000} />
         </div>
         <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" value={hp} onChange={(e) => setHp(e.target.value)} />
@@ -201,6 +209,7 @@ export default function StartProject() {
           </div>
         )}
 
+        <p className="text-sm text-muted-dark">We use these details only to reply to you. <Link href="/privacy" className="for-link">Privacy Policy</Link></p>
         <ul className="svc-terms">{COPY.payment.map((t) => <li key={t}>{t}</li>)}</ul>
       </form>
     </div>

@@ -22,7 +22,7 @@ export function useReducedMotion() {
 export function useInView<T extends Element>(opts: { once?: boolean; margin?: string; threshold?: number } = {}) {
   const ref = useRef<T>(null);
   const [inView, setInView] = useState(false);
-  const { once = false, margin = "0px", threshold = 0.15 } = opts;
+  const { once = false, margin = "0px", threshold = 0.1 } = opts;
   const watched = useRef<{ el: Element | null; io: IntersectionObserver | null; done: boolean }>({ el: null, io: null, done: false });
   /* Runs after every render: (re)attaches when the element first appears or is swapped, so conditionally
      rendered targets are observed too (a one-shot effect missed them and they stayed "off-screen" forever). */
@@ -33,7 +33,8 @@ export function useInView<T extends Element>(opts: { once?: boolean; margin?: st
     w.el = el;
     if (!el) return;
     w.io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { setInView(true); if (once) { w.done = true; w.io?.disconnect(); } }
+      /* Already scrolled past (fast scroll / anchor jump) also counts, so a reveal never stays blank. */
+      if (e.isIntersecting || (once && e.boundingClientRect.bottom < 0)) { setInView(true); if (once) { w.done = true; w.io?.disconnect(); } }
       else if (!once) setInView(false);
     }, { rootMargin: margin, threshold });
     w.io.observe(el);
@@ -99,7 +100,7 @@ export function useTabs(count: number, index: number, setIndex: (i: number) => v
 type RevealKind = "mask-up" | "wipe-right" | "clip-down" | "scale-in" | "fade";
 /** Scroll-triggered reveal. Vary `kind` between elements; do not use the same one everywhere. CSS lives in globals.css (.rv-*). */
 export function Reveal({ children, kind = "mask-up", delay = 0, className = "", as: Tag = "div" }: { children: React.ReactNode; kind?: RevealKind; delay?: number; className?: string; as?: "div" | "span" | "li" | "p" }) {
-  const [ref, inView] = useInView<HTMLElement>({ once: true, margin: "0px 0px -8% 0px" });
+  const [ref, inView] = useInView<HTMLElement>({ once: true });
   const T = Tag as "div";
   return (
     /* The observed host is never clipped; the clip/mask lives on the inner span (an element clipped to nothing
@@ -141,7 +142,7 @@ export function useFitText<T extends HTMLElement>(ref: React.RefObject<T | null>
 
 /** Headline that rises word by word out of a mask when scrolled into view. The full text stays readable to screen readers. */
 export function KineticHeading({ text, accent, as: Tag = "h2", className = "", id, accentClass = "prism-text" }: { text: string; accent?: string; as?: "h1" | "h2" | "h3"; className?: string; id?: string; accentClass?: string }) {
-  const [ref, inView] = useInView<HTMLHeadingElement>({ once: true, margin: "0px 0px -10% 0px" });
+  const [ref, inView] = useInView<HTMLHeadingElement>({ once: true });
   useFitText(ref);
   const words = text.split(" ");
   const accentWords = accent ? accent.split(" ") : [];
@@ -151,7 +152,7 @@ export function KineticHeading({ text, accent, as: Tag = "h2", className = "", i
       {all.map((x, i) => (
         <Fragment key={i}>
           <span aria-hidden="true" className="kh-word">
-            <span className={`kh-inner ${x.a ? accentClass : ""}`} style={{ transitionDelay: `${i * 0.07}s` }}>{x.w}</span>
+            <span className={`kh-inner ${x.a ? accentClass : ""}`} style={{ transitionDelay: `${Math.min(i * 0.015, 0.06)}s` }}>{x.w}</span>
           </span>
           {i < all.length - 1 ? " " : ""}
         </Fragment>

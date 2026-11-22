@@ -6,6 +6,8 @@ import Footer from "../components/Footer";
 import { SelectionProvider } from "../components/pricing/state";
 import { HOME_DESCRIPTION, HOME_TITLE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../lib/site";
 import WhatsAppFloat from "../components/WhatsAppFloat";
+import PublicChrome from "../components/PublicChrome";
+import MetaPixel from "../components/MetaPixel";
 import { services } from "../data/pricing";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", adjustFontFallback: false });
@@ -34,9 +36,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           description: SITE_DESCRIPTION, slogan: "We make ideas impossible to ignore.",
           knowsAbout: services.map((s) => s.name),
         }) }} />
-        <Nav />
+        <PublicChrome><Nav /></PublicChrome>
         <SelectionProvider><main id="main">{children}</main><WhatsAppFloat /></SelectionProvider>
-        <Footer />
+        <PublicChrome><Footer /></PublicChrome>
+        <MetaPixel />
       </body>
     </html>
   );

@@ -58,7 +58,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
               </p>
             )}
             <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href={`/contact?service=${id}`}>{beta ? "Tell us you're interested" : "Start a Project"} <Arrow /></ButtonLink>
+              <ButtonLink href={beta ? `/contact?service=${id}` : "/start-project"}>{beta ? "Tell us you're interested" : "Start a Project"} <Arrow /></ButtonLink>
               <ButtonLink href="#services" variant="secondary">See services</ButtonLink>
             </div>
             {beta && <div className="mt-6"><p className="mb-2 text-sm font-bold text-light">Join the waitlist</p><Waitlist tone="dark" /></div>}
@@ -157,7 +157,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
               {beta ? "Tell us what you'd want from it. We'll use it to shape the beta." : "Tell us what you're building, or pick your services and see the price and delivery time straight away."}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href={`/contact?service=${id}`} tone="light">{beta ? "Tell us you're interested" : "Start a Project"} <Arrow /></ButtonLink>
+              <ButtonLink href={beta ? `/contact?service=${id}` : "/start-project"} tone="light">{beta ? "Tell us you're interested" : "Start a Project"} <Arrow /></ButtonLink>
               {!beta && <a href="#services" className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-ink/25 px-6 py-3 text-[15px] font-bold text-dark transition duration-200 hover:border-ink hover:bg-ink/5 active:scale-[.96]">See prices</a>}
             </div>
           </div>

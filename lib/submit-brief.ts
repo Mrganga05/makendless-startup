@@ -10,4 +10,5 @@ export async function submitBrief(fields: Record<string, string | string[]>, sim
   const r = await fetch("/api/leads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ source: "contact", ...fields }) });
   const d = (await r.json().catch(() => ({}))) as { ok?: boolean };
   if (!r.ok || !d.ok) throw new Error("save failed");
+  (window as unknown as { fbq?: (...a: unknown[]) => void }).fbq?.("track", "Lead");
 }

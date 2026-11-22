@@ -4,7 +4,7 @@
    free items and a requirements box. Every service has an anchor id, so /create#short-videos opens it directly.
    All prices and words come from data/pricing.ts; sample links from data/samples.ts. */
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { COPY, orderedOptions, mostPicked, REQUIREMENTS_MAX, servicesOf, startingFrom, STUDIOS, type Service, type StudioKey } from "../data/pricing";
+import { cardPriceText, COPY, orderedOptions, mostPicked, REQUIREMENTS_MAX, servicesOf, startingFrom, STUDIOS, type Service, type StudioKey } from "../data/pricing";
 import { SAMPLES } from "../data/samples";
 import { estimate, inr, unitLabel } from "../lib/pricing";
 import { useSelection } from "./pricing/state";
@@ -110,7 +110,7 @@ function Panel({ s, onBack }: { s: Service; onBack: () => void }) {
 export default function Packages({ studio }: { studio: StudioKey }) {
   const { sel } = useSelection();
   const [open, setOpen] = useState<string | null>(null);
-  const [headRef, headIn] = useInView<HTMLHeadingElement>({ once: true, margin: "0px 0px -10% 0px" });
+  const [headRef, headIn] = useInView<HTMLHeadingElement>({ once: true });
   const sheet = useRef<HTMLDivElement>(null);
   const st = STUDIOS[studio];
   const list = servicesOf(studio);
@@ -178,7 +178,7 @@ export default function Packages({ studio }: { studio: StudioKey }) {
                       </span>
                       <span className="svc-card-name">{s.name}</span>
                       <span className="svc-card-line">{s.line}</span>
-                      <span className="svc-card-from">Starting from <b>{inr(startingFrom(s))}</b></span>
+                      <span className="svc-card-from">{s.id === "website-care" ? <b>{cardPriceText(s)}</b> : <>Starting from <b>{inr(startingFrom(s))}</b></>}</span>
                       <span className="svc-card-most">Most picked: {mostPicked(s)}</span>
                       <span className="svc-card-go" aria-hidden="true">→</span>
                     </button>

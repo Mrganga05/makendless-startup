@@ -1,4 +1,5 @@
-import { OWNER as O } from "./owner";
+import { CARE_MONTHLY, COPY } from "./pricing";
+import { inr } from "../lib/pricing";
 
 /*
  * How we work + FAQ copy.
@@ -18,13 +19,13 @@ export type Faq = { q: string; a: string; list?: string[]; after?: string };
 export const faqGroups: { title: string; items: Faq[] }[] = [
   { title: "Getting started", items: [
     { q: "How do I start a project?", a: "Pick the services you need on our website. You'll see the price and delivery time straight away. Then press \"Start a Project\", add your name and WhatsApp number, and we'll message you within 24 hours with your final price and timeline." },
-    { q: "I'm not sure what I need. Can you help?", a: "Yes. Tell us about your business or channel in the \"Your requirements\" box, or message us on WhatsApp. We'll suggest the best service or combo pack for you." },
+    { q: "I'm not sure what I need. Can you help?", a: `Yes. Tell us about your business or channel in the \"${COPY.requirementsName}\" box, or message us on WhatsApp. We'll suggest the best service or combo pack for you.` },
     { q: "What do you need from me?", a: "It depends on the service. After you select one, our website shows a \"What we need from you\" list. Usually:", list: [
       "**Videos:** raw footage (Google Drive link), reference videos, logo and brand colors",
       "**Websites:** logo, business details, photos, and domain or hosting login if you have one",
       "**Automation and AI:** your WhatsApp Business number, your FAQs, and logins for the apps to connect",
     ] },
-    { q: `Do you work with clients outside ${O.city}?`, a: "Yes. We work online with clients across India and abroad. Everything happens over WhatsApp, Google Drive and video calls." },
+    { q: "Do you work with clients outside India?", a: "Yes. We work online with clients across India and abroad." },
   ] },
   { title: "Prices and payment", items: [
     { q: "Are your prices fixed?", a: "Yes. Every service has a fixed price shown on our website, and the same quality for every client. We confirm the final price on WhatsApp before work starts. Custom requests are quoted after a quick chat." },
@@ -50,9 +51,8 @@ export const faqGroups: { title: string; items: Faq[] }[] = [
     { q: "How does the referral offer work?", a: "Get your unique referral link on our website and share it. When a friend starts a project of ₹2,000 or more with your link, they get ₹500 off and you get ₹500 off your next order." },
   ] },
   { title: "Support", items: [
-    { q: "Do you offer ongoing support?", a: "Yes. Website Care starts at ₹1,499/month, and monthly care plans are available for automation and AI assistants. For videos, the Monthly 12 Reels plan and the Creator Pack cover regular editing." },
+    { q: "Do you offer ongoing support?", a: `Yes. Website Care is an add-on at ${inr(CARE_MONTHLY)}/month, and monthly care plans are available for automation and AI assistants. For videos, the Monthly 12 Reels plan and the Creator Pack cover regular editing.` },
     { q: "Is digital marketing available?", a: "Digital marketing (GROW) is still in beta and not open for orders yet." },
-    { q: "Still have a question?", a: `Message us on WhatsApp at ${O.whatsapp} or press "Start a Project" and ask in the requirements box.` },
   ] },
 ];
 

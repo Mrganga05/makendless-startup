@@ -1,18 +1,17 @@
 /**
  * Owner details for Privacy, Terms, FAQ and About.
- * Anything still in [BRACKETS] has not been supplied yet. Change it here once and every page updates.
- * Do not publish while brackets remain.
+ * Change a value here once and every page updates.
  */
 export const LIVE_URL = "https://makendless.vercel.app";
 
 export const OWNER = {
   email: "makendlessofficial@gmail.com",
   whatsapp: "+91 91603 82004", // temporary number: change it here only
-  city: "[CITY]",
-  state: "[STATE]",
-  grievanceName: "[GRIEVANCE CONTACT NAME]",
-  founderName: "[FOUNDER NAME]",
-  founderPhoto: "", // e.g. "/team/founder.jpg" in public/. Empty = no photo shown.
+  /** Public location: only "India" is shown on the site. */
+  country: "India",
+  /** Courts named in Terms > Governing law (the only place a city appears). */
+  courts: "courts in Hyderabad, Telangana, India",
+  grievanceName: "Grievance Officer, MAKENDLESS Team",
   lastUpdated: "19 November 2026", // shown under the Privacy and Terms titles
 };
 
@@ -21,14 +20,9 @@ export const NUMBERS = {
   fileDays: 60, // project files kept after delivery
   enquiryMonths: 12, // enquiries that don't become projects
   referralExtraMonths: 12, // referral records kept after the program
-  replyDays: 30, // reply to a privacy request
+  replyDays: 7, // reply to privacy questions and complaints
   balanceDays: 15, // balance due after delivery
   creditMonths: 6, // referral credits stay valid
-  subscribers: "10K+",
-  teamSize: 6,
-  editors: 2,
-  developers: 2,
-  clientLeads: 2,
 };
 
 const waDigits = OWNER.whatsapp.replace(/\D/g, "");
