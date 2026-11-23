@@ -148,7 +148,9 @@ export async function POST(req: Request) {
       console.error(`chat: Anthropic API ${e.status}`, e.message);
       const type = (e.error as { error?: { type?: string } } | undefined)?.error?.type ?? "error";
       const low = /credit balance/i.test(e.message) ? "-no-credit" : "";
-      return json({ error: OFFLINE, why: `api-${e.status ?? "x"}-${type}${low}` }, 503);
+      /* TEMP diagnostic: Anthropic's error text (never contains the key). Remove once the chatbot is confirmed working. */
+      const detail = e.status === 400 ? (e.error as { error?: { message?: string } } | undefined)?.error?.message?.slice(0, 160) : undefined;
+      return json({ error: OFFLINE, why: `api-${e.status ?? "x"}-${type}${low}`, ...(detail ? { detail } : {}) }, 503);
     }
     console.error("chat: failed", e);
     return json({ error: OFFLINE, why: "server" }, 503);
