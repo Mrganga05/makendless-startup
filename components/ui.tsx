@@ -174,10 +174,10 @@ export function BetaBadge({ tone = "dark", label = "Beta", className = "" }: { t
 }
 
 /** Required caption on every original demo. `kind="illustrative"` for all marketing (GROW) demos. */
-/** Where the real work for a studio lives: the homepage "Our work" section, else the first sample link (data/samples.ts or /admin). */
+/** Where the real work for a studio lives: /work filtered to that studio (data/work.ts), else the first sample link (data/samples.ts). */
 export function realWorkHref(studio?: string): string | null {
-  if (studio === "create" && WORK.reels.length) return "/#work";
-  if (studio === "build" && WORK.sites.length) return "/#work";
+  if (studio === "create" && WORK.reels.length) return "/work?type=create";
+  if (studio === "build" && WORK.sites.length) return "/work?type=build";
   if (studio !== "create" && studio !== "build") return null;
   for (const s of servicesOf(studio)) { const url = SAMPLES[s.id]?.find(Boolean); if (url) return url; }
   return null;

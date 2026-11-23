@@ -5,6 +5,7 @@ import { BuildWorld, CreateWorld, GrowWorld } from "./studios/Worlds";
 import Packages from "./Packages";
 import { PricingRegion } from "./pricing/state";
 import Waitlist from "./Waitlist";
+import RecentWork from "./work/RecentWork";
 import { Arrow, BetaBadge, ButtonLink, DemoCaption, Eyebrow, KineticHeading, Reveal } from "./ui";
 
 /* Division page (/create, /build, /grow). One template, three identities: accent colour, hero world and
@@ -74,6 +75,9 @@ export default function StudioPage({ id }: { id: StudioId }) {
 
       {/* SERVICES — CREATE / BUILD: "Services and prices", the selector for this studio only */}
       {!beta && <PricingRegion><Packages studio={id as StudioKey} /></PricingRegion>}
+
+      {/* RECENT WORK — real reels (CREATE) or live websites (BUILD), from data/work.ts */}
+      {(id === "create" || id === "build") && <RecentWork studio={id} />}
 
       {/* SERVICES — GROW (beta): what is planned, no prices */}
       {beta && (

@@ -90,5 +90,6 @@ Without the key the chat still opens, but says the assistant is offline and poin
 
 ## Change details later
 - Email, WhatsApp number, links: `data/owner.ts`, or /admin → Settings.
-- Prices, packs, FAQ, work samples, reviews: /admin → **Website** (no code needed).
+- Prices, packs, FAQ, reviews: /admin → **Website** (no code needed).
+- Real work (reels and websites): one entry each in `data/work.ts` (ask Claude: send the video + poster, or the website link).
 - Referral reward and minimum: /admin → Settings.

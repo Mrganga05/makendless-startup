@@ -9,6 +9,7 @@
 @import "./styles/form.css";
 @import "./styles/pages.css";
 @import "./styles/chat.css";
+@import "./styles/work.css";
 
 @theme {
   --font-sans: var(--font-syne), ui-sans-serif, system-ui, sans-serif;

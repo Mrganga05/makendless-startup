@@ -3,6 +3,7 @@
    The server (app/api/admin/route.ts) enforces the same rules: this UI only hides what the API never sends. */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { SiteContent } from "../../data/content";
+import { WORK } from "../../data/work";
 import { inr } from "../../lib/pricing";
 import { downloadCsv, downloadXlsx, parseCsv, type Cell } from "../../lib/sheet";
 
@@ -780,24 +781,12 @@ function Website({ d, reload }: { d: Data; reload: () => void }) {
 
       {part === "Work samples" && (
         <div className="grid gap-3">
-          <p className="text-sm text-muted-dark">&ldquo;Our Work&rdquo; appears on the homepage only when at least one visible sample exists. Reels: Instagram/YouTube links. Sites: website links. Image: an image URL (optional).</p>
-          {c.work.map((w, wi) => {
-            const setW = (nw: Partial<typeof w>) => { const a = [...c.work]; a[wi] = { ...w, ...nw }; set({ work: a }); };
-            return (
-              <div key={w.id} className={`${card} grid gap-2 sm:grid-cols-2`}>
-                <label className={lbl}>Type<select className="for-field" value={w.kind} onChange={(e) => setW({ kind: e.target.value as "reel" | "site" })}><option value="reel">Reel / video</option><option value="site">Website</option></select></label>
-                <label className={lbl}>Title<input className="for-field" value={w.title} onChange={(e) => setW({ title: e.target.value })} /></label>
-                <label className={lbl}>Link<input className="for-field" value={w.url} onChange={(e) => setW({ url: e.target.value })} /></label>
-                <label className={lbl}>Image URL<input className="for-field" value={w.image || ""} onChange={(e) => setW({ image: e.target.value || undefined })} /></label>
-                <div className="flex flex-wrap items-center justify-between gap-2 sm:col-span-2">
-                  <label className="flex min-h-11 items-center gap-2 text-sm font-bold"><input type="checkbox" checked={!!w.hidden} onChange={(e) => setW({ hidden: e.target.checked })} /> Hidden</label>
-                  <Up onUp={() => set({ work: move(c.work, wi, -1) })} onDown={() => set({ work: move(c.work, wi, 1) })} />
-                  <button type="button" className="for-btn for-btn-ghost !min-h-9 !px-3 text-sm text-[#c2183a]" onClick={() => confirm("Delete this sample? It goes to Trash when you save.") && set({ work: c.work.filter((_, i) => i !== wi) })}>Delete</button>
-                </div>
-              </div>
-            );
-          })}
-          <button type="button" className="for-btn for-btn-ghost w-fit" onClick={() => set({ work: [...c.work, { id: uid(), kind: "reel", title: "", url: "" }] })}>+ Add work sample</button>
+          <p className="text-sm text-muted-dark">Real work (reels and websites) now lives in one file, <code>data/work.ts</code>, so every reel keeps its video, poster and tags. To add a project, ask Claude to add one entry there (send the video link and poster, or the website link). It then shows on /work, the homepage, /create or /build, and the chatbot knows it.</p>
+          <ul className="grid gap-2">
+            {[...WORK.reels.map((r) => ({ k: `r-${r.id}`, kind: "Reel", title: r.title, url: r.video })), ...WORK.sites.map((x) => ({ k: `s-${x.id}`, kind: "Website", title: x.name, url: x.url }))].map((w) => (
+              <li key={w.k} className={`${card} flex flex-wrap items-center justify-between gap-2`}><span><b>{w.title}</b> <span className="text-sm text-muted-dark">· {w.kind}</span></span><a href={w.url} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-violet underline">Open ↗</a></li>
+            ))}
+          </ul>
         </div>
       )}
 

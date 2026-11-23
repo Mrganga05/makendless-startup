@@ -1,11 +1,11 @@
 /* Website content that the Owner edits in /admin → Website content (stored in the database, table site_content).
-   The code values in data/pricing.ts, data/process.ts and data/work.ts are the defaults until something is saved.
+   The code values in data/pricing.ts and data/process.ts are the defaults until something is saved. Work items come only from data/work.ts.
    applyContent() swaps the live values in place, on the server (lib/content.ts) and in the browser (ContentBoot). */
 import { combos, rebuildIndexes, REFERRAL, services, type Combo, type Service } from "./pricing";
 import { faqGroups, faqs, type Faq } from "./process";
 import { OWNER } from "./owner";
 import { SETTINGS } from "./settings";
-import { REVIEWS, WORK } from "./work";
+import { REVIEWS } from "./work";
 
 export type WorkItem = { id: string; kind: "reel" | "site"; title: string; url: string; image?: string; hidden?: boolean };
 export type Review = { id: string; name: string; role?: string; text: string; hidden?: boolean };
@@ -16,7 +16,8 @@ const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
 /** The code defaults (what the site shows before anything is saved in /admin). */
 export const DEFAULT_CONTENT: SiteContent = clone({
   services, combos, faq: faqGroups,
-  work: [...WORK.reels.map((r, i) => ({ id: `r${i}`, kind: "reel" as const, title: r.title || "", url: r.url, image: r.cover })), ...WORK.sites.map((x, i) => ({ id: `s${i}`, kind: "site" as const, title: x.name, url: x.url, image: x.image }))],
+  /* Work is no longer edited here: data/work.ts is the one place (it carries videos, posters and screenshots). */
+  work: [],
   reviews: [],
 });
 const DEFAULT_SETTINGS = { whatsapp: SETTINGS.whatsapp, email: SETTINGS.email, discount: REFERRAL.discount, credit: REFERRAL.credit, min: REFERRAL.minTotal };
@@ -35,9 +36,6 @@ export function applyContent(c: Partial<SiteContent> | null, s: SiteSettings | n
   const faq = clone(src.faq?.length ? src.faq : DEFAULT_CONTENT.faq);
   swap(faqGroups, faq);
   swap(faqs, faq.flatMap((g) => g.items));
-  const work = (src.work || []).filter((w) => !w.hidden && w.url);
-  swap(WORK.reels, work.filter((w) => w.kind === "reel").map((w) => ({ url: w.url, title: w.title, cover: w.image })));
-  swap(WORK.sites, work.filter((w) => w.kind === "site").map((w) => ({ name: w.title || w.url, url: w.url, image: w.image })));
   swap(REVIEWS, (src.reviews || []).filter((r) => !r.hidden && r.text).map((r) => ({ name: r.name, role: r.role, text: r.text })));
   const num = (v: string | undefined, d: number) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.round(n) : d; };
   SETTINGS.whatsapp = OWNER.whatsapp = s?.whatsapp?.trim() || DEFAULT_SETTINGS.whatsapp;

@@ -5,10 +5,11 @@ Updated 2026-11-23. The site is live with published, fixed prices and one Start 
 1. **Meta Pixel ID** → Vercel → Project → Settings → Environment Variables → `NEXT_PUBLIC_META_PIXEL_ID` (Production), then redeploy. Empty = no pixel.
 2. **Database and email alerts** → follow **SETUP-GUIDE.md** (Supabase + Resend + Vercel keys). Until then forms show the WhatsApp fallback and /admin can't log in.
 3. **Run `supabase/schema.sql` in Supabase** (SETUP-GUIDE step 3: adds lead Notes and the Proposal status), switch off public sign-ups (step 4), create your /admin password (step 5), then add `CRON_SECRET` in Vercel.
-4. **Prices, packs, FAQ, work samples, reviews** → /admin → Website (no code needed).
+4. **Prices, packs, FAQ, reviews** → /admin → Website (no code needed).
 5. **Team logins** → /admin → Settings → + Add member, with a password; send it to them privately.
 6. **WhatsApp number / email** → /admin → Settings.
 7. **GROW (Beta)** launch decision → remove the Beta labels in `data/pricing.ts` when ready.
 8. Optional: more social links in `data/owner.ts` (SOCIALS).
 9. **Chatbot** → add your Claude API key in Vercel as `ANTHROPIC_API_KEY` (SETUP-GUIDE step 8), then redeploy. Until then the chat button opens but says the assistant is offline and points to WhatsApp.
-10. **Real work** → add reels and websites in /admin → Website → **Work samples** (or per-service links in `data/samples.ts`). The "Concept demo" labels on CREATE / BUILD then turn into "See our real work" links by themselves.
+10. **Real work** → it lives in one file, `data/work.ts` (6 reels, 3 websites now). To add a project, send Claude the video link + poster, or the website link; it adds one entry and takes the screenshots. It appears on /work, the homepage, /create or /build, and the chatbot knows it.
+11. **Client permission**: the Work page names "Seven Hills Global Pvt Ltd" (as you asked) and links to the video-studio site without naming it. Make sure both clients are happy to be shown.

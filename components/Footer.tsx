@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { Wordmark } from "./Nav";
 import { SETTINGS, whatsappTo } from "../data/settings";
-import { hasWork } from "../data/work";
 import { Socials } from "./WhatsAppFloat";
 
 const cols: { title: string; links: { label: string; href: string; beta?: boolean }[] }[] = [
-  { title: "Services", links: [{ label: "CREATE", href: "/create" }, { label: "BUILD", href: "/build" }, { label: "GROW", href: "/grow", beta: true }, { label: "All services", href: "/studios" }] },
+  { title: "Services", links: [{ label: "CREATE", href: "/create" }, { label: "BUILD", href: "/build" }, { label: "GROW", href: "/grow", beta: true }, { label: "All services", href: "/studios" }, { label: "Our work", href: "/work" }] },
   { title: "Company", links: [{ label: "About", href: "/about" }, { label: "FAQ", href: "/faq" }, { label: "Refer & Earn", href: "/#refer" }, { label: "Contact", href: "/contact" }] },
   { title: "Legal", links: [{ label: "Privacy", href: "/privacy" }, { label: "Terms", href: "/terms" }] },
 ];
@@ -47,7 +46,7 @@ export default function Footer() {
       </div>
       <div className="mx-auto mt-12 flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-sm text-muted">
         <p>© {new Date().getFullYear()} MAKENDLESS</p>
-        <p>{hasWork() ? "Demo animations on this site are concept pieces. Our work section shows real projects." : "All demo visuals on this site are original concept pieces."}</p>
+        <p>Concept visuals are marked as demos. See real projects on our <Link href="/work" className="font-semibold text-light underline decoration-aqua-bright underline-offset-4 hover:text-aqua-bright">Work page</Link>.</p>
       </div>
       {/* Ghost wordmark: SVG textLength makes it span the container exactly at every width (CSS font sizing clipped it). */}
       <svg aria-hidden="true" viewBox="0 0 1000 118" className="pointer-events-none mx-auto mt-10 block w-full max-w-7xl select-none">

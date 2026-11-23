@@ -12,7 +12,8 @@ export const OWNER = {
   /** Courts named in Terms > Governing law (the only place a city appears). */
   courts: "courts in Hyderabad, Telangana, India",
   grievanceName: "Grievance Officer, MAKENDLESS Team",
-  lastUpdated: "19 November 2026", // shown under the Privacy and Terms titles
+  lastUpdated: "19 November 2026", // shown under the Terms title
+  privacyUpdated: "24 November 2026", // shown under the Privacy title
 };
 
 /** Numbers used in the policies and About page. Edit freely. */

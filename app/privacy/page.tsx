@@ -13,12 +13,15 @@ const lead = `MAKENDLESS ("we", "us") is a creative and technology studio based 
 const sections: LegalSection[] = [
   { id: "collect", title: "1. Information we collect", body: [
     { h: "Information you give us" },
+    "We collect your name, WhatsApp number and messages through the Start a Project form, the contact brief, the referral form (Refer and earn), the GROW waitlist and our AI chatbot (the MAKENDLESS Assistant). This includes:",
     [
       "Your name and WhatsApp number, and your email if you share it",
       "The services you select, your requirements, and any messages you send us",
       "Files and links you share for your project: footage, logos, photos, website text, logins and access details",
       "Referral details: your referral code, and the name and WhatsApp number of people who use your code",
     ],
+    { h: "The AI chatbot" },
+    ["Chat messages are sent to our AI provider only to write the reply, and are not stored by us. If you give the chatbot your name and WhatsApp number, we save them with a short note of what you need, so the team can reply. The conversation itself stays in your browser and is cleared when you close the tab."],
     { h: "Payment information" },
     ["We record what you paid and when. Card, UPI and bank details are handled by our payment provider. We never see or store them."],
     { h: "Information collected automatically" },
@@ -32,7 +35,7 @@ const sections: LegalSection[] = [
       "To run our referral program and apply discounts",
       "To provide support after delivery",
     ],
-    "We do not sell your information, and we do not use it for anything you haven't asked for. We will only send you marketing messages if you agree to receive them.",
+    "Your information is used only to reply to your enquiry and to manage your project. We never sell it, and we never share it for anyone else's marketing or purposes. We will only send you marketing messages if you agree to receive them.",
   ] },
   { id: "files", title: "3. Your project files", body: [[
     "Your footage, files and business information are used only for your project.",
@@ -42,10 +45,11 @@ const sections: LegalSection[] = [
     "Logins and passwords you share are used only for your project. Please change them after we finish.",
   ]] },
   { id: "share", title: "4. Who we share information with", body: [
-    "We share only what is needed, with:",
+    "We never sell your information. The service providers below process it only on our behalf, to run the website and your project, and only what is needed:",
     [
       "**Hosting providers** that run our website (e.g. Vercel)",
       "**Database and email providers** (e.g. Supabase, Resend)",
+      "**AI provider** (Anthropic), which processes chatbot messages only to write the replies",
       "**Payment providers** that process your payment",
       "**WhatsApp (Meta)**, when we message you or set up WhatsApp services for you",
       "**Cloud storage** (e.g. Google Drive) used to share project files",
@@ -67,6 +71,7 @@ const sections: LegalSection[] = [
       "Stop using it, by withdrawing your consent",
       "Nominate someone to act for you if you are unable to",
     ],
+    `**To delete your data**, email ${O.email} from any address and tell us the name and WhatsApp number you used. We delete it within ${N.replyDays} days, except records the law requires us to keep (such as invoices).`,
     `To use any of these rights, contact us (section 10). We will reply within ${N.replyDays} days.`,
   ] },
   { id: "children", title: "7. Children", body: ["Our services are for people aged 18 and over. If you are under 18, a parent or guardian must contact us for you."] },
@@ -87,7 +92,7 @@ const sections: LegalSection[] = [
 export default async function Page() {
   await loadContent();
   return (
-    <PageShell eyebrow="Legal" title="Privacy" accent="Policy." intro={`Last updated: ${O.lastUpdated}`} light>
+    <PageShell eyebrow="Legal" title="Privacy" accent="Policy." intro={`Last updated: ${O.privacyUpdated}`} light>
       <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
         <LegalSections lead={lead} sections={sections} />
         <aside className="h-fit rounded-[1.75rem] bg-white p-7 ring-1 ring-line lg:sticky lg:top-24">

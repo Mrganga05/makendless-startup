@@ -4,14 +4,14 @@ import "./globals.css";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import { SelectionProvider } from "../components/pricing/state";
-import { HOME_DESCRIPTION, HOME_TITLE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../lib/site";
+import { HOME_DESCRIPTION, HOME_TITLE, SITE_NAME, SITE_URL } from "../lib/site";
 import WhatsAppFloat from "../components/WhatsAppFloat";
 import ChatWidget from "../components/ChatWidget";
 import PublicChrome from "../components/PublicChrome";
 import MetaPixel from "../components/MetaPixel";
 import ContentBoot from "../components/ContentBoot";
 import { loadContent } from "../lib/content";
-import { services } from "../data/pricing";
+import { structuredData } from "../lib/schema";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", adjustFontFallback: false });
 
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   keywords: ["video editing", "website development", "web design", "Reels editing", "YouTube editing", "e-commerce websites", "booking websites", "motion graphics", "creative studio", "MAKENDLESS"],
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
-  openGraph: { type: "website", siteName: SITE_NAME, title: HOME_TITLE, description: HOME_DESCRIPTION, url: "/" },
+  openGraph: { type: "website", siteName: SITE_NAME, title: HOME_TITLE, description: HOME_DESCRIPTION, url: "/", locale: "en_IN" },
   twitter: { card: "summary_large_image", title: HOME_TITLE, description: HOME_DESCRIPTION },
 };
 export const viewport: Viewport = { themeColor: "#0c1024", width: "device-width", initialScale: 1 };
@@ -38,11 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <noscript><style>{`.rv-mask-up>.rv-inner,.kh-inner{transform:none!important}.rv-wipe-right,.rv-clip-down{clip-path:none!important}.rv-scale-in,.rv-fade{opacity:1!important;transform:none!important}`}</style></noscript>
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-white focus:px-5 focus:py-3 focus:font-bold focus:text-black">Skip to content</a>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          "@context": "https://schema.org", "@type": "Organization", name: SITE_NAME, url: SITE_URL, logo: `${SITE_URL}/icon.svg`,
-          description: SITE_DESCRIPTION, slogan: "We make ideas impossible to ignore.",
-          knowsAbout: services.map((s) => s.name),
-        }) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData()) }} />
         <ContentBoot c={c} s={s}>
           <PublicChrome><Nav /></PublicChrome>
           <SelectionProvider><main id="main">{children}</main><WhatsAppFloat /><ChatWidget /></SelectionProvider>

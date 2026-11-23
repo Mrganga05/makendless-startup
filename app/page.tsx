@@ -1,6 +1,6 @@
 import Hero from "../components/Hero";
 import Studios from "../components/Studios";
-import OurWork from "../components/OurWork";
+import SelectedWork from "../components/work/SelectedWork";
 import Solutions from "../components/Solutions";
 import { ReferSection } from "../components/pricing/ReferEarn";
 import ProcessFaq from "../components/ProcessFaq";
@@ -14,7 +14,7 @@ export default async function Home() {
     <>
       <Hero />
       <Studios />
-      <OurWork />
+      <SelectedWork />
       <Reviews />
       <Solutions />
       {/* Services and prices live on /create and /build only. */}

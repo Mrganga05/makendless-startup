@@ -48,14 +48,17 @@ export function siteKnowledge(): string {
   out.push("", "## FAQ");
   for (const g of faqGroups) for (const f of g.items) out.push(`Q: ${f.q}`, `A: ${strip(fillTokens([f.a, ...(f.list ?? []).map((l) => `- ${l}`), f.after ?? ""].filter(Boolean).join("\n")))}`);
 
-  out.push("", "## Our work (real projects)");
-  const work = [...WORK.reels.map((r) => `- Reel: ${r.title || "Instagram reel"} — ${r.url}`), ...WORK.sites.map((x) => `- Website: ${x.name} — ${x.url}`)];
-  out.push(...(work.length ? [...work, "Shown on the homepage in the Our work section (/#work)."] : ["No public portfolio items are on the website yet. The animations on the site are concept demos, not client work. Offer to share samples on WhatsApp."]));
+  out.push("", "## Our work (real projects, all on /work; reels also on /create, websites also on /build)");
+  const work = [
+    ...WORK.reels.map((r) => `- Reel (CREATE, ${r.service}): ${r.title} — ${r.text}. Watch it on /work?type=create`),
+    ...WORK.sites.map((x) => `- Website (BUILD): ${x.name} (${x.category}) — ${x.text} Built: ${x.tags.join(", ")}. Live at ${x.url}`),
+  ];
+  out.push(...(work.length ? [...work, "The animated scenes elsewhere on the site are concept demos, marked as demos. Don't name any person or other brand beyond what is written here."] : ["No public portfolio items are on the website yet. The animations on the site are concept demos, not client work. Offer to share samples on WhatsApp."]));
   if (REVIEWS.length) out.push("", "## Client reviews", ...REVIEWS.map((r) => `- ${r.name}${r.role ? ` (${r.role})` : ""}: "${r.text}"`));
 
   out.push("", "## Contact and pages",
     `WhatsApp: ${SETTINGS.whatsapp || "via the WhatsApp button on the site"}. Email: ${SETTINGS.email || "via /contact"}.${SETTINGS.socials.instagram ? ` Instagram: ${SETTINGS.socials.instagram}` : ""}`,
-    "Pick services and see prices: /create (video editing) and /build (websites & technology). All studios and combo packs: /studios. Start a Project: /start-project. Not sure what you need: /contact (write a brief). All questions: /faq. Privacy: /privacy. Terms: /terms. Digital marketing beta: /grow.",
+    "Pick services and see prices: /create (video editing) and /build (websites & technology). All studios and combo packs: /studios. Real work: /work. Start a Project: /start-project. Not sure what you need: /contact (write a brief). All questions: /faq. Privacy: /privacy. Terms: /terms. Digital marketing beta: /grow.",
     "The team replies on WhatsApp within 24 hours with the final price and timeline.");
   return out.join("\n");
 }
