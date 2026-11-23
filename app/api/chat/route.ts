@@ -100,7 +100,8 @@ export async function POST(req: Request) {
   while (recent.length && recent[0].role !== "user") recent.shift();
   if (!recent.length || recent[recent.length - 1].role !== "user") return json({ error: "Please type a message." }, 400);
 
-  if (!process.env.ANTHROPIC_API_KEY) return json({ error: OFFLINE }, 503);
+  /* `why` is a short, non-secret reason code so the owner can see what to fix (shown only in the network reply). */
+  if (!process.env.ANTHROPIC_API_KEY?.trim()) return json({ error: OFFLINE, why: "no-key" }, 503);
   const ip = ipHash(req);
   if (limited(ip)) return json({ error: "You're sending messages quickly. Please wait a few minutes, or message us on WhatsApp." }, 429);
 
@@ -137,10 +138,15 @@ export async function POST(req: Request) {
     }
     return json({ reply: leadSaved ? "Thanks! The team will message you on WhatsApp within 24 hours." : "Sorry, something went wrong. Please try again.", leadSaved });
   } catch (e) {
-    if (e instanceof Anthropic.RateLimitError) return json({ error: "The assistant is busy right now. Please try again in a minute, or message us on WhatsApp." }, 503);
-    if (e instanceof Anthropic.AuthenticationError) { console.error("chat: ANTHROPIC_API_KEY was rejected"); return json({ error: OFFLINE }, 503); }
-    if (e instanceof Anthropic.APIError) { console.error(`chat: Anthropic API ${e.status}`, e.message); return json({ error: OFFLINE }, 503); }
+    if (e instanceof Anthropic.RateLimitError) return json({ error: "The assistant is busy right now. Please try again in a minute, or message us on WhatsApp.", why: "rate-limit" }, 503);
+    if (e instanceof Anthropic.AuthenticationError) { console.error("chat: ANTHROPIC_API_KEY was rejected"); return json({ error: OFFLINE, why: "key-rejected" }, 503); }
+    if (e instanceof Anthropic.APIError) {
+      console.error(`chat: Anthropic API ${e.status}`, e.message);
+      const type = (e.error as { error?: { type?: string } } | undefined)?.error?.type ?? "error";
+      const low = /credit balance/i.test(e.message) ? "-no-credit" : "";
+      return json({ error: OFFLINE, why: `api-${e.status ?? "x"}-${type}${low}` }, 503);
+    }
     console.error("chat: failed", e);
-    return json({ error: OFFLINE }, 503);
+    return json({ error: OFFLINE, why: "server" }, 503);
   }
 }
