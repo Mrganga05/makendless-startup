@@ -111,8 +111,8 @@ export async function POST(req: Request) {
   const params = {
     model: MODEL,
     max_tokens: MAX_TOKENS,
-    /* Short chat replies: thinking off, low effort, so all 400 tokens go to the answer. */
-    thinking: { type: "disabled" as const },
+    /* Haiku 5.5 thinks adaptively (it can't be switched off) and thinking counts toward the 400 tokens:
+       low effort keeps it to a minimum for short chat replies. */
     output_config: { effort: "low" as const },
     system: [{ type: "text" as const, text: `${RULES}\n\n<knowledge>\n${siteKnowledge()}\n</knowledge>`, cache_control: { type: "ephemeral" as const } }],
     ...(b.leadSaved ? {} : { tools: [SAVE_LEAD] }),
@@ -125,7 +125,11 @@ export async function POST(req: Request) {
       if (res.stop_reason === "refusal") return json({ reply: "I can only help with questions about MAKENDLESS services. What would you like to know?", leadSaved });
       const text = res.content.filter((c): c is Anthropic.TextBlock => c.type === "text").map((c) => c.text).join("\n").trim();
       const calls = res.content.filter((c): c is Anthropic.ToolUseBlock => c.type === "tool_use");
-      if (res.stop_reason !== "tool_use" || !calls.length) return json({ reply: text || "Sorry, I didn't catch that. Could you ask again?", leadSaved });
+      if (res.stop_reason !== "tool_use" || !calls.length) {
+        /* Cut off at the 400-token cap: keep the finished sentences, or ask for a shorter question. */
+        const cut = res.stop_reason === "max_tokens" ? text.replace(/[^.!?\n]*$/, "").trim() : text;
+        return json({ reply: cut || (res.stop_reason === "max_tokens" ? "That's a big question! Could you ask about one service at a time?" : "Sorry, I didn't catch that. Could you ask again?"), leadSaved });
+      }
       messages.push({ role: "assistant", content: res.content });
       const results: Anthropic.ToolResultBlockParam[] = [];
       for (const call of calls) {
