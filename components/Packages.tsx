@@ -9,6 +9,7 @@ import { SAMPLES } from "../data/samples";
 import { estimate, inr, unitLabel } from "../lib/pricing";
 import { useSelection } from "./pricing/state";
 import ReferEarn from "./pricing/ReferEarn";
+import { openChat } from "./ChatWidget";
 import { Reveal, useInView } from "./ui";
 
 const HEADLINE = [["Services", "and"], ["prices"]];
@@ -23,6 +24,16 @@ function Samples({ id }: { id: string }) {
       <summary className="svc-samples">See samples ↗</summary>
       <ul>{links.map((l, i) => <li key={l}><a href={l} target="_blank" rel="noopener noreferrer">Sample {i + 1} ↗</a></li>)}</ul>
     </details>
+  );
+}
+
+/* Opens the site's own chatbot (components/ChatWidget.tsx) so visitors can try an AI assistant live. */
+function TryAssistant({ className = "" }: { className?: string }) {
+  return (
+    <button type="button" className={`mk-try-ai ${className}`} onClick={openChat}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20l1-4.4A7.5 7.5 0 1 1 20 12.5Z" /></svg>
+      Try our live AI assistant
+    </button>
   );
 }
 
@@ -41,6 +52,7 @@ function Panel({ s, onBack }: { s: Service; onBack: () => void }) {
       </div>
       <h3 className="svc-panel-title">{s.name}</h3>
       <p className="svc-panel-line">{s.line}</p>
+      {s.id === "ai-assistants" && <TryAssistant className="mt-4" />}
 
       <h4 className="svc-h4 !mt-5">Options</h4>
       <ul className="svc-chips !mt-0" aria-label={`${s.name} options`}>
@@ -170,8 +182,8 @@ export default function Packages({ studio }: { studio: StudioKey }) {
               {list.map((s) => {
                 const n = s.options.filter((o) => sel.items[o.id]).length;
                 return (
-                  <li key={s.id} id={s.id}>
-                    <button type="button" className="svc-card" onClick={() => go(s.id)}>
+                  <li key={s.id} id={s.id} className={s.id === "ai-assistants" ? "relative" : undefined}>
+                    <button type="button" className={`svc-card${s.id === "ai-assistants" ? " svc-card--try" : ""}`} onClick={() => go(s.id)}>
                       <span className="svc-card-top">
                         {s.tag && <span className="svc-tag">{s.tag}</span>}
                         {n > 0 && <span className="svc-badge">{n} selected</span>}
@@ -182,6 +194,7 @@ export default function Packages({ studio }: { studio: StudioKey }) {
                       <span className="svc-card-most">Most picked: {mostPicked(s)}</span>
                       <span className="svc-card-go" aria-hidden="true">→</span>
                     </button>
+                    {s.id === "ai-assistants" && <TryAssistant className="svc-card-try" />}
                   </li>
                 );
               })}

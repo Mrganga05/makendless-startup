@@ -9,7 +9,7 @@ All three public forms send to the website's own server, which saves them in Sup
 | Start a Project (`/start-project`) and the contact brief (`/contact`) | `/api/leads` | `leads` (+ `referral_uses` when a code is used) + email alert | Source **Form** |
 | Refer and earn (homepage) | `/api/referral` | `referral_codes` + `leads` | Source **Referral**, and the Referrals tab |
 | GROW waitlist (`/grow`) | `/api/waitlist` | `waitlist` + `leads` | Source **Waitlist** |
-| Chatbot (not built yet) | `/api/leads` with `source: "chatbot"` | `leads` | Source **Chatbot** |
+| Chatbot "MAKENDLESS Assistant" (round button above WhatsApp) | `/api/chat` | `leads` + email alert | Source **Chatbot** |
 
 If the database is not connected, a form shows "send it on WhatsApp instead" and nothing is saved.
 
@@ -35,6 +35,7 @@ If `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are in the list, the database 
    | `SUPABASE_SERVICE_ROLE_KEY` | the service_role / secret key |
    | `RESEND_API_KEY` | optional: the Resend key for new-lead emails (step 7) |
    | `CRON_SECRET` | optional: any long random text (40 letters and numbers) for the weekly backup |
+   | `ANTHROPIC_API_KEY` | the Claude API key for the chatbot (step 8) |
 3. Top menu → **Deployments** → newest one → **⋯** → **Redeploy** → **Redeploy**. Wait until it says **Ready**.
 
 ## 3. Create or update the tables (run this now, and again whenever Claude says "the database changed")
@@ -66,12 +67,24 @@ A Team member sees only the leads and projects assigned to them, without prices.
 1. Open https://resend.com → **Sign up** with **makendlessofficial@gmail.com** (on the free plan Resend only sends to the email you signed up with).
 2. **API Keys** → **Create API Key** → name `makendless` → **Sending access** → **Add**. Copy the key (starts with `re_`) into Vercel as `RESEND_API_KEY` (step 2), then redeploy.
 
-## 8. Check it works
+## 8. Turn on the chatbot: Claude API key
+1. Open https://console.anthropic.com → sign up / log in with **makendlessofficial@gmail.com**.
+2. **Plans & Billing** (Settings → Billing) → add a payment method and buy a small amount of credit (for example $5). The chatbot uses the cheap Haiku model: replies are short (at most 400 tokens), so $5 lasts thousands of messages.
+3. Optional but smart: **Settings → Limits** → set a monthly spend limit (for example $10) so it can never cost more.
+4. **API Keys** → **Create Key** → name `makendless-website` → **Add**. Copy the key (starts with `sk-ant-`). It is shown only once.
+5. Vercel → **makendless-startup** → **Settings** → **Environment Variables** → Name `ANTHROPIC_API_KEY`, Value: the key. Tick **Production** and **Preview**. **Save**.
+6. **Deployments** → newest → **⋯** → **Redeploy**. Wait for **Ready**.
+7. Open https://makendless.vercel.app → round chat button (bottom right, above WhatsApp) → tap **Pricing**. You should get a short answer with real prices.
+
+Without the key the chat still opens, but says the assistant is offline and points visitors to WhatsApp. The key lives only in Vercel: the browser never sees it.
+
+## 9. Check it works
 1. Open https://makendless.vercel.app/contact, fill in the form with your own number, press **Review my brief**, then **Start a Project**. You should see "Thanks, …".
 2. Open https://makendless.vercel.app/admin → log in → **Leads**: the test lead is at the top with Source **Form**.
 3. Change its **Status** in the table and type a **note**; reload the page: both stay.
 4. Delete the test lead (open it → **Delete lead**).
-5. Tell Claude "it's set up" to run the final checks.
+5. Chatbot: tell it "I want a website", give a name and your number; the lead appears with Source **Chatbot**. Delete it after.
+6. Tell Claude "it's set up" to run the final checks.
 
 ## Change details later
 - Email, WhatsApp number, links: `data/owner.ts`, or /admin → Settings.

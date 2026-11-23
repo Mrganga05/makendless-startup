@@ -55,7 +55,7 @@ export default function Gateway({ id, verb, name, href, beta, index, from, servi
               <span className="stu-name">{name}</span>
               {from && <>{" "}<span className="stu-fromall">{from}</span></>}
             </h3>
-            <span className="stu-cap"><DemoCaption kind={beta ? "illustrative" : "concept"} tone={id === "grow" ? "light" : "dark"} /></span>
+            <span className="stu-cap"><DemoCaption kind={beta ? "illustrative" : "concept"} tone={id === "grow" ? "light" : "dark"} studio={id} inLink /></span>
             <ul className="stu-svc">
               {services.map((t) => <li key={t.name}>{t.name}{t.from && <span className="stu-from">· {t.from}</span>}</li>)}
             </ul>

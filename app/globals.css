@@ -8,6 +8,7 @@
 @import "./styles/cta.css";
 @import "./styles/form.css";
 @import "./styles/pages.css";
+@import "./styles/chat.css";
 
 @theme {
   --font-sans: var(--font-syne), ui-sans-serif, system-ui, sans-serif;

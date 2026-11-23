@@ -10,4 +10,5 @@ Updated 2026-11-23. The site is live with published, fixed prices and one Start 
 6. **WhatsApp number / email** → /admin → Settings.
 7. **GROW (Beta)** launch decision → remove the Beta labels in `data/pricing.ts` when ready.
 8. Optional: more social links in `data/owner.ts` (SOCIALS).
-9. **Chatbot** → not built yet. /admin already has a "Chatbot" source; a chatbot only needs to POST to `/api/leads` with `source: "chatbot"`.
+9. **Chatbot** → add your Claude API key in Vercel as `ANTHROPIC_API_KEY` (SETUP-GUIDE step 8), then redeploy. Until then the chat button opens but says the assistant is offline and points to WhatsApp.
+10. **Real work** → add reels and websites in /admin → Website → **Work samples** (or per-service links in `data/samples.ts`). The "Concept demo" labels on CREATE / BUILD then turn into "See our real work" links by themselves.

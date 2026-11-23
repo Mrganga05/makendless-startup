@@ -66,7 +66,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
           <Reveal kind="clip-down" className="min-w-0">
             <div className="relative">
               <StudioWorld id={id} className="h-[300px] sm:h-[380px] lg:h-[460px]" />
-              <DemoCaption kind={beta ? "illustrative" : "concept"} className="absolute bottom-4 left-4" />
+              <DemoCaption kind={beta ? "illustrative" : "concept"} studio={id} className="absolute bottom-4 left-4" />
             </div>
           </Reveal>
         </div>

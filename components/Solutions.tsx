@@ -121,7 +121,7 @@ export default function Solutions() {
                     {out ? <div key={`e${out.key}`} className="sol-edge" data-dir={out.dir} /> : null}
                   </div>
                 </div>
-                <DemoCaption tone="light" className="absolute bottom-3 left-3 z-10 bg-white/85 md:bottom-4 md:left-4" />
+                <DemoCaption tone="light" studio={s.primary} className="absolute bottom-3 left-3 z-10 bg-white/85 md:bottom-4 md:left-4" />
               </div>
             </Reveal>
             </div>

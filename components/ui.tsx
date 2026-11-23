@@ -2,6 +2,9 @@
 /* Shared UI primitives. Every section should use these instead of re-implementing tabs, reveals, buttons and labels. */
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useId, useRef, useState } from "react";
+import { servicesOf } from "../data/pricing";
+import { SAMPLES } from "../data/samples";
+import { WORK } from "../data/work";
 
 export const EASE = "cubic-bezier(.2,.8,.2,1)";
 
@@ -171,9 +174,30 @@ export function BetaBadge({ tone = "dark", label = "Beta", className = "" }: { t
 }
 
 /** Required caption on every original demo. `kind="illustrative"` for all marketing (GROW) demos. */
-export function DemoCaption({ kind = "concept", tone = "dark", className = "" }: { kind?: "concept" | "illustrative"; tone?: "dark" | "light"; className?: string }) {
+/** Where the real work for a studio lives: the homepage "Our work" section, else the first sample link (data/samples.ts or /admin). */
+export function realWorkHref(studio?: string): string | null {
+  if (studio === "create" && WORK.reels.length) return "/#work";
+  if (studio === "build" && WORK.sites.length) return "/#work";
+  if (studio !== "create" && studio !== "build") return null;
+  for (const s of servicesOf(studio)) { const url = SAMPLES[s.id]?.find(Boolean); if (url) return url; }
+  return null;
+}
+
+/** Label on the animated scenes. Shows "Concept demo" until the studio has real work; then it becomes a link to that work.
+ *  `inLink`: the caption sits inside another link (studio cards), so it can't be a link itself. */
+export function DemoCaption({ kind = "concept", tone = "dark", className = "", studio, inLink = false }: { kind?: "concept" | "illustrative"; tone?: "dark" | "light"; className?: string; studio?: string; inLink?: boolean }) {
+  const pill = `inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tone === "dark" ? "bg-white/10 text-light ring-1 ring-white/20" : "bg-ink/5 text-dark ring-1 ring-ink/15"} ${className}`;
+  const real = kind === "concept" ? realWorkHref(studio) : null;
+  if (real) {
+    const body = <><span className="h-1.5 w-1.5 rounded-full bg-[#25d366]" aria-hidden="true" />{inLink ? "Real work inside" : "See our real work"}{!inLink && <span aria-hidden="true">{real.startsWith("/") ? " →" : " ↗"}</span>}</>;
+    if (inLink) return <span className={pill}>{body}</span>;
+    const cls = `${pill} min-h-8 underline-offset-2 hover:underline`;
+    return real.startsWith("/")
+      ? <Link href={real} className={cls}>{body}</Link>
+      : <a href={real} target="_blank" rel="noopener noreferrer" className={cls}>{body}<span className="sr-only"> (opens in a new tab)</span></a>;
+  }
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tone === "dark" ? "bg-white/10 text-light ring-1 ring-white/20" : "bg-ink/5 text-dark ring-1 ring-ink/15"} ${className}`}>
+    <span className={pill}>
       <span className={`h-1.5 w-1.5 rounded-full ${kind === "concept" ? "bg-aqua-bright" : "bg-grow"}`} aria-hidden="true" />
       {kind === "concept" ? "Concept demo" : "Illustrative demo"}
     </span>

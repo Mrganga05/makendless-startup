@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import { SelectionProvider } from "../components/pricing/state";
 import { HOME_DESCRIPTION, HOME_TITLE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../lib/site";
 import WhatsAppFloat from "../components/WhatsAppFloat";
+import ChatWidget from "../components/ChatWidget";
 import PublicChrome from "../components/PublicChrome";
 import MetaPixel from "../components/MetaPixel";
 import ContentBoot from "../components/ContentBoot";
@@ -44,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         }) }} />
         <ContentBoot c={c} s={s}>
           <PublicChrome><Nav /></PublicChrome>
-          <SelectionProvider><main id="main">{children}</main><WhatsAppFloat /></SelectionProvider>
+          <SelectionProvider><main id="main">{children}</main><WhatsAppFloat /><ChatWidget /></SelectionProvider>
           <PublicChrome><Footer /></PublicChrome>
           <MetaPixel />
         </ContentBoot>
