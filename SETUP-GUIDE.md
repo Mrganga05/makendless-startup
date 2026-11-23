@@ -71,10 +71,12 @@ A Team member sees only the leads and projects assigned to them, without prices.
 1. Open https://console.anthropic.com → sign up / log in with **makendlessofficial@gmail.com**.
 2. **Plans & Billing** (Settings → Billing) → add a payment method and buy a small amount of credit (for example $5). The chatbot uses the cheap Haiku model: replies are short (at most 400 tokens), so $5 lasts thousands of messages.
 3. Optional but smart: **Settings → Limits** → set a monthly spend limit (for example $10) so it can never cost more.
-4. **API Keys** → **Create Key** → name `makendless-website` → **Add**. Copy the key (starts with `sk-ant-`). It is shown only once.
+4. **API Keys** → **Create Key** → choose the workspace **Default** (a key must belong to a workspace) → name `makendless-website` → **Add**. Copy the key (starts with `sk-ant-`). It is shown only once.
 5. Vercel → **makendless-startup** → **Settings** → **Environment Variables** → Name `ANTHROPIC_API_KEY`, Value: the key. Tick **Production** and **Preview**. **Save**.
 6. **Deployments** → newest → **⋯** → **Redeploy**. Wait for **Ready**.
 7. Open https://makendless.vercel.app → round chat button (bottom right, above WhatsApp) → tap **Pricing**. You should get a short answer with real prices.
+
+If the chat stays offline and your key was made without a workspace: either create a new key inside the **Default** workspace and replace `ANTHROPIC_API_KEY`, or add `ANTHROPIC_WORKSPACE_ID` (Console → **Settings** → **Workspaces** → copy the ID of **Default**, starts with `wrkspc_`), then redeploy.
 
 Without the key the chat still opens, but says the assistant is offline and points visitors to WhatsApp. The key lives only in Vercel: the browser never sees it.
 

@@ -106,7 +106,10 @@ export async function POST(req: Request) {
   if (limited(ip)) return json({ error: "You're sending messages quickly. Please wait a few minutes, or message us on WhatsApp." }, 429);
 
   await loadContent();
-  const client = new Anthropic();
+  /* A key made outside a workspace needs the workspace named on every request (Vercel env ANTHROPIC_WORKSPACE_ID).
+     A key created inside a workspace needs nothing extra. */
+  const workspace = process.env.ANTHROPIC_WORKSPACE_ID?.trim();
+  const client = new Anthropic(workspace ? { defaultHeaders: { "anthropic-workspace-id": workspace } } : {});
   const messages: Anthropic.MessageParam[] = recent;
   const params = {
     model: MODEL,
