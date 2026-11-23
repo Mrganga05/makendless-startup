@@ -50,7 +50,7 @@ async function load(): Promise<Db> {
 }
 async function save(db: Db) { await fs.mkdir(path.dirname(FILE), { recursive: true }); await fs.writeFile(FILE, JSON.stringify(db, null, 2)); }
 const DEFAULTS: Partial<Record<Table, Row>> = {
-  leads: { status: "New", team_notes: [], activity: [], advance_paid: false, balance_paid: false, form: "Start a Project", lead_source: "Website", whatsapp: "" },
+  leads: { status: "New", notes: "", team_notes: [], activity: [], advance_paid: false, balance_paid: false, form: "Start a Project", lead_source: "Website", whatsapp: "" },
   projects: { status: "Not started", price: 0, team_payout: 0, payout_done: false, notes: "", services: "", studio: "", client_whatsapp: "" },
   payments: { kind: "Advance", method: "UPI" }, expenses: { category: "Other", amount: 0, paid_by: "", notes: "" },
   referral_codes: { credits_earned: 0, credits_used: 0 }, referral_uses: { status: "Pending" }, waitlist: { interest: "GROW" },

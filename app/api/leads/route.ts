@@ -12,13 +12,13 @@ import { loadContent } from "../../../lib/content";
 export const dynamic = "force-dynamic";
 
 type Body = {
-  source?: "services" | "contact"; selection?: unknown; name?: string; whatsapp?: string; email?: string; business?: string; clientType?: string;
+  source?: "services" | "contact" | "chatbot"; selection?: unknown; name?: string; whatsapp?: string; email?: string; business?: string; clientType?: string;
   studio?: string; services?: string[]; referralCode?: string; footageLink?: string; notes?: string; budget?: string; timing?: string; page?: string; hp?: string;
 };
 const s = (v: unknown, n: number) => String(v ?? "").trim().slice(0, n) || null;
 
-/* POST /api/leads — every "Start a Project" form (services final page + contact page).
-   Totals and the referral are re-checked here, never trusted from the browser. */
+/* POST /api/leads — every "Start a Project" form (services final page + contact page), and a future chatbot
+   ({source: "chatbot", name, whatsapp, services?, notes?}). Totals and the referral are re-checked here, never trusted from the browser. */
 export async function POST(req: Request) {
   const b = (await req.json().catch(() => ({}))) as Body;
   await loadContent();
@@ -34,7 +34,8 @@ export async function POST(req: Request) {
     const ref = b.referralCode ? await checkReferral(b.referralCode, whatsapp) : null;
     const refOk = ref?.valid ? ref : null;
     const est = estimate(sel, !!refOk);
-    const contact = b.source === "contact";
+    const chatbot = b.source === "chatbot";
+    const contact = b.source === "contact" || chatbot;
     const contactServices = (Array.isArray(b.services) ? b.services : []).map((x) => String(x).slice(0, 80)).slice(0, 20);
     const items = contact
       ? contactServices.map((option) => ({ service: s(b.studio, 80), option, qty: 1, price: null }))
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
     /* Until the control-room SQL upgrade is run, the form/lead_source columns don't exist: save without them. */
     const save = (row: Record<string, unknown>) => insert("leads", row).catch((e) => { const { form: _f, lead_source: _s, ...old } = row; void _f; void _s; if (String(e).includes("column")) return insert("leads", old); throw e; });
     const lead = await save({
-      name, whatsapp, email: s(b.email, 254), business_name: s(b.business, 100), client_type: s(b.clientType, 60), source_page: contact ? "/contact" : "/start-project", form: contact ? "Contact brief" : "Start a Project", lead_source: "Website",
+      name, whatsapp, email: s(b.email, 254), business_name: s(b.business, 100), client_type: s(b.clientType, 60), source_page: chatbot ? "chatbot" : contact ? "/contact" : "/start-project", form: chatbot ? "Chatbot" : contact ? "Contact brief" : "Start a Project", lead_source: "Website",
       selections: { items, extras: contact ? [] : est.extras },
       combo_applied: est.combo?.name ?? null, video_discount: est.videoDiscount,
       referral_code: refOk?.code ?? null, referral_discount: est.referralDiscount,
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
 
     const est$ = contact ? "to be quoted" : est.totalText;
     const text = [
-      `New lead from ${contact ? "the contact page" : "the services page"}`, ``,
+      `New lead from ${chatbot ? "the chatbot" : contact ? "the contact page" : "the services page"}`, ``,
       `Name: ${name}`, `WhatsApp: https://wa.me/91${whatsapp}`, b.email ? `Email: ${b.email}` : "", b.business ? `Business: ${b.business}` : "", ``,
       ...items.map((i) => `• ${i.service ? i.service + ": " : ""}${i.option}${i.qty > 1 ? ` × ${i.qty}` : ""}${i.price === null ? "" : ` — ${inr(Number((i as { total?: number }).total ?? i.price))}${(i as { unit?: string }).unit === "month" ? "/month" : ""}`}`),
       ...est.extras.map((x) => `  + ${x.name} (${x.service}) ${inr(x.price)}${x.monthly ? "/month" : ""}`),

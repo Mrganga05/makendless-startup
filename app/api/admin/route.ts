@@ -4,7 +4,7 @@ import { DEFAULT_CONTENT, type SiteContent } from "../../../data/content";
 import { services as liveServices } from "../../../data/pricing";
 import { findOne, insert, list, remove, update, upsert, type Row } from "../../../lib/db";
 import { devStore } from "../../../lib/db";
-import { authReady, COOKIE, cookieOpts, currentMember, emailFromToken, sendMagicLink, sessionValue, teamMember } from "../../../lib/admin-auth";
+import { attemptKey, authReady, checkPassword, COOKIE, cookieOpts, currentMember, emailFromToken, passwordProblem, recordAttempt, sendPasswordReset, sessionValue, setPassword, setPasswordWithToken, teamMember, tooManyAttempts } from "../../../lib/admin-auth";
 import { ENTITIES, log, makeBackup, OWNER_EMAIL, purgeOldTrash, SETTING_DEFAULTS, settingsMap } from "../../../lib/admin-ops";
 import { CONTENT_TAG, loadContent } from "../../../lib/content";
 
@@ -13,8 +13,16 @@ const NOINDEX = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollo
 const json = (body: object, status = 200) => NextResponse.json(body, { status, headers: NOINDEX });
 const deny = (msg = "Please log in.", status = 401) => json({ ok: false, error: msg }, status);
 const ok = (extra: object = {}) => json({ ok: true, ...extra });
+/* A save the database refuses because the 2026-11-23 update (notes column, Proposal status) hasn't been run yet. */
+const needsDbUpdate = (e: unknown) => {
+  const t = String(e);
+  if (/column|check constraint|leads_status_check/i.test(t)) return deny("The database needs a one-time update: Supabase → SQL Editor → run supabase/schema.sql (SETUP-GUIDE.md step 3).", 409);
+  throw e;
+};
 
-const LEAD_STATUS = ["New", "Contacted", "Quote sent", "Won", "Lost"];
+const LEAD_STATUS = ["New", "Contacted", "Proposal", "Won", "Lost"];
+/* Old name, kept readable until the database update renames it. */
+const statusOf = (v: unknown) => (v === "Quote sent" ? "Proposal" : String(v || "New"));
 const PROJECT_STATUS = ["Not started", "In progress", "In review", "Delivered", "Paid"];
 const EXPENSE_CAT = ["Software & tools", "Ads & marketing", "Domain & hosting", "Equipment", "Registration & legal", "Other"];
 const METHODS = ["UPI", "Payment link", "Cash", "Bank transfer"];
@@ -35,7 +43,7 @@ function day(v: unknown): string | null {
   const d = new Date(s);
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 }
-const leadServices = (l: Row) => [...new Set((((l.selections as Row)?.items as Row[]) || []).map((i) => String(i.service || i.option || "")).filter(Boolean))];
+const leadServices = (l: Row) => { const pickedOnly = l.form === "Contact brief" || l.form === "Chatbot"; return [...new Set((((l.selections as Row)?.items as Row[]) || []).map((i) => String((pickedOnly ? i.option || i.service : i.service || i.option) || "")).filter(Boolean))]; };
 const studioOf = (names: string[]) => {
   const st = new Set(liveServices.filter((s) => names.includes(s.name)).map((s) => s.studio.toUpperCase()));
   return [...st].join(" + ");
@@ -85,7 +93,8 @@ export async function GET() {
   /* Logged out is a normal state for this page: answer 200 with no data so the browser console stays clean. */
   if (!me) return json({ ok: false, login: true });
   const owner = me.role === "Admin";
-  const [leads, projects, team] = await Promise.all([list("leads"), projectsWithPayments(), list("team_members")]);
+  const [rawLeads, projects, team] = await Promise.all([list("leads"), projectsWithPayments(), list("team_members")]);
+  const leads = rawLeads.map((l): Row => ({ ...l, status: statusOf(l.status), notes: l.notes ?? "" }));
   const teamOut = team.map((t) => ({ email: t.email, name: t.name, role: t.role === "Admin" ? "Owner" : "Team member", active: t.active, whatsapp: owner ? t.whatsapp : "" }));
   const meOut = { email: me.email, name: me.name, role: owner ? "Owner" : "Team member" };
   if (!owner) {
@@ -106,29 +115,46 @@ export async function GET() {
   });
 }
 
-type Body = { action?: string; email?: string; token?: string; id?: string; patch?: Row; body?: string; code?: string; row?: Row; rows?: Row[]; entity?: string; settings?: Row; content?: SiteContent };
+type Body = { action?: string; email?: string; password?: string; token?: string; id?: string; patch?: Row; body?: string; code?: string; row?: Row; rows?: Row[]; entity?: string; settings?: Row; content?: SiteContent };
 
 /* ============ POST: every change ============ */
 export async function POST(req: Request) {
   const b = (await req.json().catch(() => ({}))) as Body;
 
-  /* ---- login (public) ---- */
+  /* ---- login (public): email + password ---- */
   if (b.action === "login") {
+    const email = str(b.email, 254).toLowerCase(), password = String(b.password ?? "");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || !password) return deny("Please enter your email and password.", 400);
+    if (!authReady() && !devStore) return deny("Login is not set up yet: add the Supabase keys in Vercel (SETUP-GUIDE.md).", 503);
+    const key = attemptKey(req);
+    if (await tooManyAttempts(key)) return deny("Too many tries. Please wait 15 minutes and try again.", 429);
+    const m = await teamMember(email).catch(() => null);
+    const good = m ? await checkPassword(email, password).catch(() => false) : false;
+    if (!m || !good) { await recordAttempt(key, email, "failed login"); return deny("Wrong email or password.", 401); }
+    const res = ok();
+    res.cookies.set(COOKIE, sessionValue(email), cookieOpts);
+    return res;
+  }
+  /* Forgot password: same answer whether or not the email is on the team (no hints for strangers). */
+  if (b.action === "forgot") {
     const email = str(b.email, 254).toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return deny("Please enter your email.", 400);
-    const m = await teamMember(email).catch(() => null);
-    if (!m) return deny("This area is for the MAKENDLESS team only.", 403);
-    if (authReady()) {
-      try { await sendMagicLink(email, `${new URL(req.url).origin}/admin`); return ok({ sent: true }); }
-      catch { return deny("Couldn't send the login email. Please try again in a minute.", 503); }
-    }
-    if (devStore) { const res = ok({ dev: true }); res.cookies.set(COOKIE, sessionValue(email), cookieOpts); return res; }
-    return deny("Email login is not set up yet (SUPABASE_ANON_KEY).", 503);
+    const key = attemptKey(req);
+    if (await tooManyAttempts(key)) return deny("Too many tries. Please wait 15 minutes and try again.", 429);
+    await recordAttempt(key, email, "password reset request");
+    if (!authReady()) return ok({ dev: devStore });
+    if (await teamMember(email).catch(() => null)) await sendPasswordReset(email, `${new URL(req.url).origin}/admin`).catch(() => null);
+    return ok();
   }
-  if (b.action === "session") {
+  /* The reset link from the email opens /admin with a one-time token: save the new password and log in. */
+  if (b.action === "password.reset") {
+    const problem = passwordProblem(b.password);
+    if (problem) return deny(problem, 400);
     const email = b.token ? await emailFromToken(b.token) : "";
-    const m = email ? await teamMember(email) : null;
-    if (!m) return deny("This area is for the MAKENDLESS team only.", 403);
+    const m = email ? await teamMember(email).catch(() => null) : null;
+    if (!m) return deny("This reset link has expired or is not for a MAKENDLESS team account. Ask for a new one.", 403);
+    try { await setPasswordWithToken(String(b.token), String(b.password)); } catch { return deny("Couldn't save the new password. Ask for a new reset link.", 400); }
+    await log(m.name || m.email, "edit", "password", m.email, null, "reset by email link");
     const res = ok();
     res.cookies.set(COOKIE, sessionValue(email), cookieOpts);
     return res;
@@ -142,13 +168,23 @@ export async function POST(req: Request) {
   const who = me.name || me.email;
   const now = new Date().toISOString();
 
+  /* Anyone logged in can change their own password. */
+  if (b.action === "password.change") {
+    const problem = passwordProblem(b.password);
+    if (problem) return deny(problem, 400);
+    try { await setPassword(me.email, String(b.password)); } catch { return deny("Couldn't change the password. Please try again in a minute.", 503); }
+    await log(who, "edit", "password", me.email, null, "changed own password");
+    return ok();
+  }
+
   if (b.action === "lead.update" && b.id && b.patch) {
     const lead = await findOne("leads", "id", b.id);
     if (!lead) return deny("Lead not found.", 404);
     if (!owner && lead.assigned_to !== me.email) return deny("You can only update leads assigned to you.", 403);
     const p = b.patch, patch: Row = {};
-    if (p.status !== undefined) patch.status = pick(p.status, LEAD_STATUS, String(lead.status));
+    if (p.status !== undefined) patch.status = pick(p.status, LEAD_STATUS, statusOf(lead.status));
     if (p.lost_reason !== undefined) patch.lost_reason = str(p.lost_reason, 300);
+    if (p.notes !== undefined) patch.notes = str(p.notes, 4000);
     if (owner) {
       if (p.assigned_to !== undefined) patch.assigned_to = str(p.assigned_to, 254) || null;
       if (p.name !== undefined) patch.name = str(p.name, 80);
@@ -158,9 +194,8 @@ export async function POST(req: Request) {
       if (p.estimated_total !== undefined) patch.estimated_total = int(p.estimated_total);
       if (p.services !== undefined) patch.selections = { items: String(p.services).split(/[,+]/).map((x) => x.trim()).filter(Boolean).map((service) => ({ service })), extras: [] };
     }
-    if (patch.status === "Lost" && !(patch.lost_reason || lead.lost_reason)) return deny("Please add a reason for Lost.", 400);
     const old = Object.fromEntries(Object.keys(patch).map((k) => [k, lead[k]]));
-    await update("leads", "id", b.id, { ...patch, updated_at: now });
+    try { await update("leads", "id", b.id, { ...patch, updated_at: now }); } catch (e) { return needsDbUpdate(e); }
     await log(who, "edit", "lead", b.id, old, patch);
     return ok();
   }
@@ -330,6 +365,15 @@ export async function POST(req: Request) {
     await log(who, old ? "edit" : "add", "member", email, old, row);
     return ok();
   }
+  if (b.action === "member.password" && b.email) {
+    const email = str(b.email, 254).toLowerCase();
+    const problem = passwordProblem(b.password);
+    if (problem) return deny(problem, 400);
+    if (!(await findOne("team_members", "email", email))) return deny("Add this person as a team member first.", 404);
+    try { await setPassword(email, String(b.password)); } catch { return deny("Couldn't set the password. Check SUPABASE_SERVICE_ROLE_KEY in Vercel and try again.", 503); }
+    await log(who, "edit", "password", email, null, "password set by Owner");
+    return ok();
+  }
   if (b.action === "settings.save" && b.settings) {
     const before = await settingsMap();
     const changed: Row = {};
@@ -382,7 +426,7 @@ export async function POST(req: Request) {
         const name = get(r, "name", "client", "clientname");
         if (!name) continue;
         await insert("leads", { created_at: day(get(r, "date", "created", "createdat")) ? `${day(get(r, "date", "created", "createdat"))}T09:00:00Z` : now, name: name.slice(0, 80), whatsapp: phone(get(r, "whatsapp", "phone", "number", "mobile")), email: get(r, "email") || null,
-          form: "Imported", lead_source: pick(get(r, "leadsource", "source"), SOURCES, "Other"), status: pick(get(r, "status"), LEAD_STATUS, "New"), estimated_total: int(get(r, "estimatedprice", "estimate", "price", "amount")),
+          form: "Imported", lead_source: pick(get(r, "leadsource", "source"), SOURCES, "Other"), status: pick(statusOf(get(r, "status") || "New"), LEAD_STATUS, "New"), estimated_total: int(get(r, "estimatedprice", "estimate", "price", "amount")),
           selections: { items: get(r, "services", "service", "servicespicked").split(/[,+]/).map((x) => x.trim()).filter(Boolean).map((service) => ({ service })), extras: [] } });
       } else if (b.entity === "projects") {
         const client = get(r, "client", "name", "clientname");

@@ -1,49 +1,79 @@
 # Setup guide (no coding needed)
 
-Do these once. Each step says exactly where to click. Keys go into **Vercel only**, never into the code.
+Updated 2026-11-23. Do these once. Each step says exactly where to click. Keys go into **Vercel only**, never into the code or a chat.
 
-## 1. Database: Supabase (free)
-1. Open https://supabase.com → **Start your project** → **Continue with GitHub** (or sign up with makendlessofficial@gmail.com).
-2. Click **New project**. Name: `makendless`. Set a database password (save it somewhere safe). Region: **Mumbai (ap-south-1)**. Click **Create new project** and wait about 2 minutes.
-3. Left menu → **SQL Editor** → **New query**. Open the file `supabase/schema.sql` from this project, copy everything, paste it, click **Run**. You should see "Success".
-4. Left menu → **Authentication** → **URL Configuration**:
-   - **Site URL**: `https://makendless.vercel.app`
-   - **Redirect URLs** → **Add URL**: `https://makendless.vercel.app/admin` → **Save**.
-5. Left menu → **Project Settings** (gear) → **API Keys** (or **API**). Keep this tab open; you need 3 values:
-   - **Project URL** (looks like `https://abcd1234.supabase.co`)
+## Where the forms send their data
+All three public forms send to the website's own server, which saves them in Supabase and shows them in /admin:
+| Form | Sent to | Saved in Supabase | Shows in /admin as |
+|---|---|---|---|
+| Start a Project (`/start-project`) and the contact brief (`/contact`) | `/api/leads` | `leads` (+ `referral_uses` when a code is used) + email alert | Source **Form** |
+| Refer and earn (homepage) | `/api/referral` | `referral_codes` + `leads` | Source **Referral**, and the Referrals tab |
+| GROW waitlist (`/grow`) | `/api/waitlist` | `waitlist` + `leads` | Source **Waitlist** |
+| Chatbot (not built yet) | `/api/leads` with `source: "chatbot"` | `leads` | Source **Chatbot** |
+
+If the database is not connected, a form shows "send it on WhatsApp instead" and nothing is saved.
+
+## 0. Already connected? Check first
+Open https://vercel.com → project **makendless-startup** → **Settings** → **Environment Variables**.
+If `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are in the list, the database is connected: skip to **step 3**.
+
+## 1. Create the database: Supabase (free)
+1. Open https://supabase.com → **Start your project** → sign up with **makendlessofficial@gmail.com** (or Continue with GitHub).
+2. **New project**. Name: `makendless`. Set a database password (save it somewhere safe). Region: **Mumbai (ap-south-1)**. Click **Create new project** and wait about 2 minutes.
+3. Left menu → **Project Settings** (gear) → **API Keys**. Keep this tab open; you need 3 values:
+   - **Project URL** (looks like `https://abcd1234.supabase.co`; also under Project Settings → **Data API**)
    - **anon / publishable** key
-   - **service_role / secret** key (click **Reveal**). Keep this one secret.
+   - **service_role / secret** key (click **Reveal**). This one is secret: it can read everything.
 
-### 1b. Control room upgrade (2026-11-22) — run once
-Supabase → SQL Editor → New query → paste all of `supabase/upgrade-2026-11-22-control-room.sql` → Run.
-It adds projects, payments, expenses, trash, activity log, backups and website content, and moves old lead statuses to New / Contacted / Quote sent / Won / Lost. Safe to run twice.
-
-## 2. Email alerts: Resend (free)
-1. Open https://resend.com → **Sign up** with **makendlessofficial@gmail.com** (important: on the free plan Resend only sends to the email you signed up with).
-2. Left menu → **API Keys** → **Create API Key** → name `makendless` → permission **Sending access** → **Add**. Copy the key (starts with `re_`).
-
-## 3. Put the keys into Vercel
-1. Open https://vercel.com → your project **makendless-startup** → **Settings** → **Environment Variables**.
-2. Add each of these (Name → Value), tick **Production**, **Preview** and **Development**, click **Save**:
+## 2. Put the keys into Vercel
+1. Vercel → **makendless-startup** → **Settings** → **Environment Variables**.
+2. Add each line below (Name → Value). Tick **Production**, **Preview** and **Development**. Click **Save** after each.
    | Name | Value |
    |---|---|
    | `SUPABASE_URL` | the Project URL |
    | `SUPABASE_ANON_KEY` | the anon / publishable key |
    | `SUPABASE_SERVICE_ROLE_KEY` | the service_role / secret key |
-   | `RESEND_API_KEY` | the Resend key |
-3. Top menu → **Deployments** → on the newest one click **⋯** → **Redeploy** → **Redeploy**.
+   | `RESEND_API_KEY` | optional: the Resend key for new-lead emails (step 7) |
+   | `CRON_SECRET` | optional: any long random text (40 letters and numbers) for the weekly backup |
+3. Top menu → **Deployments** → newest one → **⋯** → **Redeploy** → **Redeploy**. Wait until it says **Ready**.
 
-### Weekly backup key
-Add `CRON_SECRET` in Vercel (any long random text, e.g. 40 letters and numbers), Production. Vercel's cron sends it every Sunday night to `/api/admin/backup`; without it the weekly backup doesn't run (Settings → "Back up now" still works).
+## 3. Create or update the tables (run this now, and again whenever Claude says "the database changed")
+1. Supabase → left menu → **SQL Editor** → **New query**.
+2. Open `supabase/schema.sql` from this project, copy **everything**, paste it, click **Run**.
+3. You should see one row: **MAKENDLESS database is ready**.
 
-## 4. Check it works
-1. Open https://makendless.vercel.app/contact, fill in the form, press **Review my brief**, then **Start a Project**. You should see "Thanks, …".
-2. Check the inbox of makendlessofficial@gmail.com for "New lead: …" (look in Spam the first time and mark it "Not spam").
-3. Open https://makendless.vercel.app/admin → enter makendlessofficial@gmail.com → **Send login link** → open the email on the same device → you're in.
-4. Tell Claude "the keys are in Vercel" to run the final checks (saved lead, email, public can't read the leads table).
+It is safe to run again: it only adds what is missing and keeps every lead. This version adds the **Notes** column, renames the status "Quote sent" to **Proposal**, and closes direct database access so only the website's server can read or write.
+
+## 4. Allow the password-reset link and switch off public sign-ups
+1. Supabase → **Authentication** → **URL Configuration**:
+   - **Site URL**: `https://makendless.vercel.app`
+   - **Redirect URLs** → **Add URL**: `https://makendless.vercel.app/admin` → **Save**.
+2. Supabase → **Authentication** → **Sign In / Providers** (older screens: **Providers → Email**): make sure **Email** is on, then turn **OFF** "Allow new users to sign up" → **Save**. Logins are created only by you (steps 5 and 6).
+
+## 5. Your /admin password (Owner)
+1. Supabase → **Authentication** → **Users** → **Add user** → **Create new user**.
+2. Email: `makendlessofficial@gmail.com`. Password: a strong one (at least 8 characters). Tick **Auto Confirm User**. Click **Create user**.
+3. If it says the user **already exists** (from the old email-link login), skip that: open https://makendless.vercel.app/admin → **Forgot password?** → enter the email → open the email on the same device → choose your password.
+4. Log in at https://makendless.vercel.app/admin with that email and password.
+5. To change it later: /admin → **Change my password** (under the tabs).
+
+## 6. Team members (optional)
+/admin → **Settings** → **+ Add member** → email, name, role, and a **login password** → **Save member**. Send them the password privately (WhatsApp).
+To reset a member's password: open the member → **Set a new login password**. To remove access: untick **Active**.
+A Team member sees only the leads and projects assigned to them, without prices.
+
+## 7. Email alerts for new leads: Resend (free, optional)
+1. Open https://resend.com → **Sign up** with **makendlessofficial@gmail.com** (on the free plan Resend only sends to the email you signed up with).
+2. **API Keys** → **Create API Key** → name `makendless` → **Sending access** → **Add**. Copy the key (starts with `re_`) into Vercel as `RESEND_API_KEY` (step 2), then redeploy.
+
+## 8. Check it works
+1. Open https://makendless.vercel.app/contact, fill in the form with your own number, press **Review my brief**, then **Start a Project**. You should see "Thanks, …".
+2. Open https://makendless.vercel.app/admin → log in → **Leads**: the test lead is at the top with Source **Form**.
+3. Change its **Status** in the table and type a **note**; reload the page: both stay.
+4. Delete the test lead (open it → **Delete lead**).
+5. Tell Claude "it's set up" to run the final checks.
 
 ## Change details later
-- Email, WhatsApp number, WhatsApp message, Instagram/YouTube links: `data/owner.ts` (one file).
-- Prices: `data/pricing.ts`. Combo packs come back by setting `COMBOS_ENABLED = true` there.
-- Sample links ("See samples ↗"): `data/samples.ts`. Real work ("Our work" section): `data/work.ts`.
-- Team members and the alert email: /admin → **Settings**.
+- Email, WhatsApp number, links: `data/owner.ts`, or /admin → Settings.
+- Prices, packs, FAQ, work samples, reviews: /admin → **Website** (no code needed).
+- Referral reward and minimum: /admin → Settings.

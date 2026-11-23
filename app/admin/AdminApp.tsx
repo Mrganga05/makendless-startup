@@ -13,9 +13,14 @@ type Data = {
 };
 type Api = { ok: boolean; error?: string; [k: string]: any }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-const LEAD_STATUS = ["New", "Contacted", "Quote sent", "Won", "Lost"];
+const LEAD_STATUS = ["New", "Contacted", "Proposal", "Won", "Lost"];
+const STATUS_TONE: Record<string, string> = { New: "bg-[#ece8ff] text-[#4a2fc9]", Contacted: "bg-[#e6f0ff] text-[#1f4fa8]", Proposal: "bg-[#fff3dc] text-[#8a5a00]", Won: "bg-[#e7f7ef] text-[#0f6b4b]", Lost: "bg-[#f1f1f4] text-[#5b6079]" };
 const PROJECT_STATUS = ["Not started", "In progress", "In review", "Delivered", "Paid"];
-const FORMS = ["Start a Project", "Contact brief", "Referral", "GROW waitlist", "Added by hand", "Imported"];
+/* Where a lead came from, in the four words the team uses (+ Manual for hand-added / imported). */
+const SOURCE_KINDS = ["Form", "Referral", "Waitlist", "Chatbot", "Manual"];
+const KIND_OF: Record<string, string> = { "Start a Project": "Form", "Contact brief": "Form", Referral: "Referral", "GROW waitlist": "Waitlist", Chatbot: "Chatbot" };
+const sourceOf = (l: Row) => KIND_OF[String(l.form)] || "Manual";
+const sourceDetail = (l: Row) => (sourceOf(l) === "Manual" ? `${l.form === "Imported" ? "Imported" : "Added by hand"} · ${l.lead_source || "Other"}` : sourceOf(l) === "Form" ? String(l.form) : "");
 const SOURCES = ["Website", "WhatsApp", "Instagram", "Outreach", "Referral", "Other"];
 const CATS = ["Software & tools", "Ads & marketing", "Domain & hosting", "Equipment", "Registration & legal", "Other"];
 const OWNER_TABS = ["Home", "Leads", "Projects", "Expenses", "Team", "Referrals", "Website", "Reports", "Trash", "Activity", "Settings"] as const;
@@ -30,8 +35,24 @@ const dateOf = (r: Row) => String(r.date || r.created_at || "").slice(0, 10);
 const nice = (d?: string) => (d ? new Date(d.length === 10 ? d + "T00:00" : d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—");
 const ago = (d: string) => { const m = Math.max(0, (Date.now() - new Date(d).getTime()) / 6e4); return m < 60 ? `${Math.round(m)}m` : m < 1440 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}d`; };
 const monthName = (k: string) => new Date(k + "-01T00:00").toLocaleDateString("en-IN", { month: "short", year: "numeric" });
-const services = (l: Row): string[] => [...new Set(((l.selections?.items as Row[]) || []).map((i) => String(i.service || i.option || "")).filter(Boolean))];
+/* Website orders list the service; contact-page and chatbot leads list what they picked (their "service" is only the studio). */
+const services = (l: Row): string[] => { const pickedOnly = l.form === "Contact brief" || l.form === "Chatbot"; return [...new Set(((l.selections?.items as Row[]) || []).map((i) => String((pickedOnly ? i.option || i.service : i.service || i.option) || "")).filter(Boolean))]; };
 const estimate = (l: Row) => Number(l.estimated_total || 0) + Number(l.estimated_monthly || 0);
+/** The quote the client saw (or the Owner typed), e.g. "₹14,998 + ₹1,499/month". */
+const quote = (l: Row) => {
+  const t = Number(l.estimated_total || 0), m = Number(l.estimated_monthly || 0);
+  const base = [t ? inr(t) : "", m ? `${inr(m)}/month` : ""].filter(Boolean).join(" + ");
+  if (base) return base + (l.has_custom ? " + custom" : "");
+  return l.has_custom || l.form === "Contact brief" || l.form === "Chatbot" ? "To be quoted" : "—";
+};
+/** The code a lead used; for a Referral sign-up, the code they were given. */
+const refCode = (l: Row, codes: Row[] = []) => {
+  if (l.referral_code) return { code: String(l.referral_code), own: false };
+  if (l.form !== "Referral") return null;
+  const code = String(l.total_text || "").match(/MKE-[A-Z]+-\d{4}/)?.[0] || codes.find((c) => c.referrer_whatsapp === l.whatsapp)?.code;
+  return code ? { code: String(code), own: true } : null;
+};
+const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 const late = (l: Row) => l.status === "New" && Date.now() - new Date(l.created_at).getTime() > DAY;
 const money = (p: Row) => {
   const pays = (p.payments as Row[]) || [];
@@ -200,17 +221,16 @@ function LeadSheet({ lead, d, close, reload }: { lead: Row; d: Data; close: () =
   const owner = d.me.role === "Owner";
   const [f, setF] = useState({ name: lead.name || "", whatsapp: lead.whatsapp || "", email: lead.email || "", services: services(lead).join(", "), estimated_total: String(lead.estimated_total ?? ""), lead_source: lead.lead_source || "Website" });
   const [reason, setReason] = useState(lead.lost_reason || "");
-  const [note, setNote] = useState("");
+  const [notes, setNotes] = useState(lead.notes || "");
+  const [saved, setSaved] = useState("");
   const [err, setErr] = useState("");
+  const rc = refCode(lead, d.codes);
   const run = async (body: object) => { const r = await api(body); if (!r.ok) setErr(r.error || "Something went wrong."); else { setErr(""); reload(); } return r; };
   const first = String(lead.name || "").split(/[\s@]/)[0];
   const svc = services(lead).join(", ");
   const wa = lead.whatsapp ? `https://wa.me/91${String(lead.whatsapp).slice(-10)}?text=${encodeURIComponent(`Hi ${first}, this is the MAKENDLESS team. Thanks for your interest${svc ? ` in ${svc}` : ""}! We'd love to help. When is a good time to talk about your project?`)}` : "";
   const items = (lead.selections?.items as Row[]) || [];
-  const setStatus = async (status: string) => {
-    if (status === "Lost" && !reason.trim()) return setErr("Please write the reason first, then choose Lost.");
-    await run({ action: "lead.update", id: lead.id, patch: { status, lost_reason: reason } });
-  };
+  const setStatus = (status: string) => run({ action: "lead.update", id: lead.id, patch: { status, ...(status === "Lost" ? { lost_reason: reason } : {}) } });
   return (
     <Sheet title={lead.name} onClose={close}>
       <div className="grid gap-4">
@@ -221,19 +241,19 @@ function LeadSheet({ lead, d, close, reload }: { lead: Row; d: Data; close: () =
         </div>
         <Err text={err} />
         <div className={card}>
-          <p className="text-sm text-muted-dark">{nice(lead.created_at)} · {lead.form} · {lead.lead_source}{lead.source_page ? ` · ${lead.source_page}` : ""}</p>
+          <p className="text-sm text-muted-dark">{nice(lead.created_at)} · Source: <b>{sourceOf(lead)}</b>{sourceDetail(lead) ? ` (${sourceDetail(lead)})` : ""}{lead.source_page ? ` · ${lead.source_page}` : ""}</p>
           {items.length > 0 && <ul className="mt-2 text-sm">{items.map((i, k) => <li key={k}>• {i.option ? `${i.service}: ${i.option}` : i.service}{i.qty > 1 ? ` × ${i.qty}` : ""}</li>)}</ul>}
-          {owner && lead.total_text && <p className="mt-2 font-bold">Estimate: {lead.total_text}</p>}
+          {owner && <p className="mt-2 font-bold">Quote total: {quote(lead)}</p>}
           {lead.est_delivery && <p className="text-sm">Est. delivery: {lead.est_delivery}</p>}
           {lead.extra_notes && <p className="mt-2 whitespace-pre-wrap text-sm">“{lead.extra_notes}”</p>}
           {Object.entries(lead.requirements || {}).map(([k, v]) => <p key={k} className="mt-1 text-sm"><b>{k}:</b> {String(v)}</p>)}
           {lead.footage_link && <p className="mt-1 break-all text-sm">Link: {lead.footage_link}</p>}
-          {lead.referral_code && <p className="mt-1 text-sm">Referral code: {lead.referral_code}</p>}
+          {rc && <p className="mt-1 text-sm">{rc.own ? "Their referral code" : "Used referral code"}: <b>{rc.code}</b></p>}
         </div>
         <div className={`${card} grid gap-3`}>
           <p className="font-extrabold">Status</p>
           <div className="flex flex-wrap gap-2">{LEAD_STATUS.map((s) => <button type="button" key={s} className={chip(lead.status === s)} onClick={() => setStatus(s)}>{s}</button>)}</div>
-          <label className={lbl}>Reason if Lost<input className="for-field" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. budget too low, went with someone else" /></label>
+          <label className={lbl}>Reason if Lost (optional)<input className="for-field" value={reason} onChange={(e) => setReason(e.target.value)} onBlur={() => lead.status === "Lost" && reason !== (lead.lost_reason || "") && run({ action: "lead.update", id: lead.id, patch: { lost_reason: reason } })} placeholder="e.g. budget too low, went with someone else" /></label>
           {owner && <label className={lbl}>Assigned to<MemberSelect value={lead.assigned_to} team={d.team} onChange={(v) => run({ action: "lead.update", id: lead.id, patch: { assigned_to: v } })} /></label>}
         </div>
         {owner && (
@@ -251,12 +271,16 @@ function LeadSheet({ lead, d, close, reload }: { lead: Row; d: Data; close: () =
           </form>
         )}
         <div className={`${card} grid gap-3`}>
-          <p className="font-extrabold">Notes</p>
-          <ul className="grid gap-2">{((lead.team_notes as Row[]) || []).map((n, i) => <li key={i} className="rounded-xl bg-paper p-3 text-sm"><p className="whitespace-pre-wrap">{n.body}</p><p className="mt-1 text-xs text-muted-dark">{n.author} · {nice(n.at)}</p></li>)}</ul>
-          <form className="flex gap-2" onSubmit={async (e) => { e.preventDefault(); if (!note.trim()) return; await run({ action: "lead.note", id: lead.id, body: note }); setNote(""); }}>
-            <input className="for-field min-w-0 flex-1" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note" />
-            <button className="for-btn for-btn-primary !px-4">Add</button>
+          <label htmlFor={`notes-${lead.id}`} className="font-extrabold">Notes</label>
+          <form className="grid gap-2" onSubmit={async (e) => { e.preventDefault(); const r = await run({ action: "lead.update", id: lead.id, patch: { notes } }); setSaved(r.ok ? "Saved." : ""); }}>
+            <textarea id={`notes-${lead.id}`} className="for-field for-area-sm" value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(""); }} placeholder="Call summary, next step, follow-up date…" />
+            <span className="flex items-center gap-3"><button className="for-btn for-btn-primary w-fit !px-5" disabled={notes === (lead.notes || "")}>Save notes</button>{saved && <span role="status" className="text-sm font-bold text-[#0f6b4b]">{saved}</span>}</span>
           </form>
+          {((lead.team_notes as Row[]) || []).length > 0 && (
+            <details className="text-sm"><summary className="cursor-pointer font-bold text-muted-dark">Earlier notes ({(lead.team_notes as Row[]).length})</summary>
+              <ul className="mt-2 grid gap-2">{(lead.team_notes as Row[]).map((n, i) => <li key={i} className="rounded-xl bg-paper p-3"><p className="whitespace-pre-wrap">{n.body}</p><p className="mt-1 text-xs text-muted-dark">{n.author} · {nice(n.at)}</p></li>)}</ul>
+            </details>
+          )}
         </div>
         {owner && <button type="button" className="for-btn for-btn-ghost text-[#c2183a]" onClick={async () => { if (confirmDelete() && (await run({ action: "delete", entity: "lead", id: lead.id })).ok) close(); }}>Delete lead</button>}
       </div>
@@ -285,31 +309,74 @@ function AddLead({ d, close, reload }: { d: Data; close: () => void; reload: () 
   );
 }
 
+/* Status dropdown right in the table row: saves at once. */
+function StatusSelect({ lead, reload }: { lead: Row; reload: () => void }) {
+  const [v, setV] = useState(String(lead.status));
+  const [busy, setBusy] = useState(false);
+  return (
+    <select aria-label={`Status of ${lead.name}`} disabled={busy} value={v} onClick={stop} onKeyDown={stop}
+      className={`min-h-9 cursor-pointer rounded-full border-0 py-1 pl-3 pr-7 text-sm font-bold ${STATUS_TONE[v] || ""}`}
+      onChange={async (e) => {
+        const status = e.target.value, before = v;
+        const lost_reason = status === "Lost" && !lead.lost_reason ? (prompt(`Why was ${lead.name} lost? (optional)`) ?? "").trim() : "";
+        setV(status); setBusy(true);
+        const r = await api({ action: "lead.update", id: lead.id, patch: { status, ...(lost_reason ? { lost_reason } : {}) } });
+        setBusy(false);
+        if (!r.ok) { setV(before); alert(r.error || "Couldn't save the status."); } else reload();
+      }}>
+      {LEAD_STATUS.map((s) => <option key={s}>{s}</option>)}
+    </select>
+  );
+}
+
+/* Notes right in the table row: saves when you click away (or press Enter; Shift+Enter = new line). */
+function NotesCell({ lead, reload }: { lead: Row; reload: () => void }) {
+  const [v, setV] = useState(String(lead.notes || ""));
+  const [state, setState] = useState<"" | "saving" | "saved">("");
+  const save = async () => {
+    if (v === String(lead.notes || "")) return;
+    setState("saving");
+    const r = await api({ action: "lead.update", id: lead.id, patch: { notes: v } });
+    if (!r.ok) { setState(""); alert(r.error || "Couldn't save the note."); return; }
+    setState("saved"); reload(); setTimeout(() => setState(""), 1500);
+  };
+  return (
+    <span className="flex w-full min-w-[11rem] items-start gap-1" onClick={stop}>
+      <textarea aria-label={`Notes for ${lead.name}`} rows={1} value={v} placeholder="Add a note"
+        className="min-h-9 w-full resize-y rounded-lg bg-paper px-2 py-1.5 text-sm ring-1 ring-line focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet"
+        onChange={(e) => setV(e.target.value)} onBlur={save}
+        onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); (e.target as HTMLTextAreaElement).blur(); } }} />
+      {state && <span className="pt-2 text-xs font-bold text-[#0f6b4b]" role="status">{state === "saving" ? "…" : "✓"}</span>}
+    </span>
+  );
+}
+
 function Leads({ d, reload, openId, setOpenId }: { d: Data; reload: () => void; openId: string; setOpenId: (id: string) => void }) {
   const owner = d.me.role === "Owner";
   const [status, setStatus] = useState("All");
-  const [form, setForm] = useState("All");
+  const [kind, setKind] = useState("All");
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
-  const rows = d.leads.filter((l) => (status === "All" || l.status === status) && (form === "All" || l.form === form) && (!q || `${l.name} ${l.whatsapp} ${l.email} ${services(l).join(" ")}`.toLowerCase().includes(q.toLowerCase())));
+  const rows = d.leads.filter((l) => (status === "All" || l.status === status) && (kind === "All" || sourceOf(l) === kind) && (!q || `${l.name} ${l.whatsapp} ${l.email} ${services(l).join(" ")} ${l.referral_code || ""} ${l.notes || ""}`.toLowerCase().includes(q.toLowerCase())));
   const open = d.leads.find((l) => l.id === openId);
   const cols: Col[] = [
-    { label: "Date", get: (l) => nice(l.created_at), raw: (l) => String(l.created_at).slice(0, 10) },
-    { label: "Name", get: (l) => <span className={late(l) ? "font-bold text-[#c2183a]" : "font-bold"}>{l.name}</span>, raw: (l) => l.name },
-    { label: "WhatsApp", get: (l) => l.whatsapp || "—", raw: (l) => l.whatsapp },
-    { label: "Form", get: (l) => l.form },
+    { label: "Name", get: (l) => <span className={late(l) ? "font-bold text-[#c2183a]" : "font-bold"} title={late(l) ? "New for over 24 hours" : undefined}>{l.name}</span>, raw: (l) => l.name },
+    { label: "WhatsApp", get: (l) => (l.whatsapp ? <a href={`https://wa.me/91${String(l.whatsapp).slice(-10)}`} target="_blank" rel="noopener noreferrer" onClick={stop} className="font-bold text-[#0f6b4b] underline">{l.whatsapp}</a> : (l.email || "—")), raw: (l) => l.whatsapp },
     { label: "Services", get: (l) => services(l).join(", ") || "—", raw: (l) => services(l).join(", ") },
-    ...(owner ? [{ label: "Est. price", get: (l: Row) => (estimate(l) ? inr(estimate(l)) : l.total_text || "—"), raw: (l: Row) => estimate(l) }] : []),
-    { label: "Source", get: (l) => l.lead_source },
-    { label: "Status", get: (l) => l.status + (l.status === "Lost" && l.lost_reason ? ` (${l.lost_reason})` : "") },
+    ...(owner ? [{ label: "Quote total", get: (l: Row) => <span className="whitespace-nowrap tabular-nums">{quote(l)}</span>, raw: (l: Row) => estimate(l) }] : []),
+    { label: "Referral code", get: (l) => { const rc = refCode(l, d.codes); return rc ? <span className="whitespace-nowrap">{rc.code}{rc.own && <span className="block text-xs text-muted-dark">their own code</span>}</span> : "—"; }, raw: (l) => refCode(l, d.codes)?.code || "" },
+    { label: "Source", get: (l) => <span><b>{sourceOf(l)}</b>{sourceDetail(l) && <span className="block text-xs text-muted-dark">{sourceDetail(l)}</span>}</span>, raw: (l) => sourceOf(l) },
+    { label: "Date", get: (l) => <span className="whitespace-nowrap">{nice(l.created_at)}</span>, raw: (l) => String(l.created_at).slice(0, 10) },
+    { label: "Status", get: (l) => <StatusSelect key={l.status} lead={l} reload={reload} />, raw: (l) => l.status + (l.status === "Lost" && l.lost_reason ? ` (${l.lost_reason})` : "") },
+    { label: "Notes", get: (l) => <NotesCell key={l.updated_at} lead={l} reload={reload} />, raw: (l) => l.notes || "" },
     { label: "Assigned to", get: (l) => memberName(l.assigned_to, d.team), raw: (l) => l.assigned_to || "" },
   ];
   return (
     <div className="grid gap-3">
       <div className="flex gap-2 overflow-x-auto pb-1">{["All", ...LEAD_STATUS].map((s) => <button type="button" key={s} className={chip(status === s)} onClick={() => setStatus(s)}>{s} {s === "All" ? d.leads.length : d.leads.filter((l) => l.status === s).length}</button>)}</div>
       <div className="grid gap-2 sm:grid-cols-[1fr_14rem]">
-        <input className="for-field" placeholder="Search name, number, service" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search leads" />
-        <select className="for-field" value={form} onChange={(e) => setForm(e.target.value)} aria-label="Form">{["All", ...FORMS].map((x) => <option key={x}>{x}</option>)}</select>
+        <input className="for-field" placeholder="Search name, number, service, code, notes" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search leads" />
+        <select className="for-field" value={kind} onChange={(e) => setKind(e.target.value)} aria-label="Source">{["All", ...SOURCE_KINDS].map((x) => <option key={x} value={x}>{x === "All" ? "All sources" : x}</option>)}</select>
       </div>
       <List name="Leads" cols={cols} rows={rows} onOpen={(l) => setOpenId(l.id)} tools={owner && <><button type="button" className="for-btn for-btn-primary !min-h-10 !px-4 text-sm" onClick={() => setAdding(true)}>+ Add lead</button><ImportCsv entity="leads" done={reload} /></>} />
       {open && <LeadSheet key={open.id + open.updated_at} lead={open} d={d} close={() => setOpenId("")} reload={reload} />}
@@ -451,6 +518,34 @@ function Expenses({ d, reload }: { d: Data; reload: () => void }) {
   );
 }
 
+/* ---------------- passwords ---------------- */
+/** Owner sets a member's password (or `self` = the logged-in person changes their own). */
+function SetPassword({ email, self }: { email?: string; self?: boolean }) {
+  const [p, setP] = useState("");
+  const [p2, setP2] = useState("");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    if (p.length < 8) return setMsg({ ok: false, text: "Use at least 8 characters." });
+    if (self && p !== p2) return setMsg({ ok: false, text: "The two passwords don't match." });
+    setBusy(true);
+    const r = await api(self ? { action: "password.change", password: p } : { action: "member.password", email, password: p });
+    setBusy(false);
+    setMsg(r.ok ? { ok: true, text: self ? "Password changed." : "Password set. Send it to them privately (WhatsApp)." } : { ok: false, text: r.error || "Couldn't save." });
+    if (r.ok) { setP(""); setP2(""); }
+  };
+  /* Not a <form>: this sits inside the member form, and forms can't be nested. */
+  return (
+    <div className="grid gap-2 rounded-xl bg-paper p-3">
+      <p className="text-sm font-extrabold">{self ? "Change my password" : "Set a new login password"}</p>
+      <input className="for-field" type={self ? "password" : "text"} autoComplete="new-password" aria-label="New password" placeholder="New password (8+ characters)" value={p} onChange={(e) => setP(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }} />
+      {self && <input className="for-field" type="password" autoComplete="new-password" aria-label="Type it again" placeholder="Type it again" value={p2} onChange={(e) => setP2(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }} />}
+      <button type="button" className="for-btn for-btn-ghost w-fit" disabled={busy || !p} onClick={submit}>{busy ? "Saving…" : self ? "Change password" : "Set password"}</button>
+      {msg && <p role="status" className={`text-sm font-bold ${msg.ok ? "text-[#0f6b4b]" : "for-error"}`}>{msg.text}</p>}
+    </div>
+  );
+}
+
 /* ---------------- Team (members + payouts) ---------------- */
 function Members({ d, reload }: { d: Data; reload: () => void }) {
   const [edit, setEdit] = useState<Row | null>(null);
@@ -458,18 +553,26 @@ function Members({ d, reload }: { d: Data; reload: () => void }) {
   return (
     <div className={`${card} grid gap-3`}>
       <div className="flex items-center justify-between gap-2"><p className="font-extrabold">Team members and roles</p><button type="button" className="for-btn for-btn-primary !min-h-10 !px-4 text-sm" onClick={() => setEdit({ email: "", name: "", whatsapp: "", role: "Team member", active: true, isNew: true })}>+ Add member</button></div>
-      <p className="text-xs text-muted-dark">Team logins work once the website&apos;s own email domain is verified for login emails. Until then only makendlessofficial@gmail.com can receive a login link.</p>
+      <p className="text-xs text-muted-dark">Each member logs in at /admin with their email and a password. Open a member to set or reset their password, then send it to them on WhatsApp.</p>
       <ul className="grid gap-2">{d.team.map((t) => <li key={t.email}><button type="button" className="flex min-h-12 w-full flex-wrap items-center justify-between gap-2 rounded-xl bg-paper px-3 py-2 text-left text-sm" onClick={() => setEdit({ ...t })}><span><b>{t.name || t.email}</b> · {t.email}</span><span className={t.active ? "" : "text-muted-dark"}>{t.role}{t.active ? "" : " · inactive"}</span></button></li>)}</ul>
       {edit && (
         <Sheet title={edit.isNew ? "Add member" : "Edit member"} onClose={() => setEdit(null)}>
-          <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); if (!edit.isNew && !confirm("Save these changes to this member?")) return; const r = await api({ action: "team.save", row: edit }); if (!r.ok) return setErr(r.error || "Couldn't save."); reload(); setEdit(null); }}>
+          <form className="grid gap-3" onSubmit={async (e) => {
+            e.preventDefault();
+            if (!edit.isNew && !confirm("Save these changes to this member?")) return;
+            const r = await api({ action: "team.save", row: edit }); if (!r.ok) return setErr(r.error || "Couldn't save.");
+            if (edit.isNew && edit.password) { const p = await api({ action: "member.password", email: edit.email, password: edit.password }); if (!p.ok) { reload(); return setErr(`Member saved, but the password wasn't: ${p.error || "try again"}`); } }
+            reload(); setEdit(null);
+          }}>
             <label className={lbl}>Email<input className="for-field" type="email" required readOnly={!edit.isNew} value={edit.email} onChange={(e) => setEdit({ ...edit, email: e.target.value })} /></label>
             <label className={lbl}>Name<input className="for-field" value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></label>
             <label className={lbl}>WhatsApp<input className="for-field" inputMode="tel" value={edit.whatsapp || ""} onChange={(e) => setEdit({ ...edit, whatsapp: e.target.value })} /></label>
             <label className={lbl}>Role<select className="for-field" value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value })}><option>Team member</option><option>Owner</option></select></label>
             <label className="flex min-h-11 items-center gap-2 text-sm font-bold"><input type="checkbox" checked={edit.active !== false} onChange={(e) => setEdit({ ...edit, active: e.target.checked })} /> Active (can log in)</label>
+            {edit.isNew && <label className={lbl}>Login password (at least 8 characters)<input className="for-field" type="text" autoComplete="new-password" minLength={8} value={edit.password || ""} onChange={(e) => setEdit({ ...edit, password: e.target.value })} placeholder="Leave empty to set it later" /></label>}
             <Err text={err} />
             <button className="for-btn for-btn-primary">Save member</button>
+            {!edit.isNew && <SetPassword email={edit.email} />}
             {!edit.isNew && <button type="button" className="for-btn for-btn-ghost text-[#c2183a]" onClick={async () => { if (!confirmDelete()) return; const r = await api({ action: "delete", entity: "member", id: edit.email }); if (!r.ok) return setErr(r.error || "Couldn't remove."); reload(); setEdit(null); }}>Remove member</button>}
           </form>
         </Sheet>
@@ -494,23 +597,53 @@ function Team({ d, reload }: { d: Data; reload: () => void }) {
 }
 
 /* ---------------- Referrals ---------------- */
-function Referrals({ d, reload }: { d: Data; reload: () => void }) {
+function Referrals({ d, reload, go }: { d: Data; reload: () => void; go: (tab: string, id?: string) => void }) {
   const reward = Number(d.settings?.referral_reward || 500), min = Number(d.settings?.referral_min || 2000);
-  const projectOf = (leadId: string) => d.projects.find((p) => p.lead_id === leadId);
-  const usesOf = (code: string) => (d.uses || []).filter((u) => u.code === code);
+  const [openCode, setOpenCode] = useState("");
+  const projectOf = (l: Row) => d.projects.find((p) => p.lead_id === l.id || (l.project_id && p.id === l.project_id));
+  /* Leads brought = every lead that came in with this code (the website re-checks codes before saving them). */
+  const brought = (code: string) => d.leads.filter((l) => l.referral_code === code);
+  const won = (code: string) => brought(code).filter((l) => l.status === "Won");
+  const owed = (c: Row) => Number(c.credits_earned || 0) - Number(c.credits_used || 0);
+  const rows = [...(d.codes || [])].sort((a, b) => brought(b.code).length - brought(a.code).length || String(b.created_at).localeCompare(String(a.created_at)));
+  const total = rows.reduce((s, c) => s + brought(c.code).length, 0);
   const cols: Col[] = [
-    { label: "Code", get: (c) => <b>{c.code}</b>, raw: (c) => c.code },
-    { label: "Owner", get: (c) => `${c.referrer_name} · ${c.referrer_whatsapp}`, raw: (c) => `${c.referrer_name} ${c.referrer_whatsapp}` },
-    { label: "Used by", get: (c) => usesOf(c.code).map((u) => u.new_client_name).join(", ") || "—", raw: (c) => usesOf(c.code).map((u) => u.new_client_name).join(", ") },
-    { label: "Project value", get: (c) => usesOf(c.code).map((u) => { const p = projectOf(u.lead_id); return p ? `${inr(Number(p.price || 0))}${Number(p.price || 0) < min ? " (under minimum)" : ""}` : "no project yet"; }).join(", ") || "—", raw: (c) => usesOf(c.code).map((u) => Number(projectOf(u.lead_id)?.price || 0)).join(" + ") },
+    { label: "Referrer", get: (c) => <b>{c.referrer_name}</b>, raw: (c) => c.referrer_name },
+    { label: "WhatsApp", get: (c) => <a href={`https://wa.me/91${String(c.referrer_whatsapp).slice(-10)}`} target="_blank" rel="noopener noreferrer" onClick={stop} className="font-bold text-[#0f6b4b] underline">{c.referrer_whatsapp}</a>, raw: (c) => c.referrer_whatsapp },
+    { label: "Code", get: (c) => <span className="whitespace-nowrap">{c.code}</span>, raw: (c) => c.code },
+    { label: "Joined", get: (c) => <span className="whitespace-nowrap">{nice(c.created_at)}</span>, raw: (c) => String(c.created_at).slice(0, 10) },
+    { label: "Leads brought", get: (c) => { const n = brought(c.code).length; return n ? <span className="font-extrabold">{n} · see leads →</span> : "0"; }, raw: (c) => brought(c.code).length },
+    { label: "Won", get: (c) => String(won(c.code).length), raw: (c) => won(c.code).length },
     { label: "Rewards earned", get: (c) => inr(Number(c.credits_earned || 0)), raw: (c) => Number(c.credits_earned || 0) },
     { label: "Given", get: (c) => inr(Number(c.credits_used || 0)), raw: (c) => Number(c.credits_used || 0) },
-    { label: "Owed", get: (c) => { const o = Number(c.credits_earned || 0) - Number(c.credits_used || 0); return o >= reward ? <button type="button" className="for-btn for-btn-ghost !min-h-9 !px-3 text-xs" onClick={async (e) => { e.stopPropagation(); if (confirm(`Mark ${inr(reward)} reward as given to ${c.referrer_name}?`)) { await api({ action: "credit.use", code: c.code }); reload(); } }}>{inr(o)} · Mark {inr(reward)} given</button> : inr(Math.max(0, o)); }, raw: (c) => Number(c.credits_earned || 0) - Number(c.credits_used || 0) },
+    { label: "Owed", get: (c) => { const o = owed(c); return o >= reward ? <button type="button" className="for-btn for-btn-ghost !min-h-9 !px-3 text-xs" onClick={async (e) => { e.stopPropagation(); if (confirm(`Mark ${inr(reward)} reward as given to ${c.referrer_name}?`)) { await api({ action: "credit.use", code: c.code }); reload(); } }}>{inr(o)} · Mark {inr(reward)} given</button> : inr(Math.max(0, o)); }, raw: (c) => owed(c) },
   ];
+  const open = rows.find((c) => c.code === openCode);
   return (
     <div className="grid gap-3">
-      <p className="text-sm text-muted-dark">A reward of {inr(reward)} is earned when a referred client&apos;s project of {inr(min)} or more is fully paid. Change these numbers in Settings.</p>
-      <List name="Referrals" cols={cols} rows={d.codes || []} />
+      <div className="grid grid-cols-3 gap-3"><Stat label="Referrers" value={String(rows.length)} /><Stat label="Leads they brought" value={String(total)} /><Stat label="Won" value={String(rows.reduce((s, c) => s + won(c.code).length, 0))} /></div>
+      <p className="text-sm text-muted-dark">Click a referrer to see the leads they brought. A reward of {inr(reward)} is earned when a referred client&apos;s project of {inr(min)} or more is fully paid. Change these numbers in Settings.</p>
+      <List name="Referrals" cols={cols} rows={rows} onOpen={(c) => setOpenCode(c.code)} />
+      {open && (
+        <Sheet title={`${open.referrer_name} · ${open.code}`} onClose={() => setOpenCode("")}>
+          <div className="grid gap-4">
+            <a href={`https://wa.me/91${String(open.referrer_whatsapp).slice(-10)}`} target="_blank" rel="noopener noreferrer" className="for-btn !min-h-11 w-fit bg-[#25d366] text-white">WhatsApp {open.referrer_name.split(" ")[0]}</a>
+            <div className="grid grid-cols-3 gap-3"><Stat label="Leads brought" value={String(brought(open.code).length)} /><Stat label="Won" value={String(won(open.code).length)} /><Stat label="Reward owed" value={inr(Math.max(0, owed(open)))} /></div>
+            <p className="text-sm text-muted-dark">Joined {nice(open.created_at)} · {open.referrer_whatsapp}</p>
+            <div className="grid gap-2">
+              <p className="font-extrabold">Leads they brought</p>
+              {brought(open.code).map((l) => { const p = projectOf(l); return (
+                <button type="button" key={l.id} onClick={() => go("Leads", l.id)} className="grid gap-1 rounded-xl bg-white p-3 text-left text-sm ring-1 ring-line hover:ring-violet">
+                  <span className="flex flex-wrap items-center justify-between gap-2"><b>{l.name}</b><span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${STATUS_TONE[l.status] || ""}`}>{l.status}</span></span>
+                  <span className="text-muted-dark">{nice(l.created_at)} · {l.whatsapp || l.email || "—"} · {services(l).join(", ") || "—"}</span>
+                  <span>Quote: <b>{quote(l)}</b>{p ? ` · Project ${inr(Number(p.price || 0))}${Number(p.price || 0) < min ? " (under the reward minimum)" : ""}` : ""}</span>
+                </button>
+              ); })}
+              {!brought(open.code).length && <p className="text-sm text-muted-dark">No leads with this code yet.</p>}
+            </div>
+          </div>
+        </Sheet>
+      )}
     </div>
   );
 }
@@ -772,38 +905,61 @@ function Settings({ d, reload }: { d: Data; reload: () => void }) {
 }
 
 /* ---------------- login + shell ---------------- */
-function Login({ denied }: { denied?: boolean }) {
+function Login({ resetToken, note }: { resetToken?: string; note?: string }) {
+  const [mode, setMode] = useState<"login" | "forgot" | "reset">(resetToken ? "reset" : "login");
   const [email, setEmail] = useState("");
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(denied ? { ok: false, text: "That login link is not for a MAKENDLESS team account." } : null);
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+  const [show, setShow] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(note ? { ok: false, text: note } : null);
   const [busy, setBusy] = useState(false);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault(); setMsg(null);
+    if (mode === "reset") {
+      if (password.length < 8) return setMsg({ ok: false, text: "Use at least 8 characters." });
+      if (password !== password2) return setMsg({ ok: false, text: "The two passwords don't match." });
+    }
+    setBusy(true);
+    const r = mode === "login" ? await api({ action: "login", email, password })
+      : mode === "forgot" ? await api({ action: "forgot", email })
+      : await api({ action: "password.reset", token: resetToken, password });
+    setBusy(false);
+    if (!r.ok) return setMsg({ ok: false, text: r.error || "Something went wrong. Please try again." });
+    if (mode === "forgot") return setMsg({ ok: true, text: r.dev ? "Local test mode: no email is sent. The password is makendless-dev." : "If this email is on the team, a reset link is on its way. Open it on this device (check Spam too)." });
+    location.reload();
+  };
+  const field = (id: string, label: string, value: string, set: (v: string) => void, type: string, auto: string) => (
+    <><label htmlFor={id} className="text-sm font-bold">{label}</label><input id={id} type={type} autoComplete={auto} required className="for-field" value={value} onChange={(e) => set(e.target.value)} /></>
+  );
   return (
     <div className="mx-auto mt-10 max-w-md">
-      <h1 className="text-3xl font-extrabold">Team login</h1>
-      <p className="mt-2 text-muted-dark">Enter your team email. We&apos;ll send you a one-time login link.</p>
-      <form className="mt-6 grid gap-3" onSubmit={async (e) => {
-        e.preventDefault(); setBusy(true);
-        const r = await api({ action: "login", email }); setBusy(false);
-        if (r.dev) return location.reload();
-        setMsg(r.ok ? { ok: true, text: "Check your email and open the login link on this device." } : { ok: false, text: r.error || "Something went wrong." });
-      }}>
-        <label htmlFor="adm-email" className="text-sm font-bold">Email</label>
-        <input id="adm-email" type="email" autoComplete="email" className="for-field" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <button className="for-btn for-btn-primary" disabled={busy}>{busy ? "Sending…" : "Send login link"}</button>
+      <h1 className="text-3xl font-extrabold">{mode === "reset" ? "Choose a new password" : mode === "forgot" ? "Forgot password" : "Team login"}</h1>
+      <p className="mt-2 text-muted-dark">{mode === "reset" ? "At least 8 characters. You'll be logged in right after." : mode === "forgot" ? "Enter your team email and we'll send a link to choose a new password." : "MAKENDLESS team only."}</p>
+      <form className="mt-6 grid gap-3" onSubmit={submit}>
+        {mode !== "reset" && field("adm-email", "Email", email, setEmail, "email", "username")}
+        {mode === "login" && field("adm-pass", "Password", password, setPassword, show ? "text" : "password", "current-password")}
+        {mode === "reset" && <>{field("adm-new", "New password", password, setPassword, show ? "text" : "password", "new-password")}{field("adm-new2", "Type it again", password2, setPassword2, show ? "text" : "password", "new-password")}</>}
+        {mode !== "forgot" && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} /> Show password</label>}
+        <button className="for-btn for-btn-primary" disabled={busy}>{busy ? "Please wait…" : mode === "login" ? "Log in" : mode === "forgot" ? "Send reset link" : "Save and log in"}</button>
         {msg && <p role="alert" className={`text-sm font-bold ${msg.ok ? "text-[#0f6b4b]" : "for-error"}`}>{msg.text}</p>}
       </form>
+      {mode !== "reset" && <button type="button" className="mt-4 min-h-11 text-sm font-bold underline" onClick={() => { setMode(mode === "login" ? "forgot" : "login"); setMsg(null); }}>{mode === "login" ? "Forgot password?" : "← Back to login"}</button>}
     </div>
   );
 }
 
 export default function AdminApp() {
-  const [state, setState] = useState<"loading" | "login" | "denied" | "ok">("loading");
+  const [state, setState] = useState<"loading" | "login" | "ok">("loading");
   const [d, setD] = useState<Data | null>(null);
   const [tab, setTabState] = useState("Home");
   const [openId, setOpenId] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [note, setNote] = useState("");
+  const [pwOpen, setPwOpen] = useState(false);
   const load = useCallback(async () => {
     const r = await fetch("/api/admin", { cache: "no-store" });
     const j = await r.json().catch(() => ({ ok: false }));
-    if (!r.ok || !j.ok) return setState((s) => (s === "denied" ? s : "login"));
+    if (!r.ok || !j.ok) return setState("login");
     setD(j); setState("ok");
   }, []);
   const tabs: readonly string[] = d?.me.role === "Owner" ? OWNER_TABS : TEAM_TABS;
@@ -814,12 +970,12 @@ export default function AdminApp() {
   }, []);
   useEffect(() => {
     (async () => {
+      /* A "Forgot password" email link lands here with a one-time token (or an error) after the #. */
       const h = new URLSearchParams(location.hash.slice(1));
-      const token = h.get("access_token");
-      if (token) {
+      if (h.get("access_token") || h.get("error")) {
         history.replaceState(null, "", location.pathname + location.search);
-        const r = await api({ action: "session", token });
-        if (!r.ok) { setState("denied"); return; }
+        if (h.get("access_token")) { setResetToken(h.get("access_token")!); setState("login"); return; }
+        setNote("That link has expired or was already used. Ask for a new one with \"Forgot password?\".");
       }
       const sp = new URLSearchParams(location.search);
       const lead = sp.get("lead");
@@ -833,7 +989,7 @@ export default function AdminApp() {
   const counts = useMemo(() => (d ? { Leads: d.leads.filter((l) => l.status === "New").length, Trash: d.trash?.length || 0 } : {}), [d]) as Record<string, number>;
 
   if (state === "loading") return <p className="mt-10 text-muted-dark">Loading…</p>;
-  if (state === "login" || state === "denied" || !d) return <Login denied={state === "denied"} />;
+  if (state === "login" || !d) return <Login resetToken={resetToken} note={note} />;
   return (
     <div>
       <nav aria-label="Control room" className="sticky top-12 z-30 -mx-3 mb-4 flex gap-1 overflow-x-auto border-b border-line bg-paper/95 px-3 py-2 backdrop-blur sm:-mx-5 sm:px-5 md:-mx-8 md:px-8">
@@ -843,13 +999,14 @@ export default function AdminApp() {
           </button>
         ))}
       </nav>
-      <p className="mb-4 text-sm text-muted-dark">Signed in as <b>{d.me.name || d.me.email}</b> · {d.me.role}</p>
+      <p className="mb-4 text-sm text-muted-dark">Signed in as <b>{d.me.name || d.me.email}</b> · {d.me.role} · <button type="button" className="font-bold underline" onClick={() => setPwOpen(true)}>Change my password</button></p>
+      {pwOpen && <Sheet title="Change my password" onClose={() => setPwOpen(false)}><SetPassword self /></Sheet>}
       {active === "Home" && <Home d={d} go={setTab} />}
       {active === "Leads" && <Leads d={d} reload={load} openId={openId} setOpenId={(id) => setTab("Leads", id)} />}
       {active === "Projects" && <Projects d={d} reload={load} openId={openId} setOpenId={(id) => setTab("Projects", id)} />}
       {active === "Expenses" && <Expenses d={d} reload={load} />}
       {active === "Team" && <Team d={d} reload={load} />}
-      {active === "Referrals" && <Referrals d={d} reload={load} />}
+      {active === "Referrals" && <Referrals d={d} reload={load} go={setTab} />}
       {active === "Website" && d.content && <Website key={String(d.content.updatedAt || "")} d={d} reload={load} />}
       {active === "Reports" && <Reports d={d} />}
       {active === "Trash" && <Trash d={d} reload={load} />}
