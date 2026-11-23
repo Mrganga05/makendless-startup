@@ -59,6 +59,10 @@ function limited(key: string) {
   return list.length > 20;
 }
 
+/* The model sometimes writes "&amp;" for "&" (the knowledge sits in XML-style tags); the chat shows plain text. */
+const ENT: Record<string, string> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&apos;": "'", "&nbsp;": " " };
+const unescapeHtml = (t: string) => t.replace(/&(amp|lt|gt|quot|#39|apos|nbsp);/g, (m) => ENT[m] ?? m);
+
 type Incoming = { role?: unknown; content?: unknown };
 const json = (body: object, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
@@ -126,7 +130,7 @@ export async function POST(req: Request) {
     for (let round = 0; round < 3; round++) {
       const res = await client.messages.create({ ...params, messages });
       if (res.stop_reason === "refusal") return json({ reply: "I can only help with questions about MAKENDLESS services. What would you like to know?", leadSaved });
-      const text = res.content.filter((c): c is Anthropic.TextBlock => c.type === "text").map((c) => c.text).join("\n").trim();
+      const text = unescapeHtml(res.content.filter((c): c is Anthropic.TextBlock => c.type === "text").map((c) => c.text).join("\n").trim());
       const calls = res.content.filter((c): c is Anthropic.ToolUseBlock => c.type === "tool_use");
       if (res.stop_reason !== "tool_use" || !calls.length) {
         /* Cut off at the 400-token cap: keep the finished sentences, or ask for a shorter question. */
