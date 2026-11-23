@@ -51,9 +51,10 @@ export function siteKnowledge(): string {
   out.push("", "## Our work (real projects, all on /work; reels also on /create, websites also on /build)");
   const work = [
     ...WORK.reels.map((r) => `- Reel (CREATE, ${r.service}): ${r.title} — ${r.text}. Watch it on /work?type=create`),
-    ...WORK.sites.map((x) => `- Website (BUILD): ${x.name} (${x.category}) — ${x.text} Built: ${x.tags.join(", ")}. Live at ${x.url}`),
+    /* No web addresses here: the bot would read brand names out of them. Visitors open the live sites from /work. */
+    ...WORK.sites.map((x) => `- Website (BUILD): "${x.name}" (${x.category}) — ${x.text} Built: ${x.tags.join(", ")}. Live link on /work?type=build`),
   ];
-  out.push(...(work.length ? [...work, "The animated scenes elsewhere on the site are concept demos, marked as demos. Don't name any person or other brand beyond what is written here."] : ["No public portfolio items are on the website yet. The animations on the site are concept demos, not client work. Offer to share samples on WhatsApp."]));
+  out.push(...(work.length ? [...work, "The animated scenes elsewhere on the site are concept demos, marked as demos. Call each website exactly by the name in quotes above (for example \"Video editing studio\") and never give or guess another business name, person's name or web address."] : ["No public portfolio items are on the website yet. The animations on the site are concept demos, not client work. Offer to share samples on WhatsApp."]));
   if (REVIEWS.length) out.push("", "## Client reviews", ...REVIEWS.map((r) => `- ${r.name}${r.role ? ` (${r.role})` : ""}: "${r.text}"`));
 
   out.push("", "## Contact and pages",
