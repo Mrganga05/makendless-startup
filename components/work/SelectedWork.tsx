@@ -1,8 +1,9 @@
-/* Homepage "Selected work" (right after "Our three studios"): the reels strip, the websites, then "See all work". */
+/* Homepage "Selected work" (right after "Our three studios"): the reels slider, the websites slider, then "See all work". */
 import { WORK } from "../../data/work";
 import { ButtonLink, Arrow, Eyebrow, KineticHeading } from "../ui";
-import ReelStrip from "./ReelStrip";
+import ReelCard from "./ReelCard";
 import SiteCard from "./SiteCard";
+import Slider from "./Slider";
 
 export default function SelectedWork() {
   if (!WORK.reels.length && !WORK.sites.length) return null;
@@ -20,16 +21,14 @@ export default function SelectedWork() {
         {WORK.reels.length > 0 && (
           <div className="mt-10 md:mt-14">
             <h3 className="work-kicker work-kicker--create">CREATE · Video editing</h3>
-            <ReelStrip reels={WORK.reels} label="Reels we edited" />
+            <Slider kind="reel" label="Reels we edited">{WORK.reels.map((r) => <ReelCard key={r.id} reel={r} />)}</Slider>
           </div>
         )}
 
         {WORK.sites.length > 0 && (
           <div className="mt-12 md:mt-16">
             <h3 className="work-kicker work-kicker--build">BUILD · Websites</h3>
-            <ul className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {WORK.sites.map((s) => <li key={s.id}><SiteCard site={s} /></li>)}
-            </ul>
+            <Slider kind="site" label="Websites we built">{WORK.sites.map((s) => <SiteCard key={s.id} site={s} />)}</Slider>
           </div>
         )}
 

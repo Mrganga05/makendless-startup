@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { WORK } from "../../data/work";
 import { Arrow, Eyebrow, KineticHeading } from "../ui";
-import ReelStrip from "./ReelStrip";
+import ReelCard from "./ReelCard";
 import SiteCard from "./SiteCard";
+import Slider from "./Slider";
 
 export default function RecentWork({ studio }: { studio: "create" | "build" }) {
   const create = studio === "create";
@@ -20,13 +21,11 @@ export default function RecentWork({ studio }: { studio: "create" | "build" }) {
             See all work <Arrow />
           </Link>
         </div>
-        {create ? (
-          <div className="mt-8"><ReelStrip reels={WORK.reels} label="Reels we edited" /></div>
-        ) : (
-          <ul className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {WORK.sites.map((s) => <li key={s.id}><SiteCard site={s} /></li>)}
-          </ul>
-        )}
+        <div className="mt-8">
+          {create
+            ? <Slider kind="reel" label="Reels we edited">{WORK.reels.map((r) => <ReelCard key={r.id} reel={r} />)}</Slider>
+            : <Slider kind="site" label="Websites we built">{WORK.sites.map((s) => <SiteCard key={s.id} site={s} />)}</Slider>}
+        </div>
       </div>
     </section>
   );

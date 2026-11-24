@@ -1,14 +1,21 @@
-/* MAKENDLESS Assistant (components/ChatWidget.tsx).
-   The round button sits right above the WhatsApp button (.wa-float, 3.25rem tall; 3.5rem on phones) with a .75rem gap,
-   and moves up with it when the services selection bar is open. */
-.mk-chat-fab { position: fixed; right: 1rem; z-index: 46; bottom: calc(1rem + var(--svc-bar-h, 0px) + env(safe-area-inset-bottom) + 3.25rem + .75rem); display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: 999px; color: #fff; background: var(--prism); box-shadow: 0 12px 30px -10px rgba(0,0,0,.5); transition: bottom .35s cubic-bezier(.2,.8,.2,1), transform .2s ease; --focus: #ffffff; }
-.mk-chat-fab--solo { bottom: calc(1rem + var(--svc-bar-h, 0px) + env(safe-area-inset-bottom)); }
+/* MAKENDLESS Assistant (components/ChatWidget.tsx launcher + ChatPanel.tsx window).
+   The round button sits right above the WhatsApp button (.wa-float, 3.25rem tall; 3rem on phones) with a .75rem gap
+   (.5rem on phones). Both move up together when the services selection bar is open (--svc-bar-h) and while the hero's
+   edit timeline is at the bottom of the screen (--dock-lift, set by components/Hero.tsx), so they never cover it. */
+.mk-chat-fab { position: fixed; right: 1rem; z-index: 46; bottom: calc(1rem + var(--svc-bar-h, 0px) + var(--dock-lift, 0px) + env(safe-area-inset-bottom) + 3.25rem + .75rem); display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: 999px; color: #fff; background: var(--prism); box-shadow: 0 12px 30px -10px rgba(0,0,0,.5); transition: bottom .35s cubic-bezier(.2,.8,.2,1), transform .2s ease; --focus: #ffffff; }
+.mk-chat-fab--solo { bottom: calc(1rem + var(--svc-bar-h, 0px) + var(--dock-lift, 0px) + env(safe-area-inset-bottom)); }
 .mk-chat-fab:hover { transform: translateY(-2px); }
 .mk-chat-fab svg { width: 1.5rem; height: 1.5rem; }
+/* Phones: a little smaller, neatly stacked in one column at the right edge. */
 @media (max-width: 767px) {
-  .mk-chat-fab { width: 3.5rem; height: 3.5rem; bottom: calc(1rem + var(--svc-bar-h, 0px) + env(safe-area-inset-bottom) + 3.5rem + .75rem); }
-  .mk-chat-fab--solo { bottom: calc(1rem + var(--svc-bar-h, 0px) + env(safe-area-inset-bottom)); }
+  .mk-chat-fab { right: .75rem; width: 3rem; height: 3rem; bottom: calc(.75rem + var(--svc-bar-h, 0px) + var(--dock-lift, 0px) + env(safe-area-inset-bottom) + 3rem + .5rem); }
+  .mk-chat-fab--solo { bottom: calc(.75rem + var(--svc-bar-h, 0px) + var(--dock-lift, 0px) + env(safe-area-inset-bottom)); }
+  .mk-chat-fab svg { width: 1.35rem; height: 1.35rem; }
+  /* While a reel is playing, both buttons step aside so they never sit on the video. */
+  html[data-reel="playing"] .mk-chat-fab, html[data-reel="playing"] .wa-float { opacity: 0; transform: translateY(.75rem) scale(.9); pointer-events: none; }
 }
+.mk-chat-fab, .wa-float { transition: bottom .35s cubic-bezier(.2,.8,.2,1), transform .25s ease, opacity .25s ease; }
+.mk-chat-loading { position: fixed; z-index: 60; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom)); padding: .75rem 1rem; border-radius: 999px; font-size: .875rem; font-weight: 600; color: #fff; background: var(--color-surface-2); box-shadow: 0 20px 50px -20px rgba(0,0,0,.7); }
 
 .mk-chat { position: fixed; z-index: 60; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom)); width: min(24rem, calc(100vw - 2rem)); height: min(36rem, calc(100dvh - 2rem)); display: flex; flex-direction: column; overflow: hidden; border-radius: 1.25rem; background: var(--color-surface-2); color: var(--color-light); border: 1px solid rgba(255,255,255,.1); box-shadow: 0 30px 70px -20px rgba(0,0,0,.7); animation: mk-chat-in .22s cubic-bezier(.2,.8,.2,1); --focus: #22d3ee; }
 @media (max-width: 767px) { .mk-chat { right: 0; left: 0; bottom: 0; width: auto; height: min(88dvh, 40rem); border-radius: 1.25rem 1.25rem 0 0; padding-bottom: env(safe-area-inset-bottom); } }
@@ -28,14 +35,23 @@
 .mk-chat-msg--me { align-self: flex-end; background: #6f45f6; color: #fff; border-bottom-right-radius: .35rem; }
 .mk-chat-msg--err { background: rgba(255,170,90,.12); color: #ffd9b3; }
 .mk-chat-link { color: #22d3ee; text-decoration: underline; text-underline-offset: 2px; }
+/* Page buttons under a reply ("See video prices") instead of raw paths */
+.mk-chat-links { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; white-space: normal; }
+.mk-chat-btn { display: inline-flex; align-items: center; gap: .35rem; min-height: 2.5rem; padding: 0 .9rem; border-radius: 999px; font-size: .875rem; font-weight: 700; color: #0c1024; background: #fff; transition: background-color .2s ease; }
+.mk-chat-btn:hover { background: var(--color-violet-soft); }
+.mk-chat-btn--wa { color: #fff; background: #1ea952; }
+.mk-chat-btn--wa:hover { background: #25d366; }
 .mk-chat-typing { display: inline-flex; gap: .3rem; padding: .85rem 1rem; }
 .mk-chat-typing span { width: .45rem; height: .45rem; border-radius: 999px; background: var(--color-muted); animation: beam 1s ease-in-out infinite; }
 .mk-chat-typing span:nth-child(2) { animation-delay: .15s; }
 .mk-chat-typing span:nth-child(3) { animation-delay: .3s; }
 
 .mk-chat-quick { display: flex; flex-wrap: wrap; gap: .5rem; padding: 0 1rem .75rem; }
-.mk-chat-quick button { min-height: 2.5rem; padding: 0 .95rem; border-radius: 999px; border: 1px solid rgba(34,211,238,.45); color: #22d3ee; font-size: .875rem; font-weight: 600; }
+.mk-chat-quick { padding-top: .6rem; border-top: 1px solid rgba(255,255,255,.08); }
+.mk-chat-quick button, .mk-chat-quick-wa { display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0 .95rem; border-radius: 999px; border: 1px solid rgba(34,211,238,.45); color: #22d3ee; font-size: .875rem; font-weight: 600; }
 .mk-chat-quick button:hover:not(:disabled) { background: rgba(34,211,238,.1); }
+.mk-chat-quick-wa { border-color: rgba(37,211,102,.55); color: #5be08f; }
+.mk-chat-quick-wa:hover { background: rgba(37,211,102,.1); }
 .mk-chat-quick button:disabled { opacity: .5; }
 
 .mk-chat-form { display: flex; align-items: flex-end; gap: .5rem; padding: .75rem 1rem .4rem; border-top: 1px solid rgba(255,255,255,.08); }

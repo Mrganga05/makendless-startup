@@ -1,24 +1,26 @@
 /* One website from data/work.ts: real desktop + phone screenshots in a laptop and phone mockup,
    a "Live" badge and "View live site" (new tab). On hover the page scrolls inside the laptop screen.
-   layout "row" = big mockup beside the text (/work); "card" = stacked (homepage, /build). */
+   Cards in a slider are all the same height; "View live site" sits at the bottom so the buttons line up. */
 import Image from "next/image";
 import type { Site } from "../../data/work";
 
-export default function SiteCard({ site, layout = "card", tone = "dark", priority = false }: { site: Site; layout?: "card" | "row"; tone?: "dark" | "light"; priority?: boolean }) {
-  const row = layout === "row";
+const SIZES = "(min-width: 1280px) 470px, (min-width: 1024px) 37vw, (min-width: 640px) 62vw, 82vw";
+const PHONE_SIZES = "(min-width: 1280px) 100px, (min-width: 1024px) 8vw, (min-width: 640px) 13vw, 18vw";
+
+export default function SiteCard({ site, priority = false }: { site: Site; priority?: boolean }) {
   return (
-    <article className={`site site--${layout} site--${tone}`}>
+    <article className="site">
       <a href={site.url} target="_blank" rel="noopener noreferrer" className="site-stage" tabIndex={-1} aria-hidden="true">
         <span className="site-live"><span className="site-live-dot" />Live</span>
         <span className="site-laptop">
           <span className="site-screen">
-            <Image src={site.desktop} alt="" fill priority={priority} sizes={row ? "(min-width: 1024px) 46vw, 88vw" : "(min-width: 1024px) 28vw, (min-width: 640px) 44vw, 80vw"} className="site-shot" />
+            <Image src={site.desktop} alt="" fill priority={priority} sizes={SIZES} className="site-shot" />
           </span>
           <span className="site-base" />
         </span>
         <span className="site-phone">
           <span className="site-phone-screen">
-            <Image src={site.mobile} alt="" fill sizes={row ? "(min-width: 1024px) 11vw, 24vw" : "(min-width: 1024px) 7vw, 20vw"} className="site-shot-m" />
+            <Image src={site.mobile} alt="" fill sizes={PHONE_SIZES} className="site-shot-m" />
           </span>
         </span>
       </a>

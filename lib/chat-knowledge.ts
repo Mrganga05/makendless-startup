@@ -15,7 +15,12 @@ const strip = (t: string) => t.replace(/\*\*/g, "");
 
 export function siteKnowledge(): string {
   const out: string[] = [];
-  out.push("# MAKENDLESS — CREATE • BUILD • GROW", "A small expert studio in India that works online with clients in India and abroad. Website: " + SETTINGS.siteUrl);
+  out.push("# MAKENDLESS — CREATE • BUILD • GROW", "A small expert studio in India that works online with clients in India and abroad.",
+    "MAKENDLESS has exactly three studios:",
+    `- CREATE = video editing (${servicesOf("create").map((s) => s.name).join(", ")}). Prices: /create`,
+    `- BUILD = websites & technology (${servicesOf("build").map((s) => s.name).join(", ")}). Prices: /build`,
+    "- GROW = digital marketing. BETA: waitlist only, nothing for sale yet, no prices. Join the waitlist: /grow",
+    "All services on one page: /studios. Real work: /work.");
 
   for (const st of studios) {
     out.push("", `## ${st.verb} — ${st.name}${st.beta ? " (BETA: not on sale, no prices, no results promised)" : ""}`, st.lead, `Page: ${st.href}`);

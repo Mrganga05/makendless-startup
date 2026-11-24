@@ -5,7 +5,7 @@ import Solutions from "../components/Solutions";
 import { ReferSection } from "../components/pricing/ReferEarn";
 import ProcessFaq from "../components/ProcessFaq";
 import FinalCta from "../components/FinalCta";
-import Reviews from "../components/Reviews";
+import Testimonials from "../components/Testimonials";
 import { loadContent } from "../lib/content";
 
 export default async function Home() {
@@ -15,10 +15,11 @@ export default async function Home() {
       <Hero />
       <Studios />
       <SelectedWork />
-      <Reviews />
       <Solutions />
       {/* Services and prices live on /create and /build only. */}
       <ReferSection />
+      {/* Hidden until the first testimonial is added (data/work.ts REVIEWS or /admin). */}
+      <Testimonials />
       <ProcessFaq />
       <FinalCta />
     </>

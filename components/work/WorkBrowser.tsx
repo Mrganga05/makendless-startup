@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { WORK } from "../../data/work";
 import ReelCard from "./ReelCard";
 import SiteCard from "./SiteCard";
+import Slider from "./Slider";
 
 type F = "all" | "create" | "build";
 const TABS: { id: F; label: string; count: number }[] = [
@@ -54,9 +55,7 @@ export default function WorkBrowser() {
       {showBuild && (
         <section id="build" aria-labelledby="work-build" className="mt-14 scroll-mt-24 md:mt-20">
           <h2 id="work-build" className="work-kicker work-kicker--build">BUILD · Websites</h2>
-          <ul className="mt-6 grid gap-12 md:gap-16">
-            {WORK.sites.map((s, i) => <li key={s.id}><SiteCard site={s} layout="row" priority={i === 0 && f === "build"} /></li>)}
-          </ul>
+          <Slider kind="site" label="Websites we built">{WORK.sites.map((s, i) => <SiteCard key={s.id} site={s} priority={i === 0 && f === "build"} />)}</Slider>
         </section>
       )}
     </>

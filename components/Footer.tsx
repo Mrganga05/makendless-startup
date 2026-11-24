@@ -15,7 +15,7 @@ export default function Footer() {
       <div className="absolute inset-x-0 top-0 h-px" style={{ background: "var(--prism)" }} aria-hidden="true" />
       <div className="mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-[1.2fr_repeat(3,0.8fr)_1.6fr]">
         <div>
-          <Link href="/" aria-label="MAKENDLESS — home" className="inline-flex min-h-11 items-center text-xl"><Wordmark /></Link>
+          <Link href="/" className="inline-flex min-h-11 items-center text-xl"><Wordmark /><span className="sr-only"> home</span></Link>
           <p className="mt-2 text-sm font-semibold tracking-[0.3em] text-muted">CREATE • BUILD • GROW</p>
           <p className="mt-5 max-w-xs text-[15px] leading-relaxed text-muted">Creative &amp; Technology Studio. Video editing and website development, with digital marketing in beta.</p>
         </div>

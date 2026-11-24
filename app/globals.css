@@ -61,6 +61,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 /* ---------- HERO ---------- */
+/* Off screen, every hero animation pauses (the 3D scene stops too: components/Hero3D.tsx frameloop). */
+[data-hero][data-live="false"], [data-hero][data-live="false"] * { animation-play-state: paused !important; }
 @keyframes hero-sweep { 0% { transform: translateX(-70%) rotate(14deg); } 100% { transform: translateX(190%) rotate(14deg); } }
 @keyframes hero-rise { from { transform: translateY(112%); } to { transform: none; } }
 @keyframes hero-kenburns { from { transform: scale(1.02); } to { transform: scale(1.14); } }
@@ -107,7 +109,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .sol-h2 > span > span, .pac-title-word > span, .cta-word-in { transition-delay: 0s !important; }
 .for-h1-word > span { animation-duration: .32s !important; animation-delay: calc(var(--i, 0) * .01s) !important; }
 .stu-item[data-after] { position: relative; }
-.stu-item[data-after] .stu-body { padding-bottom: 7.5rem; }
+.stu-item[data-after] .stu-body { padding-bottom: 10.5rem; } /* room for the stacked waitlist box (email, then button) */
+@media (min-width: 640px) and (max-width: 1023px) { .stu-item[data-after] .stu-body { padding-bottom: 7.5rem; } } /* wide card: email and button side by side */
 .stu-after { position: absolute; left: 1rem; right: 1rem; bottom: 1rem; z-index: 3; margin: 0; padding: 0; transition: opacity .3s ease; }
 .stu-item[data-in="false"] .stu-after { opacity: 0; }
 

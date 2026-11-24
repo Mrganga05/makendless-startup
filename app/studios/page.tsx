@@ -26,7 +26,7 @@ export default async function Page() {
                 <StudioWorld id={s.id} className="h-64 p-3 sm:h-72" />
                 <div className="flex flex-1 flex-col p-6 md:p-7">
                   <div className="flex items-center gap-3">
-                    <p className={`text-sm font-extrabold tracking-[0.3em] ${s.id === "create" ? "text-[#0891b2]" : "text-violet"}`}>{s.verb}</p>
+                    <p className={`text-sm font-extrabold tracking-[0.3em] ${s.id === "create" ? "text-[#0e7490]" : "text-violet"}`}>{s.verb}</p>
                     {s.beta && <BetaBadge tone="light" />}
                     {studioFromText(s.id) && <p className="ml-auto text-sm font-extrabold text-dark">{studioFromText(s.id)}</p>}
                   </div>

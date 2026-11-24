@@ -7,8 +7,8 @@ import { Wordmark } from "./brand";
 import { STUDIOS } from "../data/pricing";
 
 const load3D = () => import("./Hero3D");
-/* Start downloading the 3D scene as soon as this module runs (during hydration), not after the first effects. */
-if (typeof window !== "undefined") load3D();
+/* The 3D scene starts downloading in the first layout effect below, only when the hero is actually shown
+   (not when another page merely prefetches the homepage). */
 const Hero3D = dynamic(load3D, { ssr: false, loading: () => null });
 const useIsoLayout = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
@@ -76,12 +76,14 @@ export default function Hero() {
   const [touched, setTouched] = useState(false);
   const [intro, setIntro] = useState(true);
   const [cycling, setCycling] = useState(true);
-  const section = useRef<HTMLElement>(null), scene = useRef<HTMLDivElement>(null), raf = useRef(0);
+  const section = useRef<HTMLElement>(null), scene = useRef<HTMLDivElement>(null), dock = useRef<HTMLDivElement>(null), raf = useRef(0);
 
   useIsoLayout(() => {
     const rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const mq = window.matchMedia("(max-width: 767px)");
-    setReduced(rm); setCompact(mq.matches); setGl(hasWebGL() && !rm);
+    const webgl = hasWebGL() && !rm;
+    if (webgl) void load3D();
+    setReduced(rm); setCompact(mq.matches); setGl(webgl);
     if (rm) { setP(1); setIntro(false); setPaused(true); setCycling(false); }
     const on = () => setCompact(mq.matches);
     mq.addEventListener("change", on);
@@ -122,6 +124,53 @@ export default function Hero() {
     return () => io.disconnect();
   }, []);
 
+  /* The floating chat / WhatsApp buttons never cover the edit timeline or the "Pause video" button on the first screen:
+     while the timeline is in the buttons' corner, <html> gets --dock-lift = how far they rise to sit just above both
+     (app/styles/chat.css). The height is worked out at the top of the page and kept while scrolling (no jumping);
+     once the timeline has scrolled away the buttons glide back down. */
+  useEffect(() => {
+    const root = document.documentElement;
+    const clear = () => { root.style.removeProperty("--dock-lift"); };
+    if (!inView) { clear(); return; }
+    let f = 0, rest: number | null = null;
+    const measure = () => {
+      f = 0;
+      const floats = [...document.querySelectorAll<HTMLElement>(".wa-float, .mk-chat-fab")].map((e) => e.getBoundingClientRect());
+      if (!floats.length || !dock.current) return;
+      const vh = window.innerHeight, gap = 8, base = window.innerWidth >= 768 ? 16 : 12;
+      const left = Math.min(...floats.map((r) => r.left));
+      const height = Math.max(...floats.map((r) => r.bottom)) - Math.min(...floats.map((r) => r.top));
+      const lifted = parseFloat(root.style.getPropertyValue("--dock-lift")) || 0;
+      const d = dock.current.getBoundingClientRect();
+      if (!(d.top < vh && d.bottom > vh - base - height - gap)) { rest = null; clear(); return; }
+      if (rest === null || window.scrollY < 4) {
+        /* Things the buttons must not cover, lowest first; each one they would overlap pushes them up above it. */
+        const pauseBtn = section.current?.querySelector<HTMLElement>("[data-hero-pause]");
+        const blocks = [dock.current, pauseBtn].filter((e): e is HTMLElement => !!e).map((e) => e.getBoundingClientRect())
+          .filter((r) => r.right > left && r.top < vh && r.bottom > 0).sort((x, y) => y.top - x.top);
+        let lift = 0;
+        for (const r of blocks) {
+          const bottom = vh - base - lift, top = bottom - height;
+          if (r.top < bottom + gap && r.bottom > top - gap) lift = Math.max(lift, Math.round(vh - base - r.top + gap));
+        }
+        rest = lift;
+      }
+      if (rest !== lifted) { if (rest) root.style.setProperty("--dock-lift", `${rest}px`); else clear(); }
+    };
+    const queue = () => { if (!f) f = requestAnimationFrame(measure); };
+    measure();
+    const onResize = () => { rest = null; queue(); };
+    /* The hero can still shift a little after load (fonts, 3D scene): measure again when it does. */
+    const ro = new ResizeObserver(onResize);
+    if (section.current) ro.observe(section.current);
+    if (dock.current) ro.observe(dock.current);
+    if (scene.current) ro.observe(scene.current);
+    document.fonts?.ready.then(onResize).catch(() => {});
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", onResize);
+    return () => { cancelAnimationFrame(f); ro.disconnect(); window.removeEventListener("scroll", queue); window.removeEventListener("resize", onResize); clear(); };
+  }, [inView]);
+
   /* auto-cycle modes every 6s until the visitor interacts */
   useEffect(() => {
     if (!cycling || !inView) return;
@@ -154,7 +203,7 @@ export default function Hero() {
   const swipe = useRef(0);
 
   return (
-    <section ref={section} className="relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-[#0c1024] pt-16" aria-labelledby="hero-title" style={{ ["--accent" as string]: M.color }}>
+    <section ref={section} data-hero data-live={inView} className="relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-[#0c1024] pt-16" aria-labelledby="hero-title" style={{ ["--accent" as string]: M.color }}>
       {/* background: mode-tinted glow + slow prismatic sweep */}
       <div className="pointer-events-none absolute inset-0 -z-10 transition-[background] duration-1000" style={{ background: `radial-gradient(55% 55% at 74% 42%, ${M.color}${edited ? "3d" : "1f"}, transparent 70%), radial-gradient(40% 40% at 10% 95%, rgba(8,187,212,.14), transparent 70%)` }} />
       <div className="pointer-events-none absolute inset-y-[-20%] left-0 -z-10 w-[38%]" style={{ background: "linear-gradient(90deg, transparent, rgba(34,211,238,.55) 35%, rgba(139,92,246,.55) 65%, transparent)", willChange: "transform", animation: "hero-sweep 22s linear infinite", opacity: 0.05 + p * 0.1 }} />
@@ -196,7 +245,7 @@ export default function Hero() {
             </div>
           )}
           {gl && <div className="absolute inset-0 transition-opacity duration-1000" style={{ opacity: ready ? 1 : 0 }}><Hero3D p={p} mode={mode} paused={paused} compact={compact} active={inView} onReady={onSceneReady} /></div>}
-          <button onClick={() => setPaused((x) => !x)} aria-pressed={paused} className="absolute bottom-1 right-0 z-50 flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-[#0c1024]/85 px-3.5 text-xs font-bold text-[#d5d9ea] hover:bg-white/10 lg:bottom-4 lg:right-[6%]">
+          <button data-hero-pause onClick={() => setPaused((x) => !x)} aria-pressed={paused} className="absolute bottom-1 right-0 z-50 flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-[#0c1024]/85 px-3.5 text-xs font-bold text-[#d5d9ea] hover:bg-white/10 lg:bottom-4 lg:right-[6%]">
                 <span aria-hidden="true" className="text-[10px]">{paused ? "▶" : "❚❚"}</span>{paused ? "Play video" : "Pause video"}
               </button>
           {gl === false && (
@@ -218,7 +267,7 @@ export default function Hero() {
       </div>
 
       {/* EDIT DOCK: mode switch + real timeline */}
-      <div className="relative z-30 border-t border-white/10 bg-[#0c1024]/95 px-5 pb-3 pt-2.5 md:px-8 md:pb-4 md:pt-3">
+      <div ref={dock} className="relative z-30 border-t border-white/10 bg-[#0c1024]/95 px-5 pb-3 pt-2.5 md:px-8 md:pb-4 md:pt-3">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div role="tablist" aria-label="Service mode" className="relative grid w-full grid-cols-3 rounded-full border border-white/12 bg-white/5 p-1 sm:w-auto" style={{ touchAction: "pan-y" }}
@@ -232,7 +281,7 @@ export default function Hero() {
               }}>
               <span className="absolute bottom-1 top-1 rounded-full transition-all duration-500" style={{ left: `calc(${mode} * (100% - 8px) / 3 + 4px)`, width: "calc((100% - 8px) / 3)", background: `${M.color}33`, boxShadow: `inset 0 0 0 1px ${M.color}`, transitionTimingFunction: EASE }} aria-hidden="true" />
               {MODES.map((m, i) => (
-                <button key={m.label} role="tab" aria-selected={mode === i} aria-label={m.label} tabIndex={mode === i ? 0 : -1} onClick={() => pick(i)}
+                <button key={m.label} role="tab" aria-selected={mode === i} aria-label={m.label.replace(" — ", " ")} tabIndex={mode === i ? 0 : -1} onClick={() => pick(i)}
                   className={`relative flex min-h-11 items-center justify-center gap-1 whitespace-nowrap rounded-full px-1 text-[11px] font-bold min-[390px]:text-[12px] transition-colors sm:px-4 sm:text-[13px] ${mode === i ? "text-white" : "text-[#a4aac7] hover:text-white"}`}>
                   <span className="sm:hidden">{m.short}</span><span className="hidden sm:inline">{m.label.replace(" — Beta", "")}</span>
                   {m.beta && <span className="rounded bg-white/15 px-1 py-0.5 text-[9px] tracking-widest">BETA</span>}

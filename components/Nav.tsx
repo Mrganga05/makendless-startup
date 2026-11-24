@@ -59,7 +59,7 @@ export default function Nav() {
     <>
     <header data-nav data-tone={light ? "light" : "dark"} className={`fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300 ${light ? "border-ink/10 bg-paper/[.97] text-dark" : "border-white/10 bg-ink/[.94] text-light"}`}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:px-8">
-        <Link href="/" aria-label="MAKENDLESS — home" className="flex min-h-11 items-center text-lg"><Wordmark /></Link>
+        <Link href="/" className="flex min-h-11 items-center text-lg"><Wordmark /><span className="sr-only"> home</span></Link>
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
           {links.map((l) => (
             <Link key={l.href} href={l.href} aria-current={current(l.href) ? "page" : undefined}

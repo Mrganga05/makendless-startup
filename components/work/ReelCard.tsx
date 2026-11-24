@@ -3,20 +3,25 @@
    Fast: only the small poster loads; the video has preload="none", so nothing downloads until someone plays it
    (the element exists from the start so iPhones allow sound and fullscreen straight from a tap).
    Desktop (mouse): hover plays a muted preview, click keeps it playing. Phone: tap plays / pauses.
-   Sound and fullscreen buttons; only one reel plays at a time; it pauses when scrolled out of view. */
+   Sound and fullscreen buttons; only one reel plays at a time; it pauses when scrolled out of view.
+   The video address is only attached once the card is near the screen, and while a reel plays, <html data-reel="playing">
+   lets the floating chat / WhatsApp buttons step aside on phones (app/styles/chat.css). */
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Reel } from "../../data/work";
 
 const EVENT = "mk:reel-play";
+const PLAYING = new Set<HTMLVideoElement>();
+const mark = () => { if (PLAYING.size) document.documentElement.dataset.reel = "playing"; else delete document.documentElement.dataset.reel; };
 type FsVideo = HTMLVideoElement & { webkitEnterFullscreen?: () => void };
 
-export default function ReelCard({ reel, sizes = "(min-width: 1024px) 22vw, (min-width: 640px) 40vw, 62vw", className = "" }: { reel: Reel; sizes?: string; className?: string }) {
+export default function ReelCard({ reel, sizes = "(min-width: 1280px) 270px, (min-width: 1024px) 21vw, (min-width: 768px) 30vw, (min-width: 640px) 38vw, 64vw", className = "" }: { reel: Reel; sizes?: string; className?: string }) {
   const box = useRef<HTMLElement>(null);
   const vid = useRef<FsVideo>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [waiting, setWaiting] = useState(false);
+  const [near, setNear] = useState(false); // card is on or near the screen: only then the video gets its address
   const pinned = useRef(false); // started by click/tap (hover-out won't pause it)
 
   const play = useCallback(() => {
@@ -33,8 +38,10 @@ export default function ReelCard({ reel, sizes = "(min-width: 1024px) 22vw, (min
     const other = (e: Event) => { if ((e as CustomEvent).detail !== reel.id) { pinned.current = false; vid.current?.pause(); } };
     window.addEventListener(EVENT, other);
     const io = new IntersectionObserver(([en]) => { if (!en.isIntersecting) { pinned.current = false; vid.current?.pause(); } }, { threshold: 0.15 });
-    if (box.current) io.observe(box.current);
-    return () => { window.removeEventListener(EVENT, other); io.disconnect(); };
+    const soon = new IntersectionObserver(([en]) => { if (en.isIntersecting) { setNear(true); soon.disconnect(); } }, { rootMargin: "300px" });
+    if (box.current) { io.observe(box.current); soon.observe(box.current); }
+    const v = vid.current;
+    return () => { window.removeEventListener(EVENT, other); io.disconnect(); soon.disconnect(); if (v && PLAYING.delete(v)) mark(); };
   }, [reel.id]);
 
   const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -72,8 +79,9 @@ export default function ReelCard({ reel, sizes = "(min-width: 1024px) 22vw, (min
     <article ref={box} className={`reel ${playing ? "is-playing" : ""} ${className}`} onPointerEnter={onEnter} onPointerLeave={onLeave}>
       <Image src={reel.poster} alt="" fill sizes={sizes} className="reel-poster" />
       <video
-        ref={vid} className="reel-video" src={reel.video} muted={muted} playsInline loop preload="none" aria-hidden="true" tabIndex={-1}
-        onPlaying={() => { setPlaying(true); setWaiting(false); }} onPause={() => { setPlaying(false); setWaiting(false); }}
+        ref={vid} className="reel-video" src={near ? reel.video : undefined} muted={muted} playsInline loop preload="none" aria-hidden="true" tabIndex={-1}
+        onPlaying={(e) => { setPlaying(true); setWaiting(false); PLAYING.add(e.currentTarget); mark(); }}
+        onPause={(e) => { setPlaying(false); setWaiting(false); PLAYING.delete(e.currentTarget); mark(); }}
         onWaiting={() => setWaiting(true)} onCanPlay={() => setWaiting(false)}
       />
       <button type="button" className="reel-hit" onClick={toggle} aria-label={`${playing ? "Pause" : "Play"} ${reel.title}`}>

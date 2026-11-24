@@ -46,18 +46,6 @@ export function useInView<T extends Element>(opts: { once?: boolean; margin?: st
   return [ref, inView] as const;
 }
 
-export function useIsMobile(query = "(max-width: 767px)") {
-  const [m, setM] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia(query);
-    const on = () => setM(mq.matches);
-    on();
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, [query]);
-  return m;
-}
-
 export function hasWebGL() {
   try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; }
 }

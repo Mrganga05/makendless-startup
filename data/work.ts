@@ -73,7 +73,7 @@ export const WORK: { reels: Reel[]; sites: Site[] } = {
       desktop: "/work/site-studio-desktop.webp", mobile: "/work/site-studio-mobile.webp",
     },
     {
-      id: "makendless", name: "MAKENDLESS", category: "Our own studio (this website)", url: "https://makendless.vercel.app/",
+      id: "makendless", name: "MAKENDLESS", category: "Our own website", url: "https://makendless.vercel.app/",
       text: "Studio website with service picker, live prices and referral system.", tags: ["Business Website", "Automation"],
       desktop: "/work/site-makendless-desktop.webp", mobile: "/work/site-makendless-mobile.webp",
     },
@@ -83,4 +83,7 @@ export const WORK: { reels: Reel[]; sites: Site[] } = {
 export const hasWork = () => WORK.reels.length + WORK.sites.length > 0;
 
 /** Client reviews (edited in /admin → Website content). The homepage section shows only when there is at least one. */
+/* TESTIMONIALS (homepage, above the FAQ). Hidden while this list is empty. Only real words from real clients, with their OK.
+   Example: { name: "Client name", role: "Business, city", text: "What they said." }
+   They can also be added in /admin → Website content → Reviews. */
 export const REVIEWS: { name: string; role?: string; text: string }[] = [];

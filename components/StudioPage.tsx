@@ -172,7 +172,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
                 <li key={o.id}>
                   <Link href={o.href} className="group flex min-h-16 items-center justify-between gap-4 py-3">
                     <span>
-                      <span className={`text-xs font-extrabold tracking-[0.3em] ${o.id === "create" ? "text-[#0891b2]" : "text-violet"}`}>{o.verb}</span>
+                      <span className={`text-xs font-extrabold tracking-[0.3em] ${o.id === "create" ? "text-[#0e7490]" : "text-violet"}`}>{o.verb}</span>
                       <span className="block text-xl font-extrabold">{o.name}{o.beta && <span className="ml-2 align-middle text-[11px] font-bold uppercase tracking-widest text-violet">Beta</span>}</span>
                     </span>
                     <Arrow className="transition-transform group-hover:translate-x-1" />
