@@ -7,7 +7,9 @@ import * as THREE from "three";
 import { BrowserScreen, PhoneScreen, clamp, seg } from "./HeroScreens";
 
 export interface HeroSceneProps { p: number; mode: number; paused: boolean; compact: boolean; active: boolean; onReady: () => void }
-type Live = { p: number; mode: number; px: number; py: number };
+/* s = how far the page has scrolled past the hero (0..1), kept up to date by a scroll listener so the
+   per-frame code never reads window.scrollY right after writing styles (that forced a layout every frame). */
+type Live = { p: number; mode: number; px: number; py: number; s: number };
 
 const CAM = [[-0.9, 0.15, 6.5], [1.3, 0.25, 6.7], [0.25, 0.45, 7.2]];
 const LOOK = [[-0.1, 0, 0], [0.55, 0, 0], [0.25, 0, 0]];
@@ -17,6 +19,9 @@ const RIM = [[1, 0.35], [0.4, 1], [0.7, 0.75]]; // [aqua, violet] balance per mo
 const STRIP = ["#22d3ee", "#4fa8f2", "#8b5cf6", "#a57cf8", "#c7a6ff", "#22d3ee"];
 const GREY = new THREE.Color("#3a3f58");
 const WHITE = new THREE.Color("#c9cde0");
+/* "default" GPU, not "high-performance": on laptops with two graphics chips "high-performance" made Chrome
+   switch to the big chip before the first frame (about 1 s on a slow phone profile). The picture is identical. */
+const GL = { antialias: true, alpha: true, powerPreference: "default" } as const;
 /* World is scaled x100 so CSS-3D screens stay locked to their 3D bodies (sub-pixel rounding is otherwise magnified ~190x). */
 const S = 100;
 
@@ -153,9 +158,8 @@ function Device({ live, compact, kind, children, screenAnchor, screenZ }: { live
   const g = useRef<THREE.Group>(null);
   useFrame(({ clock }, dt) => {
     if (!g.current) return;
-    const { mode, px, py } = live.current!;
+    const { mode, px, py, s } = live.current!;
     const k = 1 - Math.exp(-dt * 2.8), t = clock.elapsedTime;
-    const s = clamp(window.scrollY / (window.innerHeight * 0.85));
     const dir = kind === "phone" ? -1 : 1;
     const T = (kind === "phone" ? PHONE : LAPTOP)[mode];
     const bob = Math.sin(t * 0.7 + (kind === "phone" ? 0 : 1.7)) * 0.045;
@@ -251,13 +255,20 @@ function Details({ live }: { live: React.RefObject<Live> }) {
 }
 
 export default function Hero3D({ p, mode, paused, compact, active, onReady }: HeroSceneProps) {
-  const live = useRef<Live>({ p, mode, px: 0, py: 0 });
+  const live = useRef<Live>({ p, mode, px: 0, py: 0, s: 0 });
   live.current.p = p; live.current.mode = mode;
   const wrap = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null), layer = useRef<HTMLDivElement>(null);
   const phoneEl = useRef<HTMLDivElement>(null), laptopEl = useRef<HTMLDivElement>(null);
   const phoneAnchor = useRef<THREE.Group>(null), laptopAnchor = useRef<THREE.Group>(null);
   const links = useMemo<ScreenLink[]>(() => [{ anchor: phoneAnchor, el: phoneEl }, { anchor: laptopAnchor, el: laptopEl }], []);
+  useEffect(() => {
+    const read = () => { live.current.s = clamp(window.scrollY / (window.innerHeight * 0.85)); };
+    read();
+    window.addEventListener("scroll", read, { passive: true });
+    window.addEventListener("resize", read);
+    return () => { window.removeEventListener("scroll", read); window.removeEventListener("resize", read); };
+  }, []);
   useEffect(() => {
     if (compact) return;
     let raf = 0, x = 0, y = 0;
@@ -304,7 +315,7 @@ export default function Hero3D({ p, mode, paused, compact, active, onReady }: He
   const { dpr, decline, incline, fallback } = useDpr(2);
   return (
     <div ref={wrap} className="absolute inset-0">
-      <Canvas camera={{ position: compact ? [0, 5, 375] : [-90, 15, 650], fov: 35, near: 10, far: 4000 }} dpr={dpr} frameloop={active ? "always" : "never"} gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }} onCreated={onReady}>
+      <Canvas camera={{ position: compact ? [0, 5, 375] : [-90, 15, 650], fov: 35, near: 10, far: 4000 }} dpr={dpr} frameloop={active ? "always" : "never"} gl={GL} onCreated={onReady}>
         <PerformanceMonitor bounds={fpsBounds} flipflops={4} onDecline={decline} onIncline={incline} onFallback={fallback} />
         {scene}
       </Canvas>

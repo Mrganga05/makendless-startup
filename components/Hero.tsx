@@ -21,7 +21,12 @@ const LINES = ["We make", "ideas", "impossible", "to ignore."];
 const EASE = "cubic-bezier(.2,.8,.2,1)";
 
 function hasWebGL() {
-  try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; }
+  /* Test context is released straight away so it never holds a GPU slot next to the real scene. */
+  try {
+    const c = document.createElement("canvas"), g = c.getContext("webgl2") || c.getContext("webgl");
+    g?.getExtension("WEBGL_lose_context")?.loseContext();
+    return !!g;
+  } catch { return false; }
 }
 
 /* Magnetic hover on desktop, clear press state on touch */
