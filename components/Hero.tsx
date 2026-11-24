@@ -284,7 +284,7 @@ export default function Hero() {
                 <button key={m.label} role="tab" aria-selected={mode === i} aria-label={m.label.replace(" — ", " ")} tabIndex={mode === i ? 0 : -1} onClick={() => pick(i)}
                   className={`relative flex min-h-11 items-center justify-center gap-1 whitespace-nowrap rounded-full px-1 text-[11px] font-bold min-[390px]:text-[12px] transition-colors sm:px-4 sm:text-[13px] ${mode === i ? "text-white" : "text-[#a4aac7] hover:text-white"}`}>
                   <span className="sm:hidden">{m.short}</span><span className="hidden sm:inline">{m.label.replace(" — Beta", "")}</span>
-                  {m.beta && <span className="rounded bg-white/15 px-1 py-0.5 text-[9px] tracking-widest">BETA</span>}
+                  {m.beta && <>{" "}<span className="rounded bg-white/15 px-1 py-0.5 text-[9px] tracking-widest">BETA</span></>}
                 </button>
               ))}
             </div>

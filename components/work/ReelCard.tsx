@@ -15,7 +15,7 @@ const PLAYING = new Set<HTMLVideoElement>();
 const mark = () => { if (PLAYING.size) document.documentElement.dataset.reel = "playing"; else delete document.documentElement.dataset.reel; };
 type FsVideo = HTMLVideoElement & { webkitEnterFullscreen?: () => void };
 
-export default function ReelCard({ reel, sizes = "(min-width: 1280px) 270px, (min-width: 1024px) 21vw, (min-width: 768px) 30vw, (min-width: 640px) 38vw, 64vw", className = "" }: { reel: Reel; sizes?: string; className?: string }) {
+export default function ReelCard({ reel, sizes = "(min-width: 1280px) 270px, (min-width: 1024px) 21vw, (min-width: 768px) 30vw, (min-width: 640px) 38vw, 64vw", className = "", priority = false }: { reel: Reel; sizes?: string; className?: string; priority?: boolean }) {
   const box = useRef<HTMLElement>(null);
   const vid = useRef<FsVideo>(null);
   const [playing, setPlaying] = useState(false);
@@ -77,7 +77,7 @@ export default function ReelCard({ reel, sizes = "(min-width: 1280px) 270px, (mi
 
   return (
     <article ref={box} className={`reel ${playing ? "is-playing" : ""} ${className}`} onPointerEnter={onEnter} onPointerLeave={onLeave}>
-      <Image src={reel.poster} alt="" fill sizes={sizes} className="reel-poster" />
+      <Image src={reel.poster} alt="" fill sizes={sizes} priority={priority} className="reel-poster" />
       <video
         ref={vid} className="reel-video" src={near ? reel.video : undefined} muted={muted} playsInline loop preload="none" aria-hidden="true" tabIndex={-1}
         onPlaying={(e) => { setPlaying(true); setWaiting(false); PLAYING.add(e.currentTarget); mark(); }}

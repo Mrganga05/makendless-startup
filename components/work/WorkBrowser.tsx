@@ -47,7 +47,7 @@ export default function WorkBrowser() {
             <p className="text-sm text-muted">Tap or hover to play · sound and fullscreen on each reel</p>
           </div>
           <ul className="work-grid-tight mt-5 grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3">
-            {WORK.reels.map((r) => <li key={r.id}><ReelCard reel={r} sizes="(min-width: 1280px) 400px, (min-width: 768px) 31vw, 48vw" /></li>)}
+            {WORK.reels.map((r, i) => <li key={r.id}><ReelCard reel={r} priority={i < 2} sizes="(min-width: 1280px) 400px, (min-width: 768px) 31vw, 48vw" /></li>)}
           </ul>
         </section>
       )}
