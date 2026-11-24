@@ -11,5 +11,5 @@ Updated 2026-11-23. The site is live with published, fixed prices and one Start 
 7. **GROW (Beta)** launch decision → remove the Beta labels in `data/pricing.ts` when ready.
 8. Optional: more social links in `data/owner.ts` (SOCIALS).
 9. **Chatbot** → add your Claude API key in Vercel as `ANTHROPIC_API_KEY` (SETUP-GUIDE step 8), then redeploy. Until then the chat button opens but says the assistant is offline and points to WhatsApp.
-10. **Real work** → it lives in one file, `data/work.ts` (6 reels, 3 websites now). To add a project, send Claude the video link + poster, or the website link; it adds one entry and takes the screenshots. It appears on /work, the homepage, /create or /build, and the chatbot knows it.
+10. **Real work** → it lives in one file, `data/work.ts` (6 reels, 3 websites now). To add a project, send Claude the video + poster, or the website link; it shrinks the video (scripts/compress-reel.sh, about 1-6 MB), adds one entry and takes the screenshots. It appears on /work, the homepage, /create or /build, and the chatbot knows it.
 11. **Client permission**: the Work page names "Seven Hills Global Pvt Ltd" (as you asked) and links to the video-studio site without naming it. Make sure both clients are happy to be shown.
