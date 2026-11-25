@@ -208,8 +208,8 @@ rebuildIndexes();
 
 /* ---------------- STUDIOS ---------------- */
 export type StudioId = StudioKey | "grow";
-/** GROW is Beta / coming soon: three planned items, no prices. */
-export interface PlannedService { id: string; title: string; items: string[]; summary: string; forWho: string }
+/** GROW is Beta and taking its first clients: three service cards with monthly prices, plus the combo and terms in GROW_PRICING. */
+export interface PlannedService { id: string; title: string; items: string[]; summary: string; forWho: string; price?: string; priceNote?: string }
 export interface Studio {
   id: StudioId; verb: string; name: string; href: string; tagline: string; lead: string; accent: string;
   beta?: boolean;
@@ -237,14 +237,24 @@ export const studios: Studio[] = [
   {
     id: "grow", verb: "GROW", name: "Digital Marketing", href: "/grow", accent: "#c7a6ff", beta: true,
     tagline: "In development. Digital marketing is in beta and not on sale yet.",
-    lead: "We are building a digital marketing studio and testing how we would deliver it. Paid marketing services are not offered yet. This page shows what is in development.",
+    lead: "Meta & Google ads, social media and local marketing for small businesses in India. GROW is in beta and now taking its first clients.",
     planned: [
-      { id: "meta-google-ads", title: "Meta & Google Ads", items: ["Campaign setup & monitoring", "Creative coordination", "Campaign reporting"], summary: "Setting up and monitoring ad campaigns on Meta and Google, with the creative coordinated alongside.", forWho: "Planned for businesses that want to advertise online." },
-      { id: "social-media", title: "Social media management", items: ["Content planning & calendars", "Posting schedules", "Page management"], summary: "Planning what to post and when: content calendars, posting schedules and page management.", forWho: "Planned for businesses that want a steady social presence." },
-      { id: "local-presence", title: "Local presence & analytics", items: ["Google Business Profile support", "Marketing reporting", "Basic visibility strategy"], summary: "Support with a Google Business Profile, plain marketing reporting and a basic visibility strategy.", forWho: "Planned for local businesses that want to be easier to find." },
+      { id: "meta-google-ads", title: "Meta & Google Ads", items: ["Campaign setup & monitoring", "Creative coordination", "Campaign reporting"], summary: "Setting up and monitoring ad campaigns on Meta and Google, with the creative coordinated alongside.", forWho: "Businesses that want to advertise online.", price: "₹12,999/month", priceNote: "Meta ads (Facebook, Instagram, WhatsApp). Add Google Ads: +₹6,999/month." },
+      { id: "social-media", title: "Social media management", items: ["Content planning & calendars", "Posting schedules", "Page management"], summary: "Planning what to post and when: content calendars, posting schedules and page management.", forWho: "Businesses that want a steady social presence.", price: "₹14,999/month", priceNote: "8 reels + 4 posts a month on Instagram and Facebook, captions, scheduling, comment and DM replies, monthly report." },
+      { id: "local-presence", title: "Local presence & analytics", items: ["Google Business Profile support", "Marketing reporting", "Basic visibility strategy"], summary: "Support with a Google Business Profile, plain marketing reporting and a basic visibility strategy.", forWho: "Local businesses that want to be easier to find.", price: "₹7,999/month", priceNote: "Local business marketing: Google Business Profile setup and management, review system, WhatsApp Business setup. Analytics & reporting (tracking setup + monthly report): ₹4,999/month, free with Meta & Google Ads or Social media management." },
     ],
   },
 ];
+
+/** GROW combo and terms, shown under the GROW service cards. */
+export const GROW_PRICING = {
+  combo: { title: "GROW Combo", text: "Meta & Google Ads + Social media management (analytics & reporting included).", price: "₹24,999/month" },
+  terms: [
+    "Ad spend is paid separately, by you, directly to Meta/Google (+18% GST). Recommended minimum: ₹10,000/month.",
+    "Setup included. Paid monthly in advance. No long contract.",
+    "No results are guaranteed.",
+  ],
+};
 
 export const STUDIOS = Object.fromEntries(studios.map((s) => [s.id, s])) as Record<StudioId, Studio>;
 /** The priced services of a studio, in display order (GROW has none). */

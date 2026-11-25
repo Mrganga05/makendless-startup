@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { studios, type StudioId, type StudioKey } from "../data/pricing";
+import { GROW_PRICING, studios, type StudioId, type StudioKey } from "../data/pricing";
 import { process } from "../data/process";
 import { BuildWorld, CreateWorld, GrowWorld } from "./studios/Worlds";
 import Packages from "./Packages";
@@ -33,7 +33,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
   const others = studios.filter((x) => x.id !== id);
   const beta = !!s.beta;
   /* CREATE and BUILD have one services section: the price selector (services, options, free items, prices).
-     GROW (beta) has no prices, so it lists its three planned items instead. */
+     GROW (beta) lists its three service cards with monthly prices, then the combo and terms. */
   const planned = s.planned ?? [];
   return (
     <>
@@ -55,7 +55,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#c3c8de]">{s.lead || s.tagline}</p>
             {beta && (
               <p className="mt-5 max-w-xl rounded-2xl border border-grow/40 bg-grow/10 p-4 text-[15px] leading-relaxed text-light">
-                Digital marketing is in beta. We are building and testing these services before offering them. Nothing here is a paid service yet, and no results are promised.
+                Digital marketing is in beta and now taking its first clients. Prices are monthly; ad spend is paid separately to Meta/Google. No results are promised.
               </p>
             )}
             <div className="mt-8 flex flex-wrap gap-3">
@@ -79,17 +79,17 @@ export default function StudioPage({ id }: { id: StudioId }) {
       {/* RECENT WORK — real reels (CREATE) or live websites (BUILD), from data/work.ts */}
       {(id === "create" || id === "build") && <RecentWork studio={id} />}
 
-      {/* SERVICES — GROW (beta): what is planned, no prices */}
+      {/* SERVICES — GROW (beta): service cards with monthly prices, combo and terms */}
       {beta && (
         <section id="services" data-tone="light" className="scroll-mt-16 bg-paper px-5 py-20 text-dark md:px-8 md:py-28">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:items-end">
               <div>
-                <Eyebrow tone="light">What we&apos;re building</Eyebrow>
-                <KineticHeading text="In development." className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
+                <Eyebrow tone="light">Services and prices</Eyebrow>
+                <KineticHeading text="Now in beta." className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
               </div>
               <p className="max-w-xl text-[17px] leading-relaxed text-muted-dark lg:justify-self-end">
-                These are the services GROW is being built around. They are not offered yet; tell us if you&apos;d like to hear when they are.
+                Monthly plans for small businesses, now taking first clients. Ad spend is paid separately to Meta/Google.
               </p>
             </div>
 
@@ -101,9 +101,10 @@ export default function StudioPage({ id }: { id: StudioId }) {
                       {/* what it is */}
                       <div className="flex flex-col p-6 sm:p-8">
                         <div className="flex min-h-4 items-center gap-3">
-                          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet">In development</span>
+                          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet">Beta</span>
                         </div>
                         <h3 className="mt-5 text-2xl font-extrabold leading-tight sm:text-[1.9rem]">{c.title}</h3>
+                        {c.price && <p className="mt-2 text-xl font-extrabold tabular-nums text-violet">{c.price}</p>}
                         <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted-dark">{c.summary}</p>
                         <p className="mt-5 rounded-2xl bg-paper px-4 py-3 text-[15px] leading-relaxed">
                           <span className="font-bold">Made for: </span><span className="text-muted-dark">{c.forWho}</span>
@@ -115,10 +116,11 @@ export default function StudioPage({ id }: { id: StudioId }) {
                       {/* what is inside */}
                       <div className="grid content-start gap-7 border-t border-line bg-paper/60 p-6 sm:grid-cols-2 sm:p-8 lg:border-l lg:border-t-0 lg:grid-cols-1">
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Planned scope</p>
+                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">What&apos;s included</p>
                           <ul className="mt-3 space-y-2.5 text-[15px]">
                             {c.items.map((it) => (<li key={it} className="flex gap-3"><span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${L.dot}`} />{it}</li>))}
                           </ul>
+                          {c.priceNote && <p className="mt-4 text-[14px] leading-relaxed text-muted-dark">{c.priceNote}</p>}
                         </div>
                       </div>
                     </article>
@@ -126,6 +128,23 @@ export default function StudioPage({ id }: { id: StudioId }) {
                 </li>
               ))}
             </ol>
+
+            <Reveal kind="fade">
+              <div className="mt-5 grid overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-line lg:grid-cols-[1.15fr_1fr]">
+                <div className="flex flex-col p-6 sm:p-8">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet">Beta</span>
+                  <h3 className="mt-5 text-2xl font-extrabold leading-tight sm:text-[1.9rem]">{GROW_PRICING.combo.title}</h3>
+                  <p className="mt-2 text-xl font-extrabold tabular-nums text-violet">{GROW_PRICING.combo.price}</p>
+                  <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted-dark">{GROW_PRICING.combo.text}</p>
+                </div>
+                <div className="border-t border-line bg-paper/60 p-6 sm:p-8 lg:border-l lg:border-t-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Good to know</p>
+                  <ul className="mt-3 space-y-2.5 text-[15px]">
+                    {GROW_PRICING.terms.map((t) => (<li key={t} className="flex gap-3"><span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${L.dot}`} />{t}</li>))}
+                  </ul>
+                </div>
+              </div>
+            </Reveal>
           </div>
         </section>
       )}
