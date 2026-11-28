@@ -71,7 +71,7 @@ export const services: Service[] = [
     need: ["Logo", "Business details and text (or we write simple text)", "Photos", "Domain or hosting login, if you have one"],
   },
   {
-    id: "automation", studio: "build", name: "Workflow Automation", line: "Messages, leads, orders and reports done automatically.", tag: "Most Popular",
+    id: "automation", studio: "build", name: "Workflow Automation", line: "Messages, leads, orders and reports done automatically.",
     options: [
       { id: "reports-integrations", name: "Reports & Integrations", price: 4999, unit: "one", delivery: "3 days", days: 3 },
       { id: "team-automation", name: "Team Automation", price: 6999, unit: "one", delivery: "5 days", days: 5 },
@@ -87,7 +87,7 @@ export const services: Service[] = [
     need: ["WhatsApp Business number", "Logins for the apps to connect (Google Sheets, CRM, store)", "List of the messages or tasks to automate"],
   },
   {
-    id: "ai-assistants", studio: "build", name: "AI Assistants", line: "AI that talks to your customers 24/7.",
+    id: "ai-assistants", studio: "build", name: "AI Assistant", line: "AI that talks to your customers 24/7.",
     options: [
       { id: "ai-chatbot", name: "AI Chatbot", price: 9999, unit: "one", delivery: "5 days", days: 5, popular: true },
       { id: "ai-booking-assistant", name: "AI Booking Assistant", price: 9999, unit: "one", delivery: "7 days", days: 7, popular: true },
@@ -129,7 +129,7 @@ export const services: Service[] = [
     id: "website-care", studio: "build", name: "Website Care", line: "Keep your website fast, safe and up to date.",
     options: [
       { id: "quick-fix", name: "Quick Fix", price: 999, unit: "issue", delivery: "Within 24 hours", days: 1 },
-      { id: "monthly-maintenance", name: "Monthly Maintenance", price: 1499, unit: "month", delivery: "Ongoing, replies within 24 hours", days: 0, popular: true },
+      { id: "monthly-maintenance", name: "Website Care Monthly", price: 1499, unit: "month", delivery: "Ongoing, replies within 24 hours", days: 0, popular: true },
       { id: "setup-migration", name: "Setup & Migration", price: 1999, unit: "one", delivery: "2 days", days: 2 },
       { id: "speed-optimization", name: "Speed Optimization", price: 2999, unit: "one", delivery: "3 days", days: 3 },
       { id: "website-redesign", name: "Website Redesign", price: 6999, unit: "one", delivery: "7 days", days: 7 },
@@ -143,7 +143,7 @@ export const services: Service[] = [
 
   /* ---------------- CREATE ---------------- */
   {
-    id: "short-videos", studio: "create", name: "Short Videos", line: "Reels, Shorts and ads.", tag: "Most Popular",
+    id: "short-videos", studio: "create", name: "Short Videos", line: "Reels, Shorts and ads.",
     options: [
       { id: "reels-shorts", name: "Reels & Shorts", price: 699, unit: "each", delivery: "24–48 hours", days: 2, popular: true, video: true, qty: true },
       { id: "ad-videos", name: "Ad Videos", price: 1499, unit: "each", delivery: "2 days", days: 2, popular: true, video: true, qty: true },
@@ -187,10 +187,9 @@ export const services: Service[] = [
   },
 ];
 
-/** Popular options first, then the rest in their listed order (custom stays last). */
+/** Options marked "show first" (the popular flag; no badge is shown) first, then the rest in their listed order (custom stays last). */
 export const orderedOptions = (s: Service) => [...s.options.filter((o) => o.popular), ...s.options.filter((o) => !o.popular)];
 export const startingFrom = (s: Service) => Math.min(...s.options.filter((o) => o.price !== null).map((o) => o.price!));
-export const mostPicked = (s: Service) => s.options.find((o) => o.popular)?.name ?? s.options[0].name;
 
 export const OPTIONS: Record<string, Option & { service: Service }> = {};
 export const EXTRAS: Record<string, Extra & { service: Service }> = {};
@@ -221,6 +220,9 @@ export interface Studio {
   planned?: PlannedService[];
 }
 
+/** The one GROW status, word for word, on every page (owner, 2026-11-28). */
+export const GROW_STATUS = "Beta - taking first clients";
+
 export const studios: Studio[] = [
   {
     id: "create", verb: "CREATE", name: "Video Editing", href: "/create", accent: "#22d3ee",
@@ -231,13 +233,13 @@ export const studios: Studio[] = [
   {
     id: "build", verb: "BUILD", name: "Websites & Technology", href: "/build", accent: "#8b5cf6", cardFrom: 4999,
     tagline: "Websites, automation, AI and apps built to do a job.",
-    lead: "Technology built to do a job: business websites, workflow automation, AI assistants, AI SaaS platforms, mobile apps and website care.",
+    lead: "Technology built to do a job: business websites, workflow automation, AI Assistant, AI SaaS platforms, mobile apps and Website Care.",
     inputs: ["Content", "Branding", "Examples you like"],
   },
   {
     id: "grow", verb: "GROW", name: "Digital Marketing", href: "/grow", accent: "#c7a6ff", beta: true,
-    tagline: "In development. Digital marketing is in beta and not on sale yet.",
-    lead: "Meta & Google ads, social media and local marketing for small businesses in India. GROW is in beta and now taking its first clients.",
+    tagline: "Ads, social media and local marketing for small businesses. Beta - taking first clients.",
+    lead: "Meta & Google ads, social media and local marketing for small businesses in India.",
     planned: [
       { id: "meta-google-ads", title: "Meta & Google Ads", items: ["Campaign setup & monitoring", "Creative coordination", "Campaign reporting"], summary: "Setting up and monitoring ad campaigns on Meta and Google, with the creative coordinated alongside.", forWho: "Businesses that want to advertise online.", price: "₹12,999/month", priceNote: "Meta ads (Facebook, Instagram, WhatsApp). Add Google Ads: +₹6,999/month." },
       { id: "social-media", title: "Social media management", items: ["Content planning & calendars", "Posting schedules", "Page management"], summary: "Planning what to post and when: content calendars, posting schedules and page management.", forWho: "Businesses that want a steady social presence.", price: "₹14,999/month", priceNote: "8 reels + 4 posts a month on Instagram and Facebook, captions, scheduling, comment and DM replies, monthly report." },
@@ -248,10 +250,12 @@ export const studios: Studio[] = [
 
 /** GROW combo and terms, shown under the GROW service cards. */
 export const GROW_PRICING = {
-  combo: { title: "GROW Combo", text: "Meta & Google Ads + Social media management (analytics & reporting included).", price: "₹24,999/month" },
+  combo: { title: "GROW Combo", text: "Meta Ads + Social media management (analytics & reporting included). Google Ads is not included: add it for +₹6,999/month.", price: "₹24,999/month" },
   terms: [
     "Ad spend is paid separately, by you, directly to Meta/Google (+18% GST). Recommended minimum: ₹10,000/month.",
-    "Setup included. Paid monthly in advance. No long contract.",
+    "Setup included. Paid monthly in advance.",
+    "Your ad account stays in your name.",
+    "Cancel any month, no lock-in.",
     "No results are guaranteed.",
   ],
 };
@@ -286,13 +290,13 @@ export interface Combo {
 export const combos: Combo[] = [
   { id: "starter", name: "Starter Pack", inside: "Landing Page + 2 Reels & Shorts",
     items: [{ id: "landing-page", qty: 1 }, { id: "reels-shorts", qty: 2 }], normal: 6397, price: 5499, save: 898 },
-  { id: "launch", name: "Launch Pack", tag: "Best for new businesses", inside: "Business Website + Logo & Intro Animation + 4 Reels & Shorts",
+  { id: "launch", name: "Launch Pack", inside: "Business Website + Logo & Intro Animation + 4 Reels & Shorts",
     items: [{ id: "business-website", qty: 1 }, { id: "logo-intro-animation", qty: 1 }, { id: "reels-shorts", qty: 4 }], normal: 12794, price: 10999, save: 1795 },
-  { id: "creator", name: "Creator Pack", tag: "Best for YouTubers", inside: "4 YouTube Videos + 4 Thumbnail Designs + 8 Reels & Shorts",
+  { id: "creator", name: "Creator Pack", inside: "4 YouTube Videos + 4 Thumbnail Designs + 8 Reels & Shorts",
     items: [{ id: "youtube-videos", qty: 4 }, { id: "thumbnail-design", qty: 4 }, { id: "reels-shorts", qty: 8 }], normal: 19184, price: 15999, monthly: true, save: 3185 },
-  { id: "local-business", name: "Local Business Pack", inside: "Booking Website + AI Booking Assistant + 3 months Monthly Maintenance",
+  { id: "local-business", name: "Local Business Pack", inside: "Booking Website + AI Booking Assistant + 3 months Website Care Monthly",
     items: [{ id: "booking-website", qty: 1 }, { id: "ai-booking-assistant", qty: 1 }, { id: "monthly-maintenance", qty: 1 }], normal: 27495, price: 22999, save: 4496 },
-  { id: "ai-business", name: "AI Business Pack", tag: "Most popular", inside: "Business Website + AI Chatbot + WhatsApp Automation",
+  { id: "ai-business", name: "AI Business Pack", inside: "Business Website + AI Chatbot + WhatsApp Automation",
     items: [{ id: "business-website", qty: 1 }, { id: "ai-chatbot", qty: 1 }, { id: "whatsapp-automation", qty: 1 }], normal: 27997, price: 23999, save: 3998 },
   { id: "growth", name: "Growth Pack", inside: "Online Store + WhatsApp Automation + Monthly 12 Reels",
     items: [{ id: "online-store", qty: 1 }, { id: "whatsapp-automation", qty: 1 }, { id: "monthly-12-reels", qty: 1 }], normal: 36997, price: 31999, save: 4998 },
@@ -328,7 +332,7 @@ export const COPY = {
 
 export const REQUIREMENTS_MAX = 500;
 
-/** Website Care monthly price (Monthly Maintenance), shown everywhere as "Add-on · ₹X/month". */
+/** Website Care monthly price (the Website Care Monthly option), shown everywhere as "Add-on · ₹X/month". */
 export const careMonthly = () => OPTIONS["monthly-maintenance"]?.price ?? 0;
 /** Referral rule, written once for every referral section and the FAQ. */
 /** Card price text: "from ₹4,999", or "Add-on · ₹1,499/month" for Website Care. */

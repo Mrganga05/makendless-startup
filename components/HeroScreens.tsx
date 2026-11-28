@@ -1,106 +1,81 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
+import { GROW_STATUS } from "../data/pricing";
 
 export const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 export const seg = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
 const EASE = "cubic-bezier(.2,.8,.2,1)";
-const CAPS = [["YOUR", "STORY", "CUT", "SHARP"], ["GRADED", "TO", "FEEL", "ALIVE"], ["CAPTIONS", "THAT", "KEEP", "PACE"]];
 
-/* ---------- Original designed demo reel (three shots, hard cuts) ---------- */
-function Shot({ i, paused }: { i: number; paused: boolean }) {
-  const play = { animationPlayState: paused ? "paused" : "running" } as const;
-  if (i === 0)
-    return (
-      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg,#1b1464 0%,#6f45f6 42%,#ff9e7a 76%,#ffd9a0 100%)" }}>
-        <div className="absolute left-1/2 top-[50%] h-24 w-24 rounded-full" style={{ background: "radial-gradient(circle,#fff6d8,#ffb36b 70%)", animation: "hero-drift 6s ease-in-out infinite alternate", ...play }} />
-        <div className="absolute inset-x-0 bottom-0 h-[40%] bg-[#231a5c]" style={{ clipPath: "polygon(0 60%,18% 30%,34% 55%,52% 12%,70% 48%,86% 26%,100% 50%,100% 100%,0 100%)" }} />
-        <div className="absolute inset-x-0 bottom-0 h-[25%] bg-[#0c0a26]" style={{ clipPath: "polygon(0 40%,22% 62%,45% 30%,66% 66%,84% 38%,100% 60%,100% 100%,0 100%)" }} />
-      </div>
-    );
-  if (i === 1)
-    return (
-      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 38%,#22d3ee 0%,#0e7490 45%,#0b2540 100%)" }}>
-        <div className="absolute left-1/2 top-[30%] h-[46%] w-[34%] -translate-x-1/2 overflow-hidden rounded-[18px_18px_26px_26px] bg-gradient-to-b from-[#fef3c7] to-[#f59e0b] shadow-[0_30px_40px_-10px_rgba(0,0,0,.5)]">
-          <div className="absolute inset-y-0 w-1/3 bg-white/35" style={{ animation: "hero-shine 2.4s ease-in-out infinite", ...play }} />
-          <div className="absolute inset-x-[18%] top-[34%] h-[30%] rounded-md bg-[#0c1024]/85" />
-        </div>
-        <div className="absolute left-1/2 top-[22%] h-[9%] w-[16%] -translate-x-1/2 rounded-t-md bg-[#13172b]" />
-        <div className="absolute inset-x-0 bottom-0 h-[22%] bg-[#081a2e]" />
-      </div>
-    );
-  return (
-    <div className="absolute inset-0 bg-gradient-to-b from-[#0c1024] via-[#2b1d6e] to-[#0c1024]">
-      {[12, 30, 46, 64, 80].map((x, k) => (
-        <div key={x} className="absolute bottom-0 bg-[#090b1c]" style={{ left: `${x - 8}%`, width: "17%", height: `${38 + ((k * 37) % 34)}%` }}>
-          <div className="absolute inset-2 opacity-70" style={{ backgroundImage: "radial-gradient(#ffd98a 1.2px,transparent 1.4px)", backgroundSize: "9px 12px" }} />
-        </div>
-      ))}
-      {[18, 42, 70, 86].map((x, k) => (
-        <div key={x} className="absolute h-10 w-10 rounded-full blur-[3px]" style={{ left: `${x}%`, top: `${30 + k * 12}%`, background: k % 2 ? "#22d3ee99" : "#c7a6ff99", animation: `hero-bokeh ${3 + k}s ease-in-out infinite alternate`, ...play }} />
-      ))}
-    </div>
-  );
+/* Our own work in the hero frames.
+   Phone: the first reel on /work ("Podcast to Reel"), cut from its showcase video: the finished edit and the raw clip,
+   same 13.8 s, so the slider can wipe from one to the other on the same moment. Muted, looping, 360x640.
+   Browser: a slow scroll through sevenhillsglobalpvtltd.com, a site we built (960 wide on desktop, 640 on phones).
+   The stills are the first frames: they show at once, stay when video can't play, and the videos only load after the
+   hero has settled (`load`). */
+const REEL = { edit: "/hero/reel-edit.mp4", raw: "/hero/reel-raw.mp4", editStill: "/hero/reel-edit.webp", rawStill: "/hero/reel-raw.webp" };
+const SITE = { host: "sevenhillsglobalpvtltd.com", big: "/hero/site-sevenhills-960.mp4", small: "/hero/site-sevenhills-640.mp4", still: "/hero/site-sevenhills.webp" };
+
+/** "on" = the open tab's frame (accent glow), "off" = the other frame (dimmed), undefined = neither (GROW). */
+export type Focus = "on" | "off" | undefined;
+const focusStyle = (f: Focus): React.CSSProperties => ({
+  opacity: f === "off" ? 0.4 : 1,
+  boxShadow: f === "on" ? "0 0 0 2px var(--accent), 0 0 44px 2px color-mix(in srgb, var(--accent) 60%, transparent)" : "0 0 0 0 transparent",
+  transition: "opacity .6s, box-shadow .6s",
+});
+
+/* Plays a muted looping clip only while it should be seen (hero on screen, not paused, not covered). */
+function useClip(ref: React.RefObject<HTMLVideoElement | null>, play: boolean, load: boolean) {
+  useEffect(() => {
+    const v = ref.current; if (!v || !load) return;
+    v.muted = true;
+    if (play) v.play().catch(() => {}); else v.pause();
+  }, [ref, play, load]);
 }
-function Reel({ shot, paused }: { shot: number; paused: boolean }) {
+function Clip({ ref, src, still, load, className = "" }: { ref: React.Ref<HTMLVideoElement>; src: string; still: string; load: boolean; className?: string }) {
   return (
-    <div key={shot} className="absolute inset-0" style={{ animation: "hero-kenburns 2.2s linear both", animationPlayState: paused ? "paused" : "running" }}>
-      <Shot i={shot} paused={paused} />
-    </div>
+    <video ref={ref} src={load ? src : undefined} poster={still} muted loop playsInline preload={load ? "auto" : "none"} disablePictureInPicture disableRemotePlayback tabIndex={-1}
+      className={`absolute inset-0 h-full w-full object-cover ${className}`} />
   );
 }
 
 function BetaLabel() {
-  return <span className="rounded-full bg-[#13172b] px-2.5 py-1 text-[10px] font-bold tracking-wide text-[#c7a6ff] ring-1 ring-[#c7a6ff]/50">Beta — illustrative demo</span>;
+  return <span className="rounded-full bg-[#13172b] px-2.5 py-1 text-[10px] font-bold tracking-wide text-[#c7a6ff] ring-1 ring-[#c7a6ff]/50">{GROW_STATUS}</span>;
 }
 
 /* ---------- PHONE ---------- */
-/* Reel clock local to the phone screen, so only the screen re-renders as the demo reel plays (not the whole hero). */
-function useReelClock(paused: boolean) {
-  const [t, setT] = useState(0);
+export function PhoneScreen({ p, play, load, ad, focus }: { p: number; play: boolean; load: boolean; ad: boolean; focus?: Focus }) {
+  const edit = useRef<HTMLVideoElement>(null), raw = useRef<HTMLVideoElement>(null);
+  const wipe = clamp(p) * 100; // how much of the screen already shows the finished edit (left of the playhead line)
+  const rawSeen = wipe < 99.9;
+  useClip(edit, play && !ad, load);
+  useClip(raw, play && !ad && rawSeen, load);
+  /* Keep the raw clip on the same moment as the edit (both 13.8 s and looping). */
   useEffect(() => {
-    if (paused) return;
-    const id = setInterval(() => setT((x) => Math.round(((x + 0.15) % 6) * 100) / 100), 150);
-    return () => clearInterval(id);
-  }, [paused]);
-  return t;
-}
-export function PhoneScreen({ p, paused, ad, back }: { p: number; paused: boolean; ad: boolean; back?: boolean }) {
-  const t = useReelClock(paused);
-  const cuts = p > 0.18;
-  const reframe = seg(p, 0.22, 0.48);
-  const grade = seg(p, 0.4, 0.78) * 100;
-  const caps = p > 0.72;
-  const shot = cuts ? Math.floor(t / 2) % 3 : 0;
-  const words = CAPS[Math.floor(t / 2) % 3];
-  const wi = Math.min(3, Math.floor((t % 2) / 0.45));
+    const e = edit.current, r = raw.current;
+    if (!e || !r || !load || !rawSeen) return;
+    const sync = () => { if (Math.abs(r.currentTime - e.currentTime) > 0.15) r.currentTime = e.currentTime; };
+    sync();
+    e.addEventListener("timeupdate", sync);
+    return () => e.removeEventListener("timeupdate", sync);
+  }, [load, rawSeen]);
+  const done = p >= 0.5;
   return (
-    <div className="relative h-full w-full select-none overflow-hidden rounded-[30px] bg-black text-white" style={{ opacity: back ? 0.55 : 1, transition: "opacity .6s" }}>
-      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 overflow-hidden" style={{ height: `${31 + 69 * reframe}%` }}>
-        <Reel shot={shot} paused={paused} />
-        <div className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${grade}%)`, filter: "grayscale(1) contrast(.62) brightness(.9)" }}>
-          <Reel shot={shot} paused={paused} />
-        </div>
-        {grade > 0 && grade < 100 && <div className="absolute inset-y-0 w-[2px] bg-white shadow-[0_0_14px_3px_rgba(255,255,255,.7)]" style={{ left: `${grade}%` }} />}
+    <div className="relative h-full w-full select-none overflow-hidden rounded-[30px] bg-black text-white" style={focusStyle(focus)}>
+      <Clip ref={edit} src={REEL.edit} still={REEL.editStill} load={load} />
+      <div className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${wipe}%)`, visibility: rawSeen ? "visible" : "hidden" }}>
+        <Clip ref={raw} src={REEL.raw} still={REEL.rawStill} load={load} />
       </div>
+      {wipe > 0.1 && rawSeen && <div className="absolute inset-y-0 w-[2px] bg-white shadow-[0_0_14px_3px_rgba(255,255,255,.7)]" style={{ left: `${wipe}%` }} />}
       <div className="absolute left-1/2 top-2.5 h-5 w-20 -translate-x-1/2 rounded-full bg-black" />
-      <div className="absolute inset-x-3 top-10 flex items-center justify-between text-[9px] font-bold tracking-widest">
+      <div className="absolute inset-x-3 top-10 flex items-center text-[9px] font-bold tracking-widest">
         <span className="flex items-center gap-1.5 rounded bg-black/55 px-1.5 py-1">
-          <span className={`h-1.5 w-1.5 rounded-full ${p < 0.5 ? "bg-[#ff5c7a]" : "bg-[#22d3ee]"}`} />
-          {p < 0.5 ? "RAW · 16:9" : "EDITED · 9:16"}
+          <span className={`h-1.5 w-1.5 rounded-full ${done ? "bg-[#22d3ee]" : "bg-[#ff5c7a]"}`} />
+          {done ? "FINAL EDIT" : "RAW CLIP"}
         </span>
-        <span className="rounded bg-black/55 px-1.5 py-1 tabular-nums">0:0{Math.floor(t)}</span>
       </div>
-      {caps && (
-        <div className="absolute inset-x-3 bottom-[21%] flex flex-wrap justify-center gap-1.5">
-          {words.slice(0, wi + 1).map((w, k) => (
-            <span key={`${shot}-${w}`} className={`rounded-md px-2 py-0.5 text-[22px] font-extrabold leading-tight ${k === wi ? "bg-[#22d3ee] text-[#0c1024]" : "text-white [text-shadow:0_2px_10px_rgba(0,0,0,.8)]"}`} style={{ animation: "hero-pop .22s ease-out both" }}>{w}</span>
-          ))}
-        </div>
-      )}
-      <span className="absolute bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/50 px-2 py-0.5 text-[9px] tracking-widest text-white/80">CONCEPT DEMO</span>
       {/* sample ad frame — wipes in for the marketing mode */}
       <div className="absolute inset-0 flex flex-col bg-[#f6f7fc] text-[#13172b]" style={{ clipPath: `inset(0 0 ${ad ? 0 : 100}% 0)`, transition: `clip-path .75s ${EASE}` }} aria-hidden={!ad}>
-        <div className="flex items-center gap-2 px-4 pb-2 pt-11 text-[11px] font-bold"><span className="h-7 w-7 rounded-full" style={{ background: "var(--prism)" }} />yourbrand<span className="ml-auto font-normal text-[#5a6082]">Sponsored</span></div>
+        <div className="flex items-center gap-2 px-4 pb-2 pt-11 text-[11px] font-bold"><span className="h-7 w-7 rounded-full" style={{ background: "var(--prism)" }} />yourbrand<span className="ml-auto font-normal text-[#5a6082]">Sample ad</span></div>
         <div className="relative mx-3 flex-1 overflow-hidden rounded-2xl" style={{ background: "linear-gradient(150deg,#6f45f6,#c7a6ff 55%,#22d3ee)" }}>
           <p className="absolute inset-x-4 top-7 text-[23px] font-extrabold leading-[1.05] text-white">Your offer, made impossible to ignore.</p>
           <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-white/25" />
@@ -113,61 +88,26 @@ export function PhoneScreen({ p, paused, ad, back }: { p: number; paused: boolea
 }
 
 /* ---------- BROWSER ---------- */
-function Block({ on, className = "", children }: { on: boolean; className?: string; children: React.ReactNode }) {
+export function BrowserScreen({ play, load, ad, focus, small }: { play: boolean; load: boolean; ad: boolean; focus?: Focus; small?: boolean }) {
+  const site = useRef<HTMLVideoElement>(null);
+  useClip(site, play && !ad, load);
   return (
-    <div className={`relative ${className}`}>
-      <div className="absolute inset-0 rounded-lg border border-dashed border-[#8b91ad] bg-[repeating-linear-gradient(135deg,transparent_0_8px,#8b91ad22_8px_9px)]" style={{ opacity: on ? 0 : 1, transition: "opacity .35s" }} />
-      <div className="h-full" style={{ clipPath: `inset(0 ${on ? 0 : 100}% 0 0)`, transition: `clip-path .55s ${EASE}` }}>{children}</div>
-    </div>
-  );
-}
-export function BrowserScreen({ p, resize, ad, back }: { p: number; resize: boolean; ad: boolean; back?: boolean }) {
-  const [slot, setSlot] = useState(1);
-  const slots = ["9:30", "11:00", "14:30"];
-  return (
-    <div className="relative flex h-full w-full select-none flex-col overflow-hidden rounded-[10px] bg-[#0f1226]" style={{ opacity: back ? 0.55 : 1, transition: "opacity .6s" }}>
+    <div className="relative flex h-full w-full select-none flex-col overflow-hidden rounded-[10px] bg-[#0f1226]" style={focusStyle(focus)}>
       <div className="flex h-8 shrink-0 items-center gap-1.5 bg-[#1a1d36] px-3">
         {["#ff5f57", "#febc2e", "#28c840"].map((c) => (<span key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />))}
-        <span className="ml-3 flex-1 truncate rounded-md bg-[#0f1226] px-3 py-1 text-[10px] text-[#a4aac7]">northlight-studio.example · Concept demo</span>
-        <span className="rounded bg-[#0f1226] px-2 py-1 text-[9px] font-bold tracking-widest text-[#a4aac7]">{p < 0.5 ? "WIREFRAME" : "LIVE"}</span>
+        <span className="ml-3 flex min-w-0 flex-1 items-center gap-1.5 rounded-md bg-[#0f1226] px-3 py-1 text-[10px] text-[#d5d9ea]">
+          <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 shrink-0 fill-[#a4aac7]" aria-hidden="true"><path d="M3.5 5V3.6a2.5 2.5 0 0 1 5 0V5h.6c.5 0 .9.4.9.9v4.2c0 .5-.4.9-.9.9H2.9a.9.9 0 0 1-.9-.9V5.9c0-.5.4-.9.9-.9h.6Zm1.2 0h2.6V3.6a1.3 1.3 0 0 0-2.6 0V5Z" /></svg>
+          <span className="truncate">{SITE.host}</span>
+        </span>
+        <span className="flex items-center gap-1 rounded bg-[#0f1226] px-2 py-1 text-[9px] font-bold tracking-widest text-[#a4aac7]"><span className="h-1.5 w-1.5 rounded-full bg-[#28c840]" />LIVE</span>
       </div>
-      <div className="relative flex min-h-0 flex-1 justify-center" style={{ background: p < 0.12 ? "#2a2d3a" : "#d9dceb", transition: "background .5s" }}>
-        <div className="@container h-full overflow-hidden" style={{ width: "100%", background: p < 0.12 ? "#2a2d3a" : "#f6f7fc", transition: "background .5s", animation: resize ? "hero-resize 7s ease-in-out infinite" : undefined }}>
-          <div className="space-y-2.5 p-3 text-[#13172b]">
-            <Block on={p > 0.14} className="h-8">
-              <div className="flex h-full items-center justify-between rounded-lg bg-white px-3 text-[11px] font-extrabold tracking-wider shadow-sm">NORTHLIGHT<span className="hidden gap-3 font-semibold text-[#5a6082] @[380px]:flex"><span className="cursor-pointer hover:text-[#6f45f6]">Menu</span><span className="cursor-pointer hover:text-[#6f45f6]">Visit</span><span className="cursor-pointer hover:text-[#6f45f6]">Book</span></span></div>
-            </Block>
-            <Block on={p > 0.34} className="h-[128px]">
-              <div className="flex h-full flex-col justify-center rounded-lg p-4 text-white" style={{ background: "linear-gradient(120deg,#13172b,#6f45f6 70%,#08bbd4)" }}>
-                <p className="text-[19px] font-extrabold leading-tight @[380px]:text-[26px]">Slow mornings,<br />served daily.</p>
-                <button className="mt-3 w-fit rounded-full bg-white px-4 py-1.5 text-[11px] font-bold text-[#13172b] transition hover:scale-105 hover:bg-[#22d3ee] active:scale-95">Book a table</button>
-              </div>
-            </Block>
-            <div className="grid grid-cols-1 gap-2.5 @[380px]:grid-cols-3">
-              {[["Espresso bar", "#6f45f6", 0.54], ["Bakery", "#08bbd4", 0.64], ["Workshops", "#c7a6ff", 0.74]].map(([t, c, th]) => (
-                <Block key={t as string} on={p > (th as number)} className="h-[84px]">
-                  <div className="h-full cursor-pointer rounded-lg bg-white p-2.5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
-                    <div className="h-9 rounded-md" style={{ background: `linear-gradient(135deg,${c},${c}88)` }} />
-                    <p className="mt-2 text-[11px] font-bold">{t as string}</p>
-                  </div>
-                </Block>
-              ))}
-            </div>
-            <Block on={p > 0.84} className="h-[72px]">
-              <div className="flex h-full flex-wrap items-center gap-2 rounded-lg bg-[#13172b] px-3 text-white">
-                <span className="text-[11px] font-bold">Pick a time</span>
-                {slots.map((s, k) => (<button key={s} onClick={() => setSlot(k)} aria-pressed={slot === k} className={`rounded-full px-2.5 py-1 text-[10px] font-bold transition ${slot === k ? "bg-[#22d3ee] text-[#0c1024]" : "ring-1 ring-white/30 hover:bg-white/15"}`}>{s}</button>))}
-                <span className="text-[10px] text-white/60">Selected {slots[slot]}</span>
-              </div>
-            </Block>
-            <Block on={p > 0.9} className="h-[90px]"><div className="grid h-full place-items-center rounded-lg bg-white text-[10px] text-[#5a6082]">Footer · sample layout for demonstration</div></Block>
-          </div>
-        </div>
+      <div className="relative min-h-0 flex-1 bg-[#0b1611]">
+        <Clip ref={site} src={small ? SITE.small : SITE.big} still={SITE.still} load={load} className="object-top" />
         {/* sample feed ad — wipes in for the marketing mode */}
         <div className="absolute inset-0 flex gap-3 bg-[#eceef7] p-3" style={{ clipPath: `inset(0 ${ad ? 0 : 100}% 0 0)`, transition: `clip-path .75s ${EASE}` }} aria-hidden={!ad}>
           <div className="w-20 shrink-0 space-y-2">{[0, 1, 2, 3].map((k) => (<div key={k} className="h-5 rounded bg-[#d5d9ea]" />))}</div>
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-white shadow">
-            <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-[#13172b]"><span className="h-6 w-6 rounded-full" style={{ background: "var(--prism)" }} />yourbrand <span className="font-normal text-[#5a6082]">· Sponsored</span><span className="ml-auto"><BetaLabel /></span></div>
+            <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-[#13172b]"><span className="h-6 w-6 rounded-full" style={{ background: "var(--prism)" }} />yourbrand <span className="font-normal text-[#5a6082]">· Sample ad</span><span className="ml-auto"><BetaLabel /></span></div>
             <div className="relative flex-1" style={{ background: "linear-gradient(120deg,#6f45f6,#c7a6ff 55%,#22d3ee)" }}><p className="absolute left-4 top-1/2 max-w-[70%] -translate-y-1/2 text-[24px] font-extrabold leading-[1.05] text-white">Your offer, made impossible to ignore.</p></div>
             <div className="flex items-center justify-between px-3 py-2 text-[11px] text-[#13172b]"><span>Sample ad creative</span><span className="rounded-full bg-[#13172b] px-3 py-1 font-bold text-white">Learn more</span></div>
           </div>

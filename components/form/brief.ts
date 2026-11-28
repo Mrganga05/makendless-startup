@@ -28,7 +28,7 @@ export const MESSAGE_MIN = 10;
 export const WHO_OPTIONS: { id: string; label: string }[] = [...solutions.map((s) => ({ id: s.id, label: s.label })), { id: "other", label: "Other" }];
 
 export const STUDIO_OPTIONS: { id: StudioChoice; verb: string; name: string; note: string; beta?: boolean }[] = [
-  ...studios.map((s) => ({ id: s.id as StudioChoice, verb: s.verb, name: s.name, note: s.beta ? "Beta interest only" : "", beta: s.beta })),
+  ...studios.map((s) => ({ id: s.id as StudioChoice, verb: s.verb, name: s.name, note: s.beta ? "Beta - taking first clients" : "", beta: s.beta })),
   { id: "unsure", verb: "NOT SURE", name: "Help me choose", note: "" },
 ];
 
@@ -47,7 +47,7 @@ export function servicesFor(studio: StudioChoice): { code: string; title: string
 export function studioLabel(studio: StudioChoice) {
   if (studio === "unsure") return "Not sure yet";
   const s = studios.find((x) => x.id === studio)!;
-  return `${s.verb} — ${s.name}${s.beta ? " (Beta interest)" : ""}`;
+  return `${s.verb} — ${s.name}${s.beta ? " (Beta)" : ""}`;
 }
 export const whoLabel = (id: string) => WHO_OPTIONS.find((w) => w.id === id)?.label ?? "";
 export const packageLabel = (studio: StudioChoice, slug: string) => packagesFor(studio).find((p) => p.slug === slug)?.name ?? "";

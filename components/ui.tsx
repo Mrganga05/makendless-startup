@@ -161,7 +161,7 @@ export function BetaBadge({ tone = "dark", label = "Beta", className = "" }: { t
   return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${tone === "dark" ? "bg-grow/20 text-grow ring-1 ring-grow/50" : "bg-violet text-white"} ${className}`}>{label}</span>;
 }
 
-/** Required caption on every original demo. `kind="illustrative"` for all marketing (GROW) demos. */
+/** Required caption on every original demo. `kind="illustrative"` (GROW) reads "Concept demo" too, with the GROW dot. */
 /** Where the real work for a studio lives: /work filtered to that studio (data/work.ts), else the first sample link (data/samples.ts). */
 export function realWorkHref(studio?: string): string | null {
   if (studio === "create" && WORK.reels.length) return "/work?type=create";
@@ -187,7 +187,7 @@ export function DemoCaption({ kind = "concept", tone = "dark", className = "", s
   return (
     <span className={pill}>
       <span className={`h-1.5 w-1.5 rounded-full ${kind === "concept" ? "bg-aqua-bright" : "bg-grow"}`} aria-hidden="true" />
-      {kind === "concept" ? "Concept demo" : "Illustrative demo"}
+      Concept demo
     </span>
   );
 }

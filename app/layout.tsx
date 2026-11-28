@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: { default: HOME_TITLE, template: `%s | ${SITE_NAME}` },
   description: HOME_DESCRIPTION,
   applicationName: SITE_NAME,
-  keywords: ["video editing", "website development", "web design", "Reels editing", "YouTube editing", "e-commerce websites", "booking websites", "motion graphics", "creative studio", "MAKENDLESS"],
+  keywords: ["MAKENDLESS", "creative and technology studio India", "video editing", "website development", "WhatsApp automation", "AI Assistant", "fixed prices"],
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   openGraph: { type: "website", siteName: SITE_NAME, title: HOME_TITLE, description: HOME_DESCRIPTION, url: "/", locale: "en_IN" },

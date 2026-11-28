@@ -4,12 +4,12 @@ import puppeteer from "puppeteer-core";
 import { copyFileSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 
 const PAGES = [
-  ["studios", "Services", "Three studios.", "One team.", "Video editing · Websites & tech · Digital marketing (beta)"],
+  ["studios", "Services", "Three studios.", "One team.", "Video · Websites & tech · GROW: Beta - taking first clients"],
   ["work", "Our work", "Real projects.", "Made to be seen.", "Edited reels · Live websites"],
   ["create", "CREATE", "Video editing", "that stops the scroll.", "Reels & Shorts · YouTube · Motion graphics · From ₹699"],
-  ["build", "BUILD", "Websites & tech", "that work for you.", "Websites · WhatsApp automation · AI assistants · Apps"],
-  ["grow", "GROW · Beta", "Digital marketing,", "coming soon.", "Ads · Social media · Local presence (in beta)"],
-  ["about", "About", "One studio.", "Clear prices.", "Videos, websites and automation with one point of contact"],
+  ["build", "BUILD", "Websites & tech", "that work for you.", "Websites · WhatsApp automation · AI Assistant · Apps"],
+  ["grow", "GROW · Beta", "Digital marketing,", "taking first clients.", "Meta Ads · Social media · Local presence · Monthly plans"],
+  ["about", "About", "One studio.", "Fixed prices.", "Videos, websites and automation with one point of contact"],
   ["faq", "FAQ", "Questions,", "answered plainly.", "Prices · Payment · Delivery · Revisions · Referrals"],
   ["contact", "Contact", "Tell us", "what you need.", "Your final price on WhatsApp within 24 hours"],
   ["start-project", "Start a Project", "Pick. See the price.", "Start.", "Fixed prices · Reply on WhatsApp within 24 hours"],

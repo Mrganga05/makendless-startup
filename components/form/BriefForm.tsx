@@ -191,7 +191,7 @@ export default function BriefForm({ initial, simulate }: { initial: BriefValues;
                   </label>
                 ))}
               </div>
-              {grow && <p className="for-note mt-4">GROW is in beta. This registers your interest only: we are not taking on marketing work yet, and there is no waiting list to join.</p>}
+              {grow && <p className="for-note mt-4">GROW: Beta - taking first clients. Tell us about your business and we&apos;ll reply on WhatsApp with a plan and the monthly price. Plans are paid monthly in advance.</p>}
               {v.studio === "unsure" && <p className="mt-4 text-sm leading-relaxed text-muted-dark">Not sure is fine. Describe the job in your own words below and we will work out the right studio together.</p>}
             </fieldset>
 

@@ -112,11 +112,11 @@ export function SelectionBar({ show }: { show: boolean }) {
   }, [on]);
   return (
     <div ref={bar} className="svc-bar" data-on={on} aria-hidden={!on} inert={!on}>
-      {/* Drawn only once a service is selected: never "Estimated ₹0 · 0 selected". */}
+      {/* Drawn only once a service is selected: never "Total ₹0 · 0 selected". */}
       {est.count > 0 && <div className="svc-bar-in" role="region" aria-label="Your selection">
         <div className="svc-bar-info">
           <p className="svc-bar-main">
-            <span className="svc-bar-total">Estimated {est.totalText}</span>
+            <span className="svc-bar-total">Total {est.totalText}</span>
             <span className="svc-bar-meta"> · {est.count} selected · Est. delivery: {est.delivery}</span>
           </p>
           {est.combo && <p className="svc-bar-save">{est.combo.name} applied: you save {inr(est.combo.save)}</p>}

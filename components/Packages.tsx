@@ -4,7 +4,7 @@
    free items and a requirements box. Every service has an anchor id, so /create#short-videos opens it directly.
    All prices and words come from data/pricing.ts; sample links from data/samples.ts. */
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { cardPriceText, COPY, orderedOptions, mostPicked, REQUIREMENTS_MAX, servicesOf, startingFrom, STUDIOS, type Service, type StudioKey } from "../data/pricing";
+import { cardPriceText, COPY, optionNames, orderedOptions, REQUIREMENTS_MAX, servicesOf, startingFrom, STUDIOS, type Service, type StudioKey } from "../data/pricing";
 import { SAMPLES } from "../data/samples";
 import { estimate, inr, unitLabel } from "../lib/pricing";
 import { useSelection } from "./pricing/state";
@@ -32,7 +32,7 @@ function TryAssistant({ className = "" }: { className?: string }) {
   return (
     <button type="button" className={`mk-try-ai ${className}`} onClick={openChat}>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20l1-4.4A7.5 7.5 0 1 1 20 12.5Z" /></svg>
-      Try our live AI assistant
+      Try our live AI Assistant
     </button>
   );
 }
@@ -62,7 +62,7 @@ function Panel({ s, onBack }: { s: Service; onBack: () => void }) {
             <li key={o.id} className="svc-chip" data-on={n > 0}>
               <button type="button" aria-pressed={n > 0} className="svc-chip-btn" onClick={() => toggle(o.id)}>
                 <span className="svc-tick" aria-hidden="true" />
-                <span className="svc-chip-name">{o.name}{o.popular && <span className="svc-pop">Popular</span>}</span>
+                <span className="svc-chip-name">{o.name}</span>
                 <span className="svc-chip-price">{o.price === null ? "Custom quote" : `${inr(o.price)}${unitLabel(o.unit)}`}</span>
               </button>
               {n > 0 && (
@@ -191,7 +191,7 @@ export default function Packages({ studio }: { studio: StudioKey }) {
                       <span className="svc-card-name">{s.name}</span>
                       <span className="svc-card-line">{s.line}</span>
                       <span className="svc-card-from">{s.id === "website-care" ? <b>{cardPriceText(s)}</b> : <>Starting from <b>{inr(startingFrom(s))}</b></>}</span>
-                      <span className="svc-card-most">Most picked: {mostPicked(s)}</span>
+                      <span className="svc-card-most">Includes: {optionNames(s).slice(0, 2).join(", ")}</span>
                       <span className="svc-card-go" aria-hidden="true">→</span>
                     </button>
                     {s.id === "ai-assistants" && <TryAssistant className="svc-card-try" />}

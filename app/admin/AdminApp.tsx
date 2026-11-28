@@ -699,7 +699,7 @@ function Website({ d, reload }: { d: Data; reload: () => void }) {
                     <label className={lbl}>Delivery time<input className="for-field" value={o.delivery} onChange={(e) => setO({ delivery: e.target.value })} /></label>
                     <label className={lbl}>Days<input className="for-field" inputMode="numeric" value={o.days ?? ""} onChange={(e) => setO({ days: e.target.value === "" ? null : Number(e.target.value.replace(/\D/g, "")) })} /></label>
                     <div className="flex items-end gap-2">
-                      <label className="flex min-h-11 items-center gap-1 text-xs font-bold"><input type="checkbox" checked={!!o.popular} onChange={(e) => setO({ popular: e.target.checked })} />Popular</label>
+                      <label className="flex min-h-11 items-center gap-1 text-xs font-bold"><input type="checkbox" checked={!!o.popular} onChange={(e) => setO({ popular: e.target.checked })} />Show first</label>
                       <button type="button" aria-label={`Remove ${o.name}`} className="for-btn for-btn-ghost !min-h-10 !px-3 text-[#c2183a]" onClick={() => confirm(`Remove ${o.name} from the website?`) && setS({ options: s.options.filter((_, i) => i !== oi) })}>×</button>
                     </div>
                   </div>

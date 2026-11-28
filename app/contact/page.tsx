@@ -8,7 +8,7 @@ import { SETTINGS, whatsappTo } from "../../data/settings";
 import { readSimulate } from "../../lib/submit-brief";
 import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = pageMeta("Contact", "Tell us what you need and get your final price on WhatsApp within 24 hours.", "/contact");
+export const metadata: Metadata = pageMeta("Contact", "Write a short brief for MAKENDLESS and get your final price on WhatsApp within 24 hours.", "/contact", { keywords: ["contact MAKENDLESS", "project brief", "WhatsApp quote", "video editing quote", "website quote"] });
 
 type Params = Record<string, string | string[] | undefined>;
 const H1 = ["Tell", "us", "what"];

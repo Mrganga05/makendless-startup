@@ -17,7 +17,7 @@ export default function Footer() {
         <div>
           <Link href="/" className="inline-flex min-h-11 items-center text-xl"><Wordmark /><span className="sr-only"> home</span></Link>
           <p className="mt-2 text-sm font-semibold tracking-[0.3em] text-muted">CREATE • BUILD • GROW</p>
-          <p className="mt-5 max-w-xs text-[15px] leading-relaxed text-muted">Creative &amp; Technology Studio. Video editing and website development, with digital marketing in beta.</p>
+          <p className="mt-5 max-w-xs text-[15px] leading-relaxed text-muted">Creative &amp; Technology Studio. Video editing and website development. Digital marketing (GROW): Beta - taking first clients.</p>
         </div>
         {cols.map((c) => (
           <nav key={c.title} aria-label={`Footer — ${c.title}`}>

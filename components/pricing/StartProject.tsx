@@ -55,7 +55,7 @@ export default function StartProject() {
   const summary = () => [
     `Hi MAKENDLESS, I'd like to start a project.`, `Name: ${name}`, `WhatsApp: ${phone}`,
     ...est.lines.map((l) => `• ${l.name}${l.qty > 1 ? ` × ${l.qty}` : ""}`), ...est.extras.map((x) => `+ ${x.name}`),
-    `Estimated: ${est.totalText}`, codeState === "valid" ? `Referral code: ${normalizeCode(code)}` : "",
+    `Total: ${est.totalText}`, codeState === "valid" ? `Referral code: ${normalizeCode(code)}` : "",
     ...reqs.map(([id, t]) => `${SERVICES[id].name}: ${t}`), footage ? `Link: ${footage}` : "", notes,
   ].filter(Boolean).join("\n");
 
@@ -140,7 +140,7 @@ export default function StartProject() {
                 </ul>
               </>
             )}
-            <h2 id="sp-total" className="svc-h2 mt-5">Estimated total</h2>
+            <h2 id="sp-total" className="svc-h2 mt-5">Your total</h2>
             <p className="svc-total">{est.totalText}</p>
             <p className="mt-1 font-bold">Est. delivery: {est.delivery}</p>
             <p className="svc-note mt-2">{COPY.delivery}</p>

@@ -4,12 +4,36 @@ import { COPY } from "./pricing";
  * How we work + FAQ copy.
  * FAQ copy follows the owner's approved policies (2026-11-19). The "How we work" steps below are the homepage version.
  */
+/** Homepage version (covers CREATE and BUILD projects). Each studio page uses its own steps: processFor(). */
 export const process = [
   { n: "01", title: "Discover", text: "Pick your services on our website and tell us your requirements." },
   { n: "02", title: "Confirm", text: "We confirm the final price and delivery time on WhatsApp. You pay a 50% advance to start." },
   { n: "03", title: "Create", text: "Our team edits, builds, or both, and keeps you updated." },
   { n: "04", title: "Deliver", text: "You review the work, we make your revisions, and you pay the balance to get the final files or go live." },
 ];
+
+/** How a project runs, in each studio's own words. GROW is monthly, paid in advance (no 50% advance). */
+const PROCESS_BY_STUDIO: Record<"create" | "build" | "grow", typeof process> = {
+  create: [
+    { n: "01", title: "Discover", text: "Pick your video services on our website and send your footage and requirements." },
+    { n: "02", title: "Confirm", text: "We confirm the final price and delivery time on WhatsApp. You pay a 50% advance to start." },
+    { n: "03", title: "Edit", text: "Our team edits your videos and keeps you updated." },
+    { n: "04", title: "Deliver", text: "You review the edits, we make your revisions, and you pay the balance to get the final files." },
+  ],
+  build: [
+    { n: "01", title: "Discover", text: "Pick your services on our website and tell us what your business needs." },
+    { n: "02", title: "Confirm", text: "We confirm the final price and delivery time on WhatsApp. You pay a 50% advance to start." },
+    { n: "03", title: "Build", text: "Our team builds your website or system and keeps you updated." },
+    { n: "04", title: "Go live", text: "You review the build, we make your changes, and you pay the balance to go live." },
+  ],
+  grow: [
+    { n: "01", title: "Discover", text: "Tell us about your business, your customers and your goals. We look at your pages and any past ads." },
+    { n: "02", title: "Plan", text: "We plan your campaigns, content and ad budget, and confirm the plan and monthly price on WhatsApp." },
+    { n: "03", title: "Launch", text: "You pay the first month in advance. We set up your campaigns and content and start them once you approve." },
+    { n: "04", title: "Report", text: "Every month we report the results in plain words and adjust. Each month is paid in advance." },
+  ],
+};
+export const processFor = (studio: "create" | "build" | "grow") => PROCESS_BY_STUDIO[studio];
 
 /** FAQ answer: a paragraph, then optional bullets ("**bold**" allowed) and a closing line. */
 export type Faq = { q: string; a: string; list?: string[]; after?: string };
@@ -29,7 +53,7 @@ export const faqGroups: { title: string; items: Faq[] }[] = [
   { title: "Prices and payment", items: [
     { q: "Are your prices fixed?", a: "Yes. Every service has a fixed price shown on our website, and the same quality for every client. We confirm the final price on WhatsApp before work starts. Custom requests are quoted after a quick chat." },
     { q: "Why are your prices lower than agencies?", a: "We're a small expert team with no big office or agency overheads. You pay for the work, not the office." },
-    { q: "How do I pay?", a: "50% advance to start, and 50% before we hand over final files or make your project live. You can pay by UPI or payment link." },
+    { q: "How do I pay?", a: "50% advance to start, and 50% before we hand over final files or make your project live. You can pay by UPI or payment link. GROW (digital marketing) plans are paid monthly in advance." },
     { q: "Are there any extra costs?", a: "Only outside tools, which you pay at actual cost: domain and hosting, WhatsApp API charges, AI usage, phone call minutes, payment gateway fees and app store fees. We tell you about these before starting." },
     { q: "Do you charge GST?", a: "Prices shown don't include GST. Once MAKENDLESS is GST-registered, 18% GST will be added to invoices." },
   ] },
@@ -50,8 +74,8 @@ export const faqGroups: { title: string; items: Faq[] }[] = [
     { q: "How does the referral offer work?", a: "Get your unique referral link on our website and share it. When a friend starts a project of {referralMin} or more with your link, they get {referralReward} off and you get {referralReward} off your next order." },
   ] },
   { title: "Support", items: [
-    { q: "Do you offer ongoing support?", a: `Yes. Website Care is an add-on at {websiteCare}/month, and monthly care plans are available for automation and AI assistants. For videos, the Monthly 12 Reels plan and the Creator Pack cover regular editing.` },
-    { q: "Is digital marketing available?", a: "Digital marketing (GROW) is still in beta and not open for orders yet." },
+    { q: "Do you offer ongoing support?", a: `Yes. Website Care is an add-on at {websiteCare}/month, and monthly care plans are available for Workflow Automation and AI Assistant. For videos, the Monthly 12 Reels plan and the Creator Pack cover regular editing.` },
+    { q: "Is digital marketing available?", a: "Yes. Digital marketing (GROW) is in Beta - taking first clients. Plans have fixed monthly prices shown on the GROW page, paid monthly in advance. Ad spend is paid separately to Meta/Google, and you can cancel any month." },
   ] },
 ];
 

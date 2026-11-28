@@ -9,6 +9,6 @@ import { loadContent } from "../../lib/content";
 const s = STUDIOS.build;
 export async function generateMetadata(): Promise<Metadata> {
   await loadContent();
-  return pageMeta(`${s.verb} — ${s.name}`, `Websites and technology for businesses: ${servicesOf("build").map((x) => x.name).join(", ")}. Fixed prices from ${inr(studioFrom("build")!)}.`, "/build");
+  return pageMeta(`${s.verb} — ${s.name}`, `Websites and technology for businesses: ${servicesOf("build").map((x) => x.name).join(", ")}. Fixed prices from ${inr(studioFrom("build")!)}.`, "/build", { keywords: ["website development", "business website", "online store", "WhatsApp automation", "AI Assistant", "Website Care", "app development"] });
 }
 export default async function Page() { await loadContent(); return <StudioPage id="build" />; }

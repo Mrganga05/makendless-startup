@@ -6,12 +6,12 @@ import { ButtonLink, Arrow, BetaBadge, Eyebrow, KineticHeading, Reveal } from ".
 import { SETTINGS, whatsappTo } from "../../data/settings";
 import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = pageMeta("About", "MAKENDLESS is one studio for videos, websites and automation, with clear prices and one point of contact.", "/about");
+export const metadata: Metadata = pageMeta("About", "Who MAKENDLESS is: one studio in India for videos, websites and automation, with fixed prices and one point of contact.", "/about", { keywords: ["about MAKENDLESS", "creative and technology studio", "video editing studio India", "website studio India", "CREATE BUILD GROW"] });
 
 const pillars = [
   { verb: "CREATE", label: "Video Editing", href: "/create", text: "Reels and Shorts, YouTube videos, ads, podcasts, and motion graphics like logo animations, intros and thumbnails." },
-  { verb: "BUILD", label: "Websites and Technology", href: "/build", text: "Business websites, online stores, booking websites, WhatsApp automation, AI chatbots and assistants, AI software and mobile apps." },
-  { verb: "GROW", label: "Digital Marketing", href: "", text: "Coming soon. Not open for orders yet." },
+  { verb: "BUILD", label: "Websites and Technology", href: "/build", text: "Business websites, online stores, booking websites, WhatsApp automation, AI Assistant, AI software and mobile apps." },
+  { verb: "GROW", label: "Digital Marketing", href: "", text: "Meta ads, social media and local marketing. Beta - taking first clients." },
 ];
 
 const fair = [
@@ -57,7 +57,7 @@ export default async function Page() {
           </div>
           <div className="space-y-5 text-[18px] leading-relaxed text-muted-dark">
             <p>Creators and small businesses kept running into the same problem: good agencies were too expensive, and cheap freelancers were hard to trust.</p>
-            <p>MAKENDLESS is our answer: one studio for videos, websites and automation, with clear prices published on our website and the quality of a real team.</p>
+            <p>MAKENDLESS is our answer: one studio for videos, websites and automation, with fixed prices shown on our website and the quality of a real team.</p>
             <p className="font-bold text-dark">The MAKENDLESS Team</p>
           </div>
         </div>

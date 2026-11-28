@@ -11,7 +11,7 @@ import { trackPixel } from "./MetaPixel";
 type Msg = { role: "user" | "assistant"; content: string; links?: string[]; error?: boolean };
 const KEY = "mk-chat-v1";
 const MAX = 1000;
-const GREETING = "Hi! I'm the MAKENDLESS Assistant. Ask me about our video editing, websites, AI assistants, prices or how a project works.";
+const GREETING = "Hi! I'm the MAKENDLESS Assistant. Ask me about our video editing, websites, AI Assistant, prices or how a project works.";
 const QUICK: [string, string][] = [
   ["Services", "What services do you offer?"],
   ["Pricing", "What are your prices?"],

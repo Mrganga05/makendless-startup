@@ -1,7 +1,7 @@
 /** Site-wide constants. Real values the owner has not supplied are left empty and listed in TODO-FOR-OWNER.md. */
 export const SITE_NAME = "MAKENDLESS";
 export const SITE_TAGLINE = "Creative & Technology Studio";
-export const SITE_DESCRIPTION = "We make ideas impossible to ignore. Video editing, websites, automation and AI for creators and businesses. Digital marketing in beta.";
+export const SITE_DESCRIPTION = "We make ideas impossible to ignore. Video editing, websites, automation and AI for creators and businesses. Digital marketing: Beta - taking first clients.";
 import type { Metadata } from "next";
 import { SETTINGS } from "../data/settings";
 /** Page metadata where og:title always equals the page's own <title> ("<title> | MAKENDLESS").
@@ -21,4 +21,4 @@ export const SITE_URL = SETTINGS.siteUrl;
 export const CONTACT_EMAIL = SETTINGS.email;
 export const ROUTES = ["", "/studios", "/work", "/create", "/build", "/grow", "/about", "/faq", "/contact", "/privacy", "/terms"] as const;
 export const HOME_TITLE = "MAKENDLESS | Video Editing, Websites, Automation & AI Studio";
-export const HOME_DESCRIPTION = "Startup creative and technology studio in India. Video editing, websites, WhatsApp automation and AI, with clear fixed prices.";
+export const HOME_DESCRIPTION = "Startup creative and technology studio in India. Video editing, websites, WhatsApp automation and AI, with fixed prices.";

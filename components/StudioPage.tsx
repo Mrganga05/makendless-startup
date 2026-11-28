@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { GROW_PRICING, studios, type StudioId, type StudioKey } from "../data/pricing";
-import { process } from "../data/process";
+import { GROW_PRICING, GROW_STATUS, studios, type StudioId, type StudioKey } from "../data/pricing";
+import { processFor } from "../data/process";
 import { BuildWorld, CreateWorld, GrowWorld } from "./studios/Worlds";
 import Packages from "./Packages";
 import { PricingRegion } from "./pricing/state";
-import Waitlist from "./Waitlist";
 import RecentWork from "./work/RecentWork";
 import { Arrow, BetaBadge, ButtonLink, DemoCaption, Eyebrow, KineticHeading, Reveal } from "./ui";
 
@@ -35,6 +34,9 @@ export default function StudioPage({ id }: { id: StudioId }) {
   /* CREATE and BUILD have one services section: the price selector (services, options, free items, prices).
      GROW (beta) lists its three service cards with monthly prices, then the combo and terms. */
   const planned = s.planned ?? [];
+  const steps = processFor(id);
+  /* GROW: every "I'm interested" opens the Start a Project form (contact brief) with GROW selected. */
+  const interested = `/contact?service=${id}`;
   return (
     <>
       {/* HERO — dark, division world on the right */}
@@ -55,14 +57,13 @@ export default function StudioPage({ id }: { id: StudioId }) {
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#c3c8de]">{s.lead || s.tagline}</p>
             {beta && (
               <p className="mt-5 max-w-xl rounded-2xl border border-grow/40 bg-grow/10 p-4 text-[15px] leading-relaxed text-light">
-                Digital marketing is in beta and now taking its first clients. Prices are monthly; ad spend is paid separately to Meta/Google. No results are promised.
+                {GROW_STATUS}. Prices are monthly, paid in advance; ad spend is paid separately to Meta/Google. No results are promised.
               </p>
             )}
             <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href={beta ? `/contact?service=${id}` : "/start-project"}>{beta ? "Tell us you're interested" : "Start a Project"} <Arrow /></ButtonLink>
+              <ButtonLink href={beta ? interested : "/start-project"}>{beta ? "I'm interested" : "Start a Project"} <Arrow /></ButtonLink>
               <ButtonLink href="#services" variant="secondary">See services</ButtonLink>
             </div>
-            {beta && <div className="mt-6"><p className="mb-2 text-sm font-bold text-light">Join the waitlist</p><Waitlist tone="dark" /></div>}
           </div>
           <Reveal kind="clip-down" className="min-w-0">
             <div className="relative">
@@ -86,10 +87,10 @@ export default function StudioPage({ id }: { id: StudioId }) {
             <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:items-end">
               <div>
                 <Eyebrow tone="light">Services and prices</Eyebrow>
-                <KineticHeading text="Now in beta." className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
+                <KineticHeading text={`${GROW_STATUS}.`} className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
               </div>
               <p className="max-w-xl text-[17px] leading-relaxed text-muted-dark lg:justify-self-end">
-                Monthly plans for small businesses, now taking first clients. Ad spend is paid separately to Meta/Google.
+                Monthly plans for small businesses, paid monthly in advance. Ad spend is paid separately to Meta/Google.
               </p>
             </div>
 
@@ -110,7 +111,7 @@ export default function StudioPage({ id }: { id: StudioId }) {
                           <span className="font-bold">Made for: </span><span className="text-muted-dark">{c.forWho}</span>
                         </p>
                         <div className="mt-auto flex flex-wrap items-center gap-3 pt-7">
-                          <ButtonLink href={`/contact?service=${id}&need=${c.id}`} tone="light">I&apos;m interested <Arrow /></ButtonLink>
+                          <ButtonLink href={`${interested}&need=${c.id}`} tone="light">I&apos;m interested <Arrow /></ButtonLink>
                         </div>
                       </div>
                       {/* what is inside */}
@@ -136,6 +137,9 @@ export default function StudioPage({ id }: { id: StudioId }) {
                   <h3 className="mt-5 text-2xl font-extrabold leading-tight sm:text-[1.9rem]">{GROW_PRICING.combo.title}</h3>
                   <p className="mt-2 text-xl font-extrabold tabular-nums text-violet">{GROW_PRICING.combo.price}</p>
                   <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted-dark">{GROW_PRICING.combo.text}</p>
+                  <div className="mt-auto flex flex-wrap items-center gap-3 pt-7">
+                    <ButtonLink href={`${interested}&need=meta-google-ads,social-media`} tone="light">I&apos;m interested <Arrow /></ButtonLink>
+                  </div>
                 </div>
                 <div className="border-t border-line bg-paper/60 p-6 sm:p-8 lg:border-l lg:border-t-0">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-dark">Good to know</p>
@@ -153,9 +157,9 @@ export default function StudioPage({ id }: { id: StudioId }) {
       <section data-tone="dark" className="bg-surface-2 px-5 py-20 text-light md:px-8 md:py-28">
         <div className="mx-auto max-w-7xl">
           <Eyebrow>How a project runs</Eyebrow>
-          <KineticHeading text="From brief" accent="to delivery." className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
+          <KineticHeading text="From brief" accent={beta ? "to report." : "to delivery."} className="mt-4 text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
           <ol className="mt-12 grid gap-px overflow-hidden rounded-[1.75rem] bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
-            {process.map((p, i) => (
+            {steps.map((p, i) => (
               <li key={p.n} className="bg-surface-2 p-6 md:p-8">
                 <Reveal kind="mask-up" delay={i * 0.08}>
                   <p className={`text-sm font-extrabold tabular-nums tracking-[0.2em] ${L.text}`}>{p.n}</p>
@@ -177,10 +181,10 @@ export default function StudioPage({ id }: { id: StudioId }) {
           <div>
             <KineticHeading text={beta ? "Interested in GROW?" : "Have something in mind?"} className="text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-tight tracking-tight" />
             <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-muted-dark">
-              {beta ? "Tell us what you'd want from it. We'll use it to shape the beta." : "Tell us what you're building, or pick your services and see the price and delivery time straight away."}
+              {beta ? "Tell us about your business and we'll reply on WhatsApp with a plan and the monthly price." : "Tell us what you're building, or pick your services and see the price and delivery time straight away."}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href={beta ? `/contact?service=${id}` : "/start-project"} tone="light">{beta ? "Tell us you're interested" : "Start a Project"} <Arrow /></ButtonLink>
+              <ButtonLink href={beta ? interested : "/start-project"} tone="light">{beta ? "I'm interested" : "Start a Project"} <Arrow /></ButtonLink>
               {!beta && <a href="#services" className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-ink/25 px-6 py-3 text-[15px] font-bold text-dark transition duration-200 hover:border-ink hover:bg-ink/5 active:scale-[.96]">See prices</a>}
             </div>
           </div>

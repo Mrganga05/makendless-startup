@@ -9,6 +9,7 @@ export const metadata: Metadata = pageMeta(
   "Our Work",
   `Real projects by MAKENDLESS: ${WORK.reels.length} edited reels (podcast, motion graphics, documentary, fast-paced) and ${WORK.sites.length} live websites built for real businesses.`,
   "/work",
+  { keywords: ["MAKENDLESS work", "reel editing portfolio", "podcast to reel", "motion graphics edit", "website portfolio"] },
 );
 
 export default function WorkPage() {

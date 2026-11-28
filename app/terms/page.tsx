@@ -6,22 +6,22 @@ import { LegalSections, type LegalSection } from "../../components/Prose";
 import { NUMBERS as N, OWNER as O } from "../../data/owner";
 import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = pageMeta("Terms of Service", "Prices, payment, delivery, revisions, refunds, referrals and ownership when you work with MAKENDLESS.", "/terms");
+export const metadata: Metadata = pageMeta("Terms of Service", "The MAKENDLESS terms: fixed prices, payment, delivery, revisions, refunds, referrals and ownership of your work.", "/terms", { keywords: ["MAKENDLESS terms of service", "payment terms", "revisions", "refunds", "ownership"] });
 
 const lead = "These terms apply when you use the MAKENDLESS website or hire us for any service. By starting a project with us, you agree to them.";
 
 const sections: LegalSection[] = [
-  { id: "who", title: "1. Who we are", body: [`MAKENDLESS is a creative and technology studio based in India. We provide video editing, motion graphics, websites, workflow automation, AI assistants, AI software and mobile apps.`] },
+  { id: "who", title: "1. Who we are", body: [`MAKENDLESS is a creative and technology studio based in India. We provide video editing, motion graphics, websites, workflow automation, AI Assistant, AI software and mobile apps.`] },
   { id: "prices", title: "2. Prices and quotes", body: [[
-    "Prices on our website are fixed starting prices for each service.",
-    "Your estimate on the website is a guide. We confirm the final price, scope and delivery time with you on WhatsApp before any work starts.",
+    "Every service has a fixed price shown on our website.",
+    "We confirm the final price, scope and delivery time with you on WhatsApp before any work starts.",
     "Custom requests are quoted after we understand your needs.",
     "Prices do not include GST. Once MAKENDLESS is GST-registered, 18% GST will be added to invoices.",
   ]] },
   { id: "payment", title: "3. Payment", body: [[
     "**50% advance** to start the work. **50% balance** before we hand over final files or make your website, app or system live.",
     "You can pay by UPI or payment link.",
-    "Monthly plans (Website Care, Monthly Care, Monthly Reels, Creator Pack) are paid in advance at the start of each month.",
+    "Monthly plans (Website Care, Monthly Care, Monthly Reels, Creator Pack and GROW plans) are paid in advance at the start of each month.",
     `If the balance isn't paid within ${N.balanceDays} days of delivery, we may pause support and keep the final files until payment is made.`,
   ]] },
   { id: "third-party", title: "4. Third-party costs", body: [
@@ -48,7 +48,7 @@ const sections: LegalSection[] = [
   ]] },
   { id: "revisions", title: "7. Revisions and small changes", body: [[
     "**Videos and motion graphics:** 2 rounds of revisions are included.",
-    "**Websites, automation and AI assistants:** small changes are free for 30 days after delivery.",
+    "**Websites, automation and AI Assistant:** small changes are free for 30 days after delivery.",
     "**AI software and apps:** bug fixes and small changes are free for 60 days after delivery.",
     "**Small changes** include text, images, colors, small fixes, and edits within the original brief. These are always free during the periods above.",
     "**New work** is charged separately. This includes new pages, new features, new videos, and a full change of style or direction. We tell you the price before doing it.",

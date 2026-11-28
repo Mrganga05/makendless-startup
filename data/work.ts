@@ -74,7 +74,7 @@ export const WORK: { reels: Reel[]; sites: Site[] } = {
     },
     {
       id: "makendless", name: "MAKENDLESS", category: "Our own website", url: "https://makendless.vercel.app/",
-      text: "Studio website with service picker, live prices and referral system.", tags: ["Business Website", "Automation"],
+      text: "Studio website with service picker, fixed prices and referral system.", tags: ["Business Website", "Automation"],
       desktop: "/work/site-makendless-desktop.webp", mobile: "/work/site-makendless-mobile.webp",
     },
   ],

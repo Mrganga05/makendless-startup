@@ -5,19 +5,19 @@ import PageShell from "../../components/PageShell";
 import { StudioWorld } from "../../components/StudioPage";
 import { Arrow, BetaBadge, Reveal } from "../../components/ui";
 import { studios } from "../../data/studios";
-import { studioFromText, studioServices } from "../../components/Studios";
-import Waitlist from "../../components/Waitlist";
+import { GrowInterested, studioFromText, studioServices } from "../../components/Studios";
 import ComboPacks from "../../components/pricing/ComboPacks";
 import { PricingRegion } from "../../components/pricing/state";
 import { pageMeta } from "../../lib/site";
+import { GROW_STATUS } from "../../data/pricing";
 
-export const metadata: Metadata = pageMeta("Services", "CREATE, BUILD and GROW: video editing, websites, automation and AI, plus combo packs. Digital marketing in beta.", "/studios");
+export const metadata: Metadata = pageMeta("Services", "All MAKENDLESS services with fixed prices: CREATE video editing, BUILD websites, automation and AI, and combo packs. GROW digital marketing: Beta - taking first clients.", "/studios", { keywords: ["MAKENDLESS services", "video editing prices", "website development prices", "WhatsApp automation", "AI Assistant", "combo packs", "digital marketing beta"] });
 
 export default async function Page() {
   await loadContent();
   return (
     <>
-    <PageShell eyebrow="Our three studios" title="Three worlds." accent="Endless possibilities." intro="Create the content. Build the experience. Grow, in beta. Each studio has its own team, tools and way of working." light>
+    <PageShell eyebrow="Our three studios" title="Three worlds." accent="Endless possibilities." intro={`Create the content. Build the experience. Grow (${GROW_STATUS}). Each studio has its own team, tools and way of working.`} light>
       <ul className="grid gap-6 lg:grid-cols-3">
         {studios.map((s, i) => (
           <li key={s.id}>
@@ -36,13 +36,13 @@ export default async function Page() {
                     {studioServices(s.id, (s.planned ?? []).map((sv) => sv.title)).map((sv) => (<li key={sv.name} className="flex justify-between gap-3"><span>{sv.name}</span>{sv.from && <span className="shrink-0 font-bold text-muted-dark">{sv.from}</span>}</li>))}
                   </ul>
                   <span className="mt-auto flex items-center justify-between pt-7 text-[15px] font-extrabold">
-                    {s.beta ? "Preview the GROW studio" : `Enter the ${s.verb} studio`}
+                    {`Enter the ${s.verb} studio`}
                     <span className="grid h-11 w-11 place-items-center rounded-full bg-ink text-white transition group-hover:translate-x-1"><Arrow /></span>
                   </span>
                 </div>
               </Link>
             </Reveal>
-            {s.id === "grow" && <div className="stu-more"><Waitlist compact /></div>}
+            {s.id === "grow" && <div className="stu-more"><GrowInterested /></div>}
           </li>
         ))}
       </ul>

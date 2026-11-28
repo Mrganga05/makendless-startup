@@ -32,7 +32,7 @@ export default function Gateway({ id, verb, name, href, beta, index, from, servi
   }, []);
 
   const world = id === "create" ? <CreateWorld /> : id === "build" ? <BuildWorld /> : <GrowWorld />;
-  const cta = beta ? `Preview the ${verb} studio` : `Enter the ${verb} studio`;
+  const cta = `Enter the ${verb} studio`;
 
   return (
     <li ref={ref} className="stu-item" data-after={after ? "" : undefined} data-in={seen} data-live={live} style={{ ["--i" as string]: index }}>

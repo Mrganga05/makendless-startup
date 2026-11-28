@@ -1,8 +1,8 @@
 /* SERVER ONLY. Everything the MAKENDLESS Assistant knows, written from the same live data the pages use
    (data/pricing.ts, data/process.ts, data/work.ts, data/owner.ts, after /admin edits are applied by loadContent()).
    So the bot can only quote prices that are on the website, and a price change in /admin reaches it at once. */
-import { COMBOS_ENABLED, combos, COPY, REFERRAL, servicesOf, studios, VIDEO_TIERS, fillTokens, type Option } from "../data/pricing";
-import { faqGroups, process } from "../data/process";
+import { COMBOS_ENABLED, combos, COPY, GROW_PRICING, REFERRAL, servicesOf, studios, VIDEO_TIERS, fillTokens, type Option } from "../data/pricing";
+import { faqGroups, process, processFor } from "../data/process";
 import { REVIEWS, WORK } from "../data/work";
 import { NUMBERS } from "../data/owner";
 import { SETTINGS } from "../data/settings";
@@ -19,15 +19,16 @@ export function siteKnowledge(): string {
     "MAKENDLESS has exactly three studios:",
     `- CREATE = video editing (${servicesOf("create").map((s) => s.name).join(", ")}). Prices: /create`,
     `- BUILD = websites & technology (${servicesOf("build").map((s) => s.name).join(", ")}). Prices: /build`,
-    "- GROW = digital marketing. BETA: waitlist only, nothing for sale yet, no prices. Join the waitlist: /grow",
+    "- GROW = digital marketing. Beta - taking first clients. Monthly prices: /grow. To start: the I'm interested button on /grow (opens the form with GROW selected).",
     "All services on one page: /studios. Real work: /work.");
 
   for (const st of studios) {
-    out.push("", `## ${st.verb} — ${st.name}${st.beta ? " (BETA: not on sale, no prices, no results promised)" : ""}`, st.lead, `Page: ${st.href}`);
-    if (st.planned?.length) for (const p of st.planned) out.push(`- ${p.title} (in development): ${p.summary} Planned scope: ${p.items.join(", ")}.`);
+    out.push("", `## ${st.verb} — ${st.name}${st.beta ? " (Beta - taking first clients; no results promised)" : ""}`, st.lead, `Page: ${st.href}`);
+    if (st.planned?.length) for (const p of st.planned) out.push(`- ${p.title}${p.price ? `: ${p.price}` : ""}. ${p.summary} Includes: ${p.items.join(", ")}.${p.priceNote ? ` ${p.priceNote}` : ""}`);
+    if (st.id === "grow") out.push(`- ${GROW_PRICING.combo.title}: ${GROW_PRICING.combo.price}. ${GROW_PRICING.combo.text}`, `Good to know: ${GROW_PRICING.terms.join(" ")}`);
     for (const s of servicesOf(st.id)) {
       out.push("", `### ${s.name}${s.tag ? ` [${s.tag}]` : ""} — ${s.line} (link: ${st.href}#${s.id})`);
-      for (const o of s.options) out.push(`- ${o.name}: ${price(o)}; delivery ${o.delivery}${o.popular ? "; popular" : ""}`);
+      for (const o of s.options) out.push(`- ${o.name}: ${price(o)}; delivery ${o.delivery}`);
       if (s.extras.length) out.push(`Extras: ${s.extras.map((x) => `${x.name} ${inr(x.price)}${x.monthly ? "/month" : ""}`).join("; ")}`);
       if (s.free.length) out.push(`Included free: ${s.free.join(", ")}`);
       if (s.need.length) out.push(`What we need from the client: ${s.need.join("; ")}`);
@@ -49,6 +50,7 @@ export function siteKnowledge(): string {
     `- Project files are kept ${NUMBERS.fileDays} days after delivery.`, "- Prices shown don't include GST; once MAKENDLESS is GST-registered, 18% GST is added to invoices.");
 
   out.push("", "## How a project runs", ...process.map((p) => `${p.n}. ${p.title}: ${p.text}`));
+  out.push("", "## How GROW (digital marketing) runs, paid monthly in advance", ...processFor("grow").map((p) => `${p.n}. ${p.title}: ${p.text}`));
 
   out.push("", "## FAQ");
   for (const g of faqGroups) for (const f of g.items) out.push(`Q: ${f.q}`, `A: ${strip(fillTokens([f.a, ...(f.list ?? []).map((l) => `- ${l}`), f.after ?? ""].filter(Boolean).join("\n")))}`);

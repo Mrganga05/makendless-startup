@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { BrowserScreen, PhoneScreen, clamp, seg } from "./HeroScreens";
 
-export interface HeroSceneProps { p: number; mode: number; paused: boolean; compact: boolean; active: boolean; onReady: () => void }
+export interface HeroSceneProps { p: number; mode: number; paused: boolean; compact: boolean; active: boolean; load: boolean; onReady: () => void }
 /* s = how far the page has scrolled past the hero (0..1), kept up to date by a scroll listener so the
    per-frame code never reads window.scrollY right after writing styles (that forced a layout every frame). */
 type Live = { p: number; mode: number; px: number; py: number; s: number };
@@ -254,7 +254,7 @@ function Details({ live }: { live: React.RefObject<Live> }) {
   );
 }
 
-export default function Hero3D({ p, mode, paused, compact, active, onReady }: HeroSceneProps) {
+export default function Hero3D({ p, mode, paused, compact, active, load, onReady }: HeroSceneProps) {
   const live = useRef<Live>({ p, mode, px: 0, py: 0, s: 0 });
   live.current.p = p; live.current.mode = mode;
   const wrap = useRef<HTMLDivElement>(null);
@@ -284,6 +284,9 @@ export default function Hero3D({ p, mode, paused, compact, active, onReady }: He
   }, [compact]);
   const ad = mode === 2;
   const showPhone = !compact || mode !== 1, showLaptop = !compact || mode === 1;
+  /* Video Editing tab -> the phone lights up, Websites & Technology -> the browser; the other frame dims. */
+  const focusPhone = ad ? undefined : mode === 0 ? "on" : "off", focusLaptop = ad ? undefined : mode === 1 ? "on" : "off";
+  const play = active && !paused;
   /* The 3D scene graph is memoised: it reads progress/mode from the "live" ref inside useFrame, so React
      never has to re-reconcile it while the timeline moves (only the DOM screens re-render). */
   const scene = useMemo(() => (
@@ -319,17 +322,17 @@ export default function Hero3D({ p, mode, paused, compact, active, onReady }: He
         <PerformanceMonitor bounds={fpsBounds} flipflops={4} onDecline={decline} onIncline={incline} onFallback={fallback} />
         {scene}
       </Canvas>
-      {/* DOM screens, positioned by <ScreenSync>. Decorative demo: hidden from assistive tech and the Tab order. */}
+      {/* DOM screens, positioned by <ScreenSync>. Decorative: hidden from assistive tech and the Tab order. */}
       <div ref={stage} className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div ref={layer} className="absolute left-0 top-0" style={{ transformStyle: "preserve-3d" }}>
           {showPhone && (
             <div ref={phoneEl} className="pointer-events-auto absolute" style={{ width: 260, height: 540 }}>
-              <PhoneScreen p={p} paused={paused} ad={ad} back={!compact && mode === 1} />
+              <PhoneScreen p={p} play={play} load={load} ad={ad} focus={focusPhone} />
             </div>
           )}
           {showLaptop && (
             <div ref={laptopEl} className="pointer-events-auto absolute" style={{ width: 612, height: 392 }}>
-              <BrowserScreen p={p} resize={mode === 1 && p > 0.95} ad={ad} back={!compact && mode === 0} />
+              <BrowserScreen play={play} load={load} ad={ad} focus={focusLaptop} small={compact} />
             </div>
           )}
         </div>

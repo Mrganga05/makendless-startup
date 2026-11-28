@@ -6,14 +6,14 @@ import { LegalSections, type LegalSection } from "../../components/Prose";
 import { NUMBERS as N, OWNER as O } from "../../data/owner";
 import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = pageMeta("Privacy Policy", "What information MAKENDLESS collects, why we collect it, how long we keep it and the choices you have.", "/privacy");
+export const metadata: Metadata = pageMeta("Privacy Policy", "What information MAKENDLESS collects, why we collect it, how long we keep it and the choices you have.", "/privacy", { keywords: ["MAKENDLESS privacy policy", "data we collect", "WhatsApp data", "delete my data"] });
 
-const lead = `MAKENDLESS ("we", "us") is a creative and technology studio based in India. We edit videos, build websites, set up automation and AI assistants, and build apps for creators and businesses. This policy explains what information we collect, why, and the choices you have. We follow India's Digital Personal Data Protection Act, 2023.`;
+const lead = `MAKENDLESS ("we", "us") is a creative and technology studio based in India. We edit videos, build websites, set up automation and AI Assistant, and build apps for creators and businesses. This policy explains what information we collect, why, and the choices you have. We follow India's Digital Personal Data Protection Act, 2023.`;
 
 const sections: LegalSection[] = [
   { id: "collect", title: "1. Information we collect", body: [
     { h: "Information you give us" },
-    "We collect your name, WhatsApp number and messages through the Start a Project form, the contact brief, the referral form (Refer and earn), the GROW waitlist and our AI chatbot (the MAKENDLESS Assistant). This includes:",
+    "We collect your name, WhatsApp number and messages through the Start a Project form, the contact brief, the referral form (Refer and earn) and our AI chatbot (the MAKENDLESS Assistant). This includes:",
     [
       "Your name and WhatsApp number, and your email if you share it",
       "The services you select, your requirements, and any messages you send us",

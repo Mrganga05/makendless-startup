@@ -200,6 +200,8 @@ export default function Hero() {
     return () => { el.removeEventListener("touchstart", down); el.removeEventListener("touchend", up); };
   }, []);
 
+  /* Hero videos load only once the hero has settled; reduced-motion visitors keep the stills until they press Play. */
+  const media = go && (!reduced || !paused);
   const M = MODES[mode];
   const frames = Math.round(p * 144);
   const timecode = `00:00:0${Math.floor(frames / 24)}:${String(frames % 24).padStart(2, "0")}`;
@@ -233,7 +235,7 @@ export default function Hero() {
             </span>
           </div>
           <p className="mt-2.5 max-w-md text-[14.5px] leading-snug text-[#b9bed6] sm:mt-5 sm:text-lg sm:leading-relaxed">
-            Video editing, websites, automation and AI for creators and businesses. Digital marketing in beta.
+            Video editing, websites, automation and AI for creators and businesses. Digital marketing: Beta - taking first clients.
           </p>
           <div className="mt-4 flex gap-2.5 sm:mt-8 sm:gap-3">
             <Magnetic className="flex-1 sm:flex-none"><Link href="/start-project" className="block rounded-full bg-white whitespace-nowrap px-2 py-3.5 text-center text-[13px] min-[390px]:text-sm font-extrabold text-[#13172b] transition-colors hover:bg-[#c7a6ff] sm:px-8 sm:text-base">Start a Project</Link></Magnetic>
@@ -249,7 +251,7 @@ export default function Hero() {
               <span className="hero-ph-phone" /><span className="hero-ph-laptop" />
             </div>
           )}
-          {gl && <div className="absolute inset-0 transition-opacity duration-1000" style={{ opacity: ready ? 1 : 0 }}><Hero3D p={p} mode={mode} paused={paused} compact={compact} active={inView} onReady={onSceneReady} /></div>}
+          {gl && <div className="absolute inset-0 transition-opacity duration-1000" style={{ opacity: ready ? 1 : 0 }}><Hero3D p={p} mode={mode} paused={paused} compact={compact} active={inView} load={media} onReady={onSceneReady} /></div>}
           <button data-hero-pause onClick={() => setPaused((x) => !x)} aria-pressed={paused} className="absolute bottom-1 right-0 z-50 flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-[#0c1024]/85 px-3.5 text-xs font-bold text-[#d5d9ea] hover:bg-white/10 lg:bottom-4 lg:right-[6%]">
                 <span aria-hidden="true" className="text-[10px]">{paused ? "▶" : "❚❚"}</span>{paused ? "Play video" : "Pause video"}
               </button>
@@ -257,13 +259,13 @@ export default function Hero() {
             /* No-3D / reduced-motion fallback: the same live screens in a still composition; the slider still drives raw -> finished */
             <div className="absolute inset-0 flex items-center justify-center gap-[4%] lg:justify-end lg:pr-[5%]" style={{ perspective: 1400 }}>
               {(!compact || mode !== 1) && (
-                <div className="shrink-0 rounded-[38px] bg-gradient-to-br from-[#c9cde0] via-[#6d7290] to-[#2a2d44] p-[6px] shadow-[0_40px_80px_-20px_rgba(0,0,0,.8),0_0_60px_-10px_var(--accent)]" style={{ transform: compact ? "none" : "rotateY(16deg) rotateX(3deg)", zoom: compact ? 0.34 : 0.72, opacity: !compact && mode === 1 ? 0.75 : 1, transition: "opacity .6s" }}>
-                  <div style={{ width: 260, height: 540 }}><PhoneScreen p={p} paused={paused} ad={ad} /></div>
+                <div className="shrink-0 rounded-[38px] bg-gradient-to-br from-[#c9cde0] via-[#6d7290] to-[#2a2d44] p-[6px] shadow-[0_40px_80px_-20px_rgba(0,0,0,.8),0_0_60px_-10px_var(--accent)]" style={{ transform: compact ? "none" : "rotateY(16deg) rotateX(3deg)", zoom: compact ? 0.34 : 0.72 }}>
+                  <div style={{ width: 260, height: 540 }}><PhoneScreen p={p} play={inView && !paused} load={media} ad={ad} focus={ad ? undefined : mode === 0 ? "on" : "off"} /></div>
                 </div>
               )}
               {(!compact || mode === 1) && (
-                <div className="shrink-0 rounded-[16px] bg-gradient-to-br from-[#c9cde0] via-[#8a8fa8] to-[#3a3d55] p-[7px] shadow-[0_40px_80px_-20px_rgba(0,0,0,.8),0_0_60px_-10px_var(--accent)]" style={{ transform: compact ? "none" : "rotateY(-14deg) rotateX(3deg)", zoom: compact ? 0.46 : 0.62, opacity: !compact && mode === 0 ? 0.75 : 1, transition: "opacity .6s" }}>
-                  <div style={{ width: 612, height: 392 }}><BrowserScreen p={p} resize={false} ad={ad} /></div>
+                <div className="shrink-0 rounded-[16px] bg-gradient-to-br from-[#c9cde0] via-[#8a8fa8] to-[#3a3d55] p-[7px] shadow-[0_40px_80px_-20px_rgba(0,0,0,.8),0_0_60px_-10px_var(--accent)]" style={{ transform: compact ? "none" : "rotateY(-14deg) rotateX(3deg)", zoom: compact ? 0.46 : 0.62 }}>
+                  <div style={{ width: 612, height: 392 }}><BrowserScreen play={inView && !paused} load={media} ad={ad} focus={ad ? undefined : mode === 1 ? "on" : "off"} small={compact} /></div>
                 </div>
               )}
             </div>

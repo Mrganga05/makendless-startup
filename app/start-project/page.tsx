@@ -4,7 +4,7 @@ import StartProject from "../../components/pricing/StartProject";
 import { Eyebrow } from "../../components/ui";
 import { pageMeta } from "../../lib/site";
 
-export const metadata: Metadata = pageMeta("Start a Project", "Your selected services, estimated total and delivery time. Send it and we'll message you on WhatsApp within 24 hours.", "/start-project", { robots: { index: false, follow: true } });
+export const metadata: Metadata = pageMeta("Start a Project", "Your selected services at fixed prices, your total and delivery time. Send it and we'll message you on WhatsApp within 24 hours.", "/start-project", { robots: { index: false, follow: true }, keywords: ["start a project", "MAKENDLESS order", "fixed prices", "delivery time"] });
 
 export default async function Page() {
   await loadContent();

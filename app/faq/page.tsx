@@ -9,7 +9,7 @@ import { COPY, fillTokens } from "../../data/pricing";
 import { SETTINGS, whatsappTo } from "../../data/settings";
 import { loadContent } from "../../lib/content";
 
-export const metadata: Metadata = pageMeta("FAQ", "Prices, payment, delivery times, free changes and referrals, answered plainly.", "/faq");
+export const metadata: Metadata = pageMeta("FAQ", "MAKENDLESS questions answered plainly: fixed prices, payment, delivery times, free changes, refunds and referrals.", "/faq", { keywords: ["MAKENDLESS FAQ", "fixed prices", "payment terms", "delivery time", "free revisions", "refund policy", "referral offer"] });
 
 export default async function Page() {
   await loadContent();

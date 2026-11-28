@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { studios } from "../data/site";
-import { Arrow, Eyebrow, KineticHeading } from "./ui";
+import { Arrow, ButtonLink, Eyebrow, KineticHeading } from "./ui";
 import Gateway from "./studios/Gateway";
-import { cardPriceText, servicesOf, studioFrom, type StudioId } from "../data/pricing";
+import { cardPriceText, GROW_STATUS, servicesOf, studioFrom, type StudioId } from "../data/pricing";
 import { inr } from "../lib/pricing";
-import Waitlist from "./Waitlist";
 
 /* CREATE and BUILD cards list the current priced services; GROW (beta) keeps its plan. */
 export const studioServices = (id: StudioId, fallback: string[]): { name: string; from?: string }[] => {
@@ -13,6 +12,9 @@ export const studioServices = (id: StudioId, fallback: string[]): { name: string
 };
 /** "From ₹399" for a studio (lowest price in data/pricing.ts), or undefined for GROW. */
 export const studioFromText = (id: StudioId) => { const n = studioFrom(id); return n === null ? undefined : `From ${inr(n)}`; };
+
+/** GROW card button: opens the Start a Project form (contact brief) with GROW selected. */
+export const GrowInterested = () => <ButtonLink href="/contact?service=grow" tone="light" className="w-full sm:w-auto">I&apos;m interested <Arrow /></ButtonLink>;
 
 /* Homepage section 2 — Our Three Studios. Light editorial surface; the three gateways carry the colour. */
 export default function Studios() {
@@ -26,7 +28,7 @@ export default function Studios() {
           </div>
           <div className="stu-intro">
             <p className="text-[15px] leading-relaxed text-muted-dark md:text-base">
-              Create the content. Build the experience. Grow, in beta. Each studio is its own world, so step into the one you need.
+              Create the content. Build the experience. Grow ({GROW_STATUS}). Each studio is its own world, so step into the one you need.
             </p>
             <Link href="/studios" className="stu-all group mt-2 inline-flex min-h-11 items-center gap-2 text-[15px] font-bold text-dark">
               <span className="stu-all-label">Compare all three studios</span>
@@ -38,7 +40,7 @@ export default function Studios() {
         <ul className="stu-list">
           {studios.map((s, i) => (
             <Gateway key={s.id} id={s.id} verb={s.verb} name={s.name} href={s.href} beta={!!s.beta} index={i} from={studioFromText(s.id)} services={studioServices(s.id, (s.planned ?? []).map((x) => x.title))}
-              after={s.id === "grow" ? <div className="stu-more"><Waitlist compact /></div> : undefined} />
+              after={s.id === "grow" ? <div className="stu-more"><GrowInterested /></div> : undefined} />
           ))}
         </ul>
       </div>

@@ -23,7 +23,7 @@ export interface Solution {
   primary: StudioId;
   /** Services available today (CREATE / BUILD). */
   services: SolutionService[];
-  /** A GROW option. Always shown as Beta and as a future option, never as a current service. */
+  /** A GROW option, shown with its Beta badge and the GROW status ("Beta - taking first clients"). */
   later?: SolutionService;
 }
 
@@ -53,7 +53,7 @@ export const solutions: Solution[] = [
       { studio: "build", id: "automation", note: "Enquiries, bookings and follow-ups handled automatically." },
       { studio: "create", id: "short-videos", note: "Short promo videos for your page and socials." },
     ],
-    later: { studio: "grow", id: "local-presence", note: "In beta and not offered yet. A possible next step later on." },
+    later: { studio: "grow", id: "local-presence", note: "Beta - taking first clients. A possible next step." },
   },
   {
     id: "startup",
@@ -67,7 +67,7 @@ export const solutions: Solution[] = [
       { studio: "build", id: "saas", note: "Your idea built as AI software you can launch." },
       { studio: "create", id: "long-videos", note: "A brand or product video for the page and the pitch." },
     ],
-    later: { studio: "grow", id: "meta-google-ads", note: "In beta and not offered yet. A possible next step later on." },
+    later: { studio: "grow", id: "meta-google-ads", note: "Beta - taking first clients. A possible next step." },
   },
   {
     id: "store",
@@ -81,6 +81,6 @@ export const solutions: Solution[] = [
       { studio: "create", id: "short-videos", note: "Ad videos and product Reels." },
       { studio: "build", id: "website-care", note: "Keeps the store fast, safe and up to date." },
     ],
-    later: { studio: "grow", id: "social-media", note: "In beta and not offered yet. A possible next step later on." },
+    later: { studio: "grow", id: "social-media", note: "Beta - taking first clients. A possible next step." },
   },
 ];

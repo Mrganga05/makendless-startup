@@ -9,7 +9,7 @@ const PAGES: Record<string, { label: string; words: string }> = {
   "/start-project": { label: "Start a project", words: "the Start a Project page" },
   "/contact": { label: "Contact us", words: "our contact page" },
   "/faq": { label: "Read the FAQ", words: "our FAQ page" },
-  "/grow": { label: "Join the GROW waitlist", words: "our GROW page" },
+  "/grow": { label: "See GROW plans", words: "our GROW page" },
   "/about": { label: "About us", words: "our About page" },
   "/privacy": { label: "Privacy policy", words: "our privacy page" },
   "/terms": { label: "Terms", words: "our terms page" },
